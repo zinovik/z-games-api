@@ -15,6 +15,7 @@ class NoThanks {
         this._currentCard = 0;
         this._currentCardCost = 0;
         this._cardsLeft = this._MAX_NUMBER - this._EXCESS_CARDS_NUMBER;
+        this._cards = [];
     }
 
     getRules() {
@@ -34,8 +35,7 @@ class NoThanks {
                 place: 0
             });
         }
-
-        this._cards = [];
+        
         for (let i = this._MIN_NUMBER; i <= this._MAX_NUMBER; i++) {
             this._cards.push(i);
         }
@@ -114,6 +114,32 @@ class NoThanks {
             gameInfo.players[userNumber] = this._players[userNumber];
         }
         return gameInfo;
+    }
+
+    getGamedata() {
+        return {
+            started: this._started,
+            finished: this._finished,
+            nextPlayers: [this._nextPlayerNumber],
+            currentCard: this._currentCard,
+            currentCardCost: this._currentCardCost,
+            cardsLeft: this._cardsLeft,
+            players: this._players,
+            cards: this._cards
+        };
+    }
+
+    setGamedata(gameInfo) {
+        if (!gameInfo) return;
+        this._started = gameInfo.started;
+        this._finished = gameInfo.finished;
+        this._nextPlayerNumber = gameInfo.nextPlayers[0];
+        this._currentCard = gameInfo.currentCard;
+        this._currentCardCost = gameInfo.currentCardCost;
+        this._cardsLeft = gameInfo.cardsLeft;
+        this._players = gameInfo.players;
+        this._cards = gameInfo.cards;
+        return true;
     }
 
     _nextCard() {

@@ -2,7 +2,7 @@
 <html>
 
     <head>
-        <title>Games Server</title>
+        <title>Games Site</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
@@ -18,7 +18,7 @@
 
         <div id="container" class="container-fluid animated">
 
-            <h1>Games Server</h1>
+            <h1>Games Site</h1>
 
             <div id="usersOnlineDiv"></div>
 
@@ -113,6 +113,8 @@
 
 
         <script>
+            var SERVER_URL = 'http://gamesserver.herokuapp.com';
+            //var socket = io(SERVER_URL);
             var socket = io();
 
             // global variables
@@ -282,7 +284,8 @@
                         noThanksGame();
                     }
 
-                    gameLogo.src = 'images/' + allGamesInfo[openGameNumber].name + '.jpg';
+                    //gameLogo.src = SERVER_URL + '/images/' + allGamesInfo[openGameNumber].name + '.jpg';
+                    gameLogo.src = '/images/' + allGamesInfo[openGameNumber].name + '.jpg';
                     gameLogo.alt = allGamesInfo[openGameNumber].name;
 
                     minPlayersDiv.innerHTML = 'Minimum players in this game: ' + allGamesInfo[openGameNumber].gameInfo.PLAYERS_MIN;
@@ -308,7 +311,7 @@
                     } else {
                         watchersInGameDiv.innerHTML = '';
                     }
-                    console.log(allGamesInfo[openGameNumber].nextPlayersNames);
+
                     nextMovePlayerDiv.innerHTML = '<b>Next player</b>: ' + allGamesInfo[openGameNumber].nextPlayersNames;
 
                     // logNchat
@@ -361,7 +364,8 @@
 
                     let td2 = document.createElement('td');
                     let img = document.createElement('img');
-                    img.src = 'images/' + allGamesInfo[i].name + '.jpg';
+                    //img.src = SERVER_URL + '/images/' + allGamesInfo[i].name + '.jpg';
+                    img.src = '/images/' + allGamesInfo[i].name + '.jpg';
                     img.alt = allGamesInfo[i].name;
                     td2.appendChild(img);
                     tr.appendChild(td2);

@@ -1,8 +1,8 @@
 module.exports = function(server) {
 
-    var io = require('socket.io').listen(server);
-    var session = require('../session');
-    var gamesServer = require('../gamesserver');
+    let io = require('socket.io').listen(server);
+    let session = require('../session');
+    let gamesServer = require('../gamesserver');
 
     io.use(function(socket, next) {
         session(socket.request, socket.request.res, next);  
@@ -10,9 +10,12 @@ module.exports = function(server) {
 
     io.on('connection', function(socket){
         if (socket.request.session.name) {
-            if (gamesServer.checkUsername(socket.request.session.name) && gamesServer.authorize(socket.request.session.name, socket)) {
-                socket.emit('setUsername', socket.request.session.name);
-            }
+            gamesServer.checkUsername(socket.request.session.name)
+                .then(() => {
+                    gamesServer.authorize(socket.request.session.name, socket).then(() => {
+                        socket.emit('setUsername', socket.request.session.name);
+                    });
+                });
         }
 
         // update by browser request (e.g., page refresh)
@@ -21,7 +24,9 @@ module.exports = function(server) {
         });
 
         socket.on('getOpenGameInfo', function() {
-            socket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(socket.request.session.name));
+            if (socket.request.session.name) {
+                socket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(socket.request.session.name));
+            }
         });
 
         socket.on('getUsersOnline', function() {
@@ -34,37 +39,42 @@ module.exports = function(server) {
 
         // authorize, register, logout
         socket.on('authorize', function(username, password) {
-            if (gamesServer.checkPassword(username, password) && gamesServer.authorize(username, socket)) {
-                socket.emit('updateCurrentUsername', username);
-                updateUsersOnline();
-                updateOpenGameInfo(username);
-                socket.request.session.name = username;
-                socket.request.session.save();
-            }
+            gamesServer.checkPassword(username, password).then(() => {
+                gamesServer.authorize(username, socket).then(() => {
+                    socket.emit('updateCurrentUsername', username);
+                    updateUsersOnline();
+                    updateOpenGameInfo(username);
+                    socket.request.session.name = username;
+                    socket.request.session.save();
+                });
+            });
         });
 
         socket.on('register', function(username, password) {
-            if (gamesServer.register(username, password, socket)) {
+            gamesServer.register(username, password, socket).then(() => {
                 socket.emit('updateCurrentUsername', username);
                 updateUsersOnline();
                 socket.request.session.name = username;
                 socket.request.session.save();
-            }
+            });
         });
 
         socket.on('logout', function() {
-            if (gamesServer.logout(socket.request.session.name)) {
-                socket.emit('updateCurrentUsername');
-                updateUsersOnline();
-                delete socket.request.session.name;
-                socket.request.session.save();
+            if (socket.request.session.name) {
+                gamesServer.logout(socket.request.session.name).then(() => {
+                    socket.emit('updateCurrentUsername');
+                    updateUsersOnline();
+                    delete socket.request.session.name;
+                    socket.request.session.save();
+                });
             }
         });
 
         socket.on('disconnect', function() {
             if (socket.request.session.name) {
-                gamesServer.logout(socket.request.session.name);
-                updateUsersOnline();
+                gamesServer.logout(socket.request.session.name).then(() => {
+                    updateUsersOnline();
+                });
             }
         });
 
@@ -130,11 +140,17 @@ module.exports = function(server) {
         function updateOpenGameInfo(username, gameNumber) {
             let gamePlayers = gamesServer.getGamePlayers(username, gameNumber);
             for (let i = 0; i < gamePlayers.length; i++) {
-                gamesServer.getSocket(gamePlayers[i].username).emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gamePlayers[i].username));
+                let currentSocket = gamesServer.getSocket(gamePlayers[i].username);
+                if (currentSocket) {
+                    currentSocket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gamePlayers[i].username));
+                }
             }
             let gameWatchers = gamesServer.getGameWatchers(username, gameNumber);
             for (let i = 0; i < gameWatchers.length; i++) {
-                gamesServer.getSocket(gameWatchers[i].username).emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gameWatchers[i].username));
+                let currentSocket = gamesServer.getSocket(gameWatchers[i].username);
+                if (currentSocket) {
+                    currentSocket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gameWatchers[i].username));
+                }
             }
         }
     });

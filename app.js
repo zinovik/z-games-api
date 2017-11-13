@@ -6,8 +6,6 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var session = require('./session');
-//var redis = require('redis');
-//var rdsclt = redis.createClient(process.env.REDIS_URL);
 
 var app = express();
 
