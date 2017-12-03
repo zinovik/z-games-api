@@ -1,7 +1,11 @@
-// leave, logout, in game, watchers!
-// current games from user delete
+// delete current games from user?
 // social login
-// spinner
+// check current user move
+// SASS
+// test
+// bot
+// ionic
+// vue
 let serverGames = {};
 serverGames['No, Thanks!'] = require('../games/nothanks');
 serverGames['Perudo'] = require('../games/perudo');
@@ -10,7 +14,7 @@ let redis = require('promise-redis')();
 let redisClient = (process.env.REDIS_URL) ? redis.createClient(process.env.REDIS_URL) : redis.createClient('6379', '127.0.0.1');
 
 let bcrypt = require('bcrypt');
-const saltRounds = 10;
+const saltRounds = process.env.SALT_ROUNDS || 10;
 
 class GamesServer {
 
@@ -23,7 +27,7 @@ class GamesServer {
             let serverInfo = JSON.parse(serverInfoJSON);
             this._nextGameNumber = serverInfo.nextGameNumber;
             for (let i = 0; i < this._nextGameNumber; i++) {
-                redisClient.get('game-' + i).then(gamedataJSON => {
+                redisClient.get('game:' + i).then(gamedataJSON => {
                     if (gamedataJSON === null) return;
                     this._games[i] = JSON.parse(gamedataJSON);
                     this._games[i].engine = new serverGames[this._games[i].name];
@@ -36,7 +40,7 @@ class GamesServer {
 
     register(username, password, socket) {
         return new Promise((resolve, reject) => {
-            redisClient.get('user-' + username).then(userdataJSON => {
+            redisClient.get('user:' + username).then(userdataJSON => {
                 if (userdataJSON !== null) return;
                 if ((username.length < 3) || (password.length < 3)) return;
                 bcrypt.hash(password, saltRounds).then(hash => {
@@ -50,7 +54,7 @@ class GamesServer {
                         currentGames: [],
                         openGameNumber: null
                     };
-                    redisClient.set('user-' + username, JSON.stringify(userdata));
+                    redisClient.set('user:' + username, JSON.stringify(userdata));
                     resolve();
                 });
             });
@@ -59,7 +63,7 @@ class GamesServer {
 
     checkUsername(username) {
         return new Promise((resolve, reject) => {
-            redisClient.get('user-' + username).then(userdataJSON => {
+            redisClient.get('user:' + username).then(userdataJSON => {
                 if (userdataJSON === null) return;
                 resolve();
             });
@@ -68,7 +72,7 @@ class GamesServer {
 
     checkPassword(username, password) {
         return new Promise((resolve, reject) => {
-            redisClient.get('user-' + username).then(userdataJSON => {
+            redisClient.get('user:' + username).then(userdataJSON => {
                 if (userdataJSON === null) return;
                 let userdata = JSON.parse(userdataJSON);
                 bcrypt.compare(password, userdata.password).then(res => {
@@ -80,7 +84,7 @@ class GamesServer {
 
     authorize(username, socket) {
         return new Promise((resolve, reject) => {
-            redisClient.get('user-' + username).then(userdataJSON => {
+            redisClient.get('user:' + username).then(userdataJSON => {
                 if (userdataJSON === null) return;
                 let userdata = JSON.parse(userdataJSON);
                 this._usersOnline[username] = {
@@ -88,35 +92,61 @@ class GamesServer {
                     currentGames: userdata.currentGames,
                     openGameNumber: userdata.openGameNumber
                 };
+
+                if (userdata.openGameNumber && this._games[userdata.openGameNumber] && this._games[userdata.openGameNumber].logNchat) {
+                    this._games[userdata.openGameNumber].logNchat.push({
+                        type: 'move',
+                        time: Date.now(),
+                        username: username,
+                        text: 'opened the game'
+                    });
+                    this._updateGamedata(userdata.openGameNumber);
+                }
                 resolve();
             });
         });
     }
 
     logout(username) {
+        if (!username) return Promise.reject();
+        if (!this._usersOnline[username]) return Promise.reject();
+
         return new Promise((resolve, reject) => {
-            redisClient.get('user-' + username).then(userdataJSON => {
+            redisClient.get('user:' + username).then(userdataJSON => {
+                let openGameNumber = this._usersOnline[username].openGameNumber;
                 delete this._usersOnline[username];
-                resolve();
+
+                if (this._games[openGameNumber] && this._games[openGameNumber].logNchat) {
+                    // logNchat
+                    this._games[openGameNumber].logNchat.push({
+                        type: 'move',
+                        time: Date.now(),
+                        username: username,
+                        text: 'closed the game'
+                    });
+                    this._updateGamedata(openGameNumber);
+                }
+
+                resolve(openGameNumber);
             });
         });
     }
 
     _updateUserdata(username, currentGames, openGameNumber) {
         if (!username) return;
-        redisClient.get('user-' + username).then(userdataJSON => {
+        redisClient.get('user:' + username).then(userdataJSON => {
             if (userdataJSON === null) return;
             let userdata = JSON.parse(userdataJSON);
             userdata.currentGames = currentGames;
             userdata.openGameNumber = openGameNumber;
-            redisClient.set('user-' + username, JSON.stringify(userdata));
+            redisClient.set('user:' + username, JSON.stringify(userdata));
         });
     }
 
     _updateGamedata(gameNumber) {
         if (!gameNumber && gameNumber !== 0) return;
         this._games[gameNumber].gamedata = this._games[gameNumber].engine.getGamedata();
-        redisClient.set('game-' + gameNumber, JSON.stringify(this._games[gameNumber]))
+        redisClient.set('game:' + gameNumber, JSON.stringify(this._games[gameNumber]))
         .then(() => {
             delete this._games[gameNumber].gamedata;
         });
@@ -124,12 +154,12 @@ class GamesServer {
 
     _updateUserdata(username, currentGames, openGameNumber) {
         if (!username) return;
-        redisClient.get('user-' + username).then(userdataJSON => {
+        redisClient.get('user:' + username).then(userdataJSON => {
             if (userdataJSON === null) return;
             let userdata = JSON.parse(userdataJSON);
             userdata.currentGames = currentGames;
             userdata.openGameNumber = openGameNumber;
-            redisClient.set('user-' + username, JSON.stringify(userdata));
+            redisClient.set('user:' + username, JSON.stringify(userdata));
         });
     }
 
@@ -259,43 +289,42 @@ class GamesServer {
         if (!this._usersOnline[username]) return;
 
         if (this._usersOnline[username].currentGames.indexOf(gameNumber) >= 0) {
-            for (let i = 0; i < this._games[gameNumber].players.length; i++) {
-                if (this._games[gameNumber].players[i].username === username) {
-                    this._games[gameNumber].players[i].online = true;
-                }
-            }
-
             // logNchat
             this._games[gameNumber].logNchat.push({
                 type: 'move',
                 time: Date.now(),
                 username: username,
-                text: 'rejoined the game'
+                text: 'opened the game'
             });
         } else {
             if (this._games[gameNumber].gameInfo.started) {
-                this._games[gameNumber].watchers.push({
-                    username: username
-                });
+                let alreadyWatch = false;
+                for (let i = 0; i < this._games[gameNumber].watchers.length; i++) {
+                    if (this._games[gameNumber].watchers[i].username === username) alreadyWatch = true;
+                }
+                if (!alreadyWatch) {
+                    this._games[gameNumber].watchers.push({
+                        username: username
+                    });
+                    
+                    // logNchat
+                    this._games[gameNumber].logNchat.push({
+                        type: 'move',
+                        time: Date.now(),
+                        username: username,
+                        text: 'started to watch the game'
+                    });
+                }
 
-                // logNchat
-                this._games[gameNumber].logNchat.push({
-                    type: 'move',
-                    time: Date.now(),
-                    username: username,
-                    text: 'started to watch the game'
-                });
             } else {
                 if (this._games[gameNumber].players.length < this._games[gameNumber].gameInfo.PLAYERS_MAX)
                 {
                     this._games[gameNumber].players.push({
                         username: username,
-                        ready: false,
-                        online: true
+                        ready: false
                     });
 
                     this._usersOnline[username].currentGames.push(gameNumber);
-                    this._updateUserdata(username, this._usersOnline[username].currentGames, gameNumber);
 
                     // logNchat
                     this._games[gameNumber].logNchat.push({
@@ -311,6 +340,7 @@ class GamesServer {
         }
         
         this._usersOnline[username].openGameNumber = gameNumber;
+        this._updateUserdata(username, this._usersOnline[username].currentGames, this._usersOnline[username].openGameNumber);
         this._updateGamedata(gameNumber);
         return true;
     }
@@ -349,12 +379,6 @@ class GamesServer {
                 this._updateGamedata(gameNumber);
                 return gameNumber;
             } else {
-                for (let i = 0; i < this._games[gameNumber].players.length; i++) {
-                    if (this._games[gameNumber].players[i].username === username) {
-                        this._games[gameNumber].players[i].online = false;
-                    }
-                }
-
                 delete this._usersOnline[username].openGameNumber;
                 this._updateUserdata(username, this._usersOnline[username].currentGames, null);
 
@@ -363,7 +387,7 @@ class GamesServer {
                     type: 'move',
                     time: Date.now(),
                     username: username,
-                    text: 'came out from the game'
+                    text: 'closed the game'
                 });
                 this._updateGamedata(gameNumber);
                 return gameNumber;
@@ -449,17 +473,22 @@ class GamesServer {
     }
 
     move(username, move) {
+        if (!this._usersOnline[username]) return;
         let gameNumber = this._usersOnline[username].openGameNumber;
 
-        let logNchatText = this._games[gameNumber].engine.move(move);
+        let messages = this._games[gameNumber].engine.move(move);
+        if (!messages) return;
 
-        // logNchat
-        this._games[gameNumber].logNchat.push({
-            type: 'move',
-            time: Date.now(),
-            username: username,
-            text: logNchatText
-        });
+        for (let i = 0; i < messages.length; i++) {
+            // logNchat
+            this._games[gameNumber].logNchat.push({
+                type: 'move',
+                time: Date.now(),
+                username: this._games[gameNumber].players[messages[i].playerNumber].username,
+                text: messages[i].text
+            });
+        }
+
 
         this._games[gameNumber].gameInfo = this._games[gameNumber].engine.getCommonGameInfo();
         this._games[gameNumber].nextPlayersNames = [];

@@ -53,6 +53,7 @@ class NoThanks {
 
         let card = this._currentCard;
         let cardCost = this._currentCardCost;
+        let currentPlayerNumber = this._nextPlayerNumber;
 
         if (move.takeCard) {
             this._players[this._nextPlayerNumber].cards.push(this._currentCard);
@@ -68,7 +69,9 @@ class NoThanks {
             this._updatePoints(this._players[this._nextPlayerNumber]);
             this._nextPlayer();
 
-            return 'taked the card ' + card + ' with ' + cardCost + ' chips on it';
+            let messages = [];
+            messages.push({playerNumber: currentPlayerNumber, text: 'taked the card ' + card + ' with ' + cardCost + ' chips on it'});
+            return messages;
         } else if (this._players[this._nextPlayerNumber].chips !== 0) {
             this._players[this._nextPlayerNumber].chips--;
             this._currentCardCost++;
@@ -76,7 +79,9 @@ class NoThanks {
             this._updatePoints(this._players[this._nextPlayerNumber]);
             this._nextPlayer();
 
-            return 'payed 1 chip on the card ' + card + ', ' + (cardCost + 1) + ' chips total on the card';            
+            let messages = [];
+            messages.push({playerNumber: currentPlayerNumber, text: 'payed 1 chip on the card ' + card + ', ' + (cardCost + 1) + ' chips total on the card'});
+            return messages;
         }
     }
 

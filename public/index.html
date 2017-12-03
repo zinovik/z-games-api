@@ -2,7 +2,7 @@
 <html>
 
     <head>
-        <title>Games Site</title>
+        <title>Games Server</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
@@ -18,7 +18,8 @@
 
         <div id="container" class="container-fluid animated">
 
-            <h1>Games Site</h1>
+            <div id="spinnerDiv" style="width: 100%; height: 100%; position: fixed; z-index: 1; background-color: #fff; text-align: center;">Loading...</div>
+            <h1>Games Server</h1>
 
             <div id="usersOnlineDiv"></div>
 
@@ -41,7 +42,8 @@
             <hr>
             <div id="newGameDiv">
                 <div>New game: </div>
-                <button role="button" id="newNoThanksButton" class="btn btn-success">"No, Thanks!"</button>
+                <button role="button" id="newNoThanksButton" class="btn btn-success">No, Thanks!</button>
+                <button role="button" id="newPerudoButton" class="btn btn-success">Perudo</button>
             </div>
 
             <div id="allGamesInfoDiv">
@@ -76,9 +78,26 @@
                                 <div id="noThanksCard"></div>
                                 <div id="noThanksOtherPlayersInfo"></div>
                                 <div id="noThanksCurrentPlayerInfo"></div>
-                                <div id="gameButtonsDiv">
+                                <div id="noThanksButtonsDiv">
                                     <button role="button" id="noThanksPayButton" class="btn btn-success">Pay</button>
                                     <button role="button" id="noThanksTakeButton" class="btn btn-success">Take</button>
+                                </div>
+                            </div>
+
+                            <div id="perudoGameDiv">                
+                                <div id="perudoLastPlayerNumber"></div>
+                                <div id="perudoLastRoundResults"></div>                          
+                                <div id="perudoCurrentRound"></div>
+                                <div id="perudoCurrentBet"></div>                             
+                                <div id="perudoOtherPlayersInfo"></div>
+                                <div id="perudoCurrentPlayerInfo"></div>
+                                <div id="perudoButtonsDiv">
+                                    <b>Dice number:</b>
+                                    <select id="perudoDiceNumber" class="form-control"></select>
+                                    <b>Dice figure:</b>
+                                    <select id="perudoDiceFigure" class="form-control"></select><br>
+                                    <button role="button" id="perudoBetButton" class="btn btn-success">Bet</button>
+                                    <button role="button" id="perudoNotBelieveButton" class="btn btn-success">Not Believe</button>
                                 </div>
                             </div>
 
@@ -113,9 +132,20 @@
 
 
         <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                spinnerDiv.style.display = 'none';
+            });
+
             var SERVER_URL = 'http://gamesserver.herokuapp.com';
             //var socket = io(SERVER_URL);
             var socket = io();
+
+            socket.on('connect_error', (error) => {
+                spinnerDiv.style.display = '';
+            });
+            socket.on('connect', (error) => {
+                spinnerDiv.style.display = 'none';
+            });
 
             // global variables
             var currentUsername;
@@ -139,9 +169,9 @@
                 }
                 updateOpenGameNumber();
                 updatePage();
-                container.classList.remove('flip');
+                container.classList.remove('fadeIn');
                 window.setTimeout(function(){
-                    container.classList.add('flip');
+                    container.classList.add('fadeIn');
                 }, 0);
             });
 
@@ -198,20 +228,24 @@
                 socket.emit('newgame', 'No, Thanks!');
             }
 
+            newPerudoButton.onclick = function() {
+                socket.emit('newgame', 'Perudo');
+            }
+
             allGamesInfoTable.onclick = function(event) {
                 if (event.target.tagName !== 'BUTTON') return;
                 socket.emit('joingame', event.target.getAttribute('data-game-number'));
-                container.classList.remove('flip');
+                container.classList.remove('fadeIn');
                 window.setTimeout(function(){
-                    container.classList.add('flip');
+                    container.classList.add('fadeIn');
                 }, 0);
             }
 
             leaveGameButton.onclick = function() {
                 socket.emit('leavegame');
-                container.classList.remove('flip');
+                container.classList.remove('fadeIn');
                 window.setTimeout(function(){
-                    container.classList.add('flip');
+                    container.classList.add('fadeIn');
                 }, 0);
             }
 
@@ -276,12 +310,17 @@
                 if (openGame) {
                     changeVisibility(!allGamesInfo[openGameNumber].gameInfo.started, notStartedGame);
                     changeVisibility((allGamesInfo[openGameNumber].gameInfo.started && !allGamesInfo[openGameNumber].gameInfo.finished), startedNotFinishedGame);
-                    changeVisibility(allGamesInfo[openGameNumber].gameInfo.started && allGamesInfo[openGameNumber].nextPlayersNames && (allGamesInfo[openGameNumber].nextPlayersNames.indexOf(currentUsername) >= 0), gameButtonsDiv);
+                    changeVisibility(allGamesInfo[openGameNumber].gameInfo.started && allGamesInfo[openGameNumber].nextPlayersNames && (allGamesInfo[openGameNumber].nextPlayersNames.indexOf(currentUsername) >= 0), noThanksButtonsDiv);
+                    changeVisibility(allGamesInfo[openGameNumber].gameInfo.started && allGamesInfo[openGameNumber].nextPlayersNames && (allGamesInfo[openGameNumber].nextPlayersNames.indexOf(currentUsername) >= 0), perudoButtonsDiv);
                     changeVisibility(allGamesInfo[openGameNumber].gameInfo.finished, gameResultsDiv)
 
                     changeVisibility(allGamesInfo[openGameNumber].name === 'No, Thanks!', noThanksGameDiv);
+                    changeVisibility(allGamesInfo[openGameNumber].name === 'Perudo', perudoGameDiv);
                     if (allGamesInfo[openGameNumber].name === 'No, Thanks!') {
                         noThanksGame();
+                    }
+                    if (allGamesInfo[openGameNumber].name === 'Perudo') {
+                        perudo();
                     }
 
                     //gameLogo.src = SERVER_URL + '/images/' + allGamesInfo[openGameNumber].name + '.jpg';
@@ -297,16 +336,25 @@
                         playerInGameDiv.innerHTML += '<br>&nbsp;&nbsp;&nbsp;' + allGamesInfo[openGameNumber].players[i].username;
                         if (!allGamesInfo[openGameNumber].gameInfo.finished) {
                             if (allGamesInfo[openGameNumber].gameInfo.started) {
-                                playerInGameDiv.innerHTML += allGamesInfo[openGameNumber].players[i].online ? ': in game' : ': not in game';
+                                playerInGameDiv.innerHTML += userInGame(allGamesInfo[openGameNumber].players[i].username, openGameNumber) ? ': in game' : ': not in game';
                             } else {
                                 playerInGameDiv.innerHTML += allGamesInfo[openGameNumber].players[i].ready ? ': ready' : ': not ready';
                             }
                         }
                     }
+
                     if (allGamesInfo[openGameNumber].watchers && allGamesInfo[openGameNumber].watchers.length > 0) {
-                        watchersInGameDiv.innerHTML = '<b>Watchers in game</b>:';
+                        var watchersCount = 0;
                         for (var i = 0; i < allGamesInfo[openGameNumber].watchers.length; i++) {
-                            watchersInGameDiv.innerHTML += '<br>&nbsp;&nbsp;&nbsp;' + allGamesInfo[openGameNumber].watchers[i].username;
+                            if (userInGame(allGamesInfo[openGameNumber].watchers[i].username, openGameNumber)) watchersCount++;
+                        }
+                        if (watchersCount) {
+                            watchersInGameDiv.innerHTML = '<b>Watchers in game</b>:';
+                            for (var i = 0; i < allGamesInfo[openGameNumber].watchers.length; i++) {
+                                watchersInGameDiv.innerHTML += '<br>&nbsp;&nbsp;&nbsp;' + allGamesInfo[openGameNumber].watchers[i].username;
+                            }
+                        } else {
+                            watchersInGameDiv.innerHTML = '';
                         }
                     } else {
                         watchersInGameDiv.innerHTML = '';
@@ -339,6 +387,15 @@
 
                 makeGameListTable();
 
+            }
+
+            function userInGame(username, gameNumber) {
+                for (var i = 0; i < usersOnline.length; i++) {
+                    if (usersOnline[i].username === username && usersOnline[i].openGameNumber === gameNumber) {
+                        return true;
+                    }
+                }
+                return false;
             }
 
             function makeGameListTable() {
@@ -409,11 +466,11 @@
             function noThanksGame() {
                 noThanksPayButton.onclick = function() {
                     socket.emit('move', {takeCard: false});
-                }
+                };
 
                 noThanksTakeButton.onclick = function() {
                     socket.emit('move', {takeCard: true});
-                }
+                };
 
                 noThanksCardsLeft.innerHTML = '<b>Cards left</b>: ' + allGamesInfo[openGameNumber].gameInfo.cardsLeft;
                 noThanksCard.innerHTML = '<br><b>Current card</b>: <h1><b>' + allGamesInfo[openGameNumber].gameInfo.currentCard + '</b></h1> (' + allGamesInfo[openGameNumber].gameInfo.currentCardCost + ' chips)';
@@ -446,6 +503,109 @@
                     gameResultsDiv.innerHTML = '';
                     for (var i = 0; i < allGamesInfo[openGameNumber].gameInfo.players.length; i++) {
                         gameResultsDiv.innerHTML += allGamesInfo[openGameNumber].players[i].username + ': ' + allGamesInfo[openGameNumber].gameInfo.players[i].place + ' place (' + allGamesInfo[openGameNumber].gameInfo.players[i].points + ' points, cards: ' + JSON.stringify(allGamesInfo[openGameNumber].gameInfo.players[i].cards) + ', ' + allGamesInfo[openGameNumber].gameInfo.players[i].chips + ' chips)<br>';
+                    }
+                    gameResultsDiv.innerHTML = gameResultsDiv.innerHTML.substring(0, gameResultsDiv.innerHTML.length - 2) + '<br><br><br>';
+                }
+            }
+
+            function perudo() {
+                perudoBetButton.onclick = function() {
+                    socket.emit('move', {number: perudoDiceNumber.value, figure: perudoDiceFigure.value});
+                };
+
+                perudoNotBelieveButton.onclick = function() {
+                    socket.emit('move', {notBelieve: true});
+                };
+
+                perudoDiceNumber.innerHTML = '';
+                if (allGamesInfo[openGameNumber].gameInfo.currentDiceFigure != 6 && allGamesInfo[openGameNumber].gameInfo.currentDiceNumber != 0) {
+                    var option = document.createElement("option");
+                    option.text = allGamesInfo[openGameNumber].gameInfo.currentDiceNumber;
+                    perudoDiceNumber.add(option);
+                }
+                var allDicesCount = 0;
+                if (allGamesInfo[openGameNumber].gameInfo.players) {
+                    for (var i = 0; i < allGamesInfo[openGameNumber].gameInfo.players.length; i++) {
+                        allDicesCount += allGamesInfo[openGameNumber].gameInfo.players[i].dicesCount;
+                    }
+                }
+                for (let i = +allGamesInfo[openGameNumber].gameInfo.currentDiceNumber + 1; i <= allDicesCount; i++) {
+                    var option = document.createElement("option");
+                    option.text = i;
+                    perudoDiceNumber.add(option);
+                }
+
+                function updatePerudoDiceFigureList() {
+                    perudoDiceFigure.innerHTML = '';
+                    if (perudoDiceNumber.value > allGamesInfo[openGameNumber].gameInfo.currentDiceNumber) {
+                        for (let i = 2; i <= 6; i++) {
+                            var option = document.createElement("option");
+                            option.text = i;
+                            perudoDiceFigure.add(option);
+                        }
+                    } else {
+                        if (allGamesInfo[openGameNumber].gameInfo.currentDiceFigure != 6) {
+                        for (let i = +allGamesInfo[openGameNumber].gameInfo.currentDiceFigure + 1; i <= 6; i++) {
+                            var option = document.createElement("option");
+                            option.text = i;
+                            perudoDiceFigure.add(option);
+                        }
+                        } else {
+                            for (let i = 2; i <= 6; i++) {
+                                var option = document.createElement("option");
+                                option.text = i;
+                                perudoDiceFigure.add(option);
+                            }
+                        }
+                    }
+                }
+                updatePerudoDiceFigureList();
+                perudoDiceNumber.onchange = updatePerudoDiceFigureList;
+
+                if (allGamesInfo[openGameNumber].players[allGamesInfo[openGameNumber].gameInfo.lastPlayerNumber]) {
+                    perudoLastPlayerNumber.innerHTML = '<b>Last player</b>: ' + allGamesInfo[openGameNumber].players[allGamesInfo[openGameNumber].gameInfo.lastPlayerNumber].username;
+                }
+
+                if (allGamesInfo[openGameNumber].gameInfo.lastRoundResults) {
+                    perudoLastRoundResults.innerHTML = '<b>Last round results</b>: ';
+                    for (var i = 0; i < allGamesInfo[openGameNumber].gameInfo.players.length; i++) {
+                        if (!allGamesInfo[openGameNumber].players[i]) continue;
+                        var playerDices = (allGamesInfo[openGameNumber].gameInfo.lastRoundResults[i]) ? allGamesInfo[openGameNumber].gameInfo.lastRoundResults[i] : '-';
+                        perudoLastRoundResults.innerHTML += '<br>&nbsp;&nbsp;&nbsp;<b>' + allGamesInfo[openGameNumber].players[i].username + '</b>\'s dices: ' + playerDices;
+                    }
+                }
+
+                perudoCurrentRound.innerHTML = '<b>Round</b>: ' + allGamesInfo[openGameNumber].gameInfo.currentRound;
+                perudoCurrentBet.innerHTML = '';
+                if (allGamesInfo[openGameNumber].gameInfo.currentDiceNumber && allGamesInfo[openGameNumber].gameInfo.currentDiceFigure) {
+                    var curBet = '';
+                    for (var i = 0; i < allGamesInfo[openGameNumber].gameInfo.currentDiceNumber; i++) {
+                        curBet += allGamesInfo[openGameNumber].gameInfo.currentDiceFigure + ' ';
+                    }
+                    perudoCurrentBet.innerHTML = '<br><b>Current Bet</b>: <h1><b>' + curBet + '</b></h1>';
+                }
+
+                perudoOtherPlayersInfo.innerHTML = '';
+                perudoCurrentPlayerInfo.innerHTML = '';
+
+                if (!allGamesInfo[openGameNumber].gameInfo.players) return;
+
+                if (allGamesInfo[openGameNumber].gameInfo.started) {
+                    for (var i = 0; i < allGamesInfo[openGameNumber].gameInfo.players.length; i++) {
+                        if (!allGamesInfo[openGameNumber].players[i]) continue;
+
+                        if (allGamesInfo[openGameNumber].players[i].username === currentUsername) {
+                            perudoCurrentPlayerInfo.innerHTML += '<br>My dices: ' + allGamesInfo[openGameNumber].gameInfo.players[i].dices + '<br><br>';
+                        } else {
+                            perudoOtherPlayersInfo.innerHTML += '<br><b>' + allGamesInfo[openGameNumber].players[i].username + '</b>\'s dice count: ' + allGamesInfo[openGameNumber].gameInfo.players[i].dicesCount;
+                        }
+                    }
+                }
+
+                if (allGamesInfo[openGameNumber].gameInfo.finished) {
+                    gameResultsDiv.innerHTML = '';
+                    for (var i = 0; i < allGamesInfo[openGameNumber].gameInfo.players.length; i++) {
+                        gameResultsDiv.innerHTML += allGamesInfo[openGameNumber].players[i].username + ': ' + allGamesInfo[openGameNumber].gameInfo.players[i].place + ' place<br>';
                     }
                     gameResultsDiv.innerHTML = gameResultsDiv.innerHTML.substring(0, gameResultsDiv.innerHTML.length - 2) + '<br><br><br>';
                 }

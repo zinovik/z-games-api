@@ -8,7 +8,8 @@ module.exports = session({
   secret: process.env.SECRET || 'localhost test',
   resave: true,
   saveUninitialized: true,
-  cookie: { secure: false }
+  cookie: {
+    secure: false,
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  }
 });
-
-

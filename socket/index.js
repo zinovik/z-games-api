@@ -10,10 +10,12 @@ module.exports = function(server) {
 
     io.on('connection', function(socket){
         if (socket.request.session.name) {
+            socket.request.session._garbage = Date();
             gamesServer.checkUsername(socket.request.session.name)
                 .then(() => {
                     gamesServer.authorize(socket.request.session.name, socket).then(() => {
                         socket.emit('setUsername', socket.request.session.name);
+                        updateUsersOnline();
                     });
                 });
         }
@@ -61,9 +63,11 @@ module.exports = function(server) {
 
         socket.on('logout', function() {
             if (socket.request.session.name) {
-                gamesServer.logout(socket.request.session.name).then(() => {
+                gamesServer.logout(socket.request.session.name).then((gameNumber) => {
                     socket.emit('updateCurrentUsername');
                     updateUsersOnline();
+                    updateAllGamesInfo();
+                    updateOpenGameInfo(null, gameNumber);
                     delete socket.request.session.name;
                     socket.request.session.save();
                 });
@@ -72,8 +76,10 @@ module.exports = function(server) {
 
         socket.on('disconnect', function() {
             if (socket.request.session.name) {
-                gamesServer.logout(socket.request.session.name).then(() => {
+                gamesServer.logout(socket.request.session.name).then((gameNumber) => {
                     updateUsersOnline();
+                    updateAllGamesInfo();
+                    updateOpenGameInfo(null, gameNumber);
                 });
             }
         });
