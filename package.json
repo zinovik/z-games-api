@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "test": "jest --coverage"
   },
   "dependencies": {
     "bcrypt": "^1.0.3",
@@ -17,5 +18,13 @@
     "promise-redis": "0.0.5",
     "serve-favicon": "~2.4.5",
     "socket.io": "^2.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^4.13.1",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.5.1",
+    "jest": "^21.2.1"
   }
 }

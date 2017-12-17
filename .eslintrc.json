@@ -1,0 +1,11 @@
+{
+  "extends": "airbnb",
+  "rules" :{
+    "object-shorthand": ["error", "consistent"],
+    "no-else-return": ["off"],
+    "no-plusplus": ["off"],
+    "arrow-body-style": ["off"],
+    "prefer-promise-reject-errors": ["off"],
+    "no-underscore-dangle": ["off"]
+  }
+}
