@@ -63,50 +63,48 @@ class GamesServer {
   }
 
   checkUsername(username) {
-    return new Promise((resolve, reject) => {
-      redisClient.get(`user:${username}`).then((userdataJSON) => {
-        if (userdataJSON === null) return;
-        resolve();
+    return redisClient.get(`user:${username}`)
+      .then((userdataJSON) => {
+        if (userdataJSON === null) return Promise.reject();
+        return Promise.resolve();
       });
-    });
   }
 
   checkPassword(username, password) {
-    return new Promise((resolve, reject) => {
-      redisClient.get(`user:${username}`).then((userdataJSON) => {
-        if (userdataJSON === null) return;
+    return redisClient.get(`user:${username}`)
+      .then((userdataJSON) => {
+        if (userdataJSON === null) return Promise.reject();
         const userdata = JSON.parse(userdataJSON);
-        bcrypt.compare(password, userdata.password).then((res) => {
-          if (res) resolve();
-        });
+        return bcrypt.compare(password, userdata.password);
+      })
+      .then((res) => {
+        if (res) return Promise.resolve();
+        return Promise.reject();
       });
-    });
   }
 
   authorize(username, socket) {
-    return new Promise((resolve, reject) => {
-      redisClient.get(`user:${username}`).then((userdataJSON) => {
-        if (userdataJSON === null) return;
-        const userdata = JSON.parse(userdataJSON);
-        this._usersOnline[username] = {
-          socket: socket,
-          currentGames: userdata.currentGames,
-          openGameNumber: userdata.openGameNumber,
-        };
+    return redisClient.get(`user:${username}`).then((userdataJSON) => {
+      if (userdataJSON === null) return Promise.reject();
+      const userdata = JSON.parse(userdataJSON);
+      this._usersOnline[username] = {
+        socket: socket,
+        currentGames: userdata.currentGames,
+        openGameNumber: userdata.openGameNumber,
+      };
 
-        if (userdata.openGameNumber &&
+      if (userdata.openGameNumber &&
             this._games[userdata.openGameNumber] &&
             this._games[userdata.openGameNumber].logNchat) {
-          this._games[userdata.openGameNumber].logNchat.push({
-            type: 'move',
-            time: Date.now(),
-            username: username,
-            text: 'opened the game',
-          });
-          this._updateGamedata(userdata.openGameNumber);
-        }
-        resolve();
-      });
+        this._games[userdata.openGameNumber].logNchat.push({
+          type: 'move',
+          time: Date.now(),
+          username: username,
+          text: 'opened the game',
+        });
+        this._updateGamedata(userdata.openGameNumber);
+      }
+      return Promise.resolve();
     });
   }
 

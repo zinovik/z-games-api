@@ -69,15 +69,20 @@ function socket(server) {
 
     // authorize, register, logout
     socket.on('authorize', (username, password) => {
-      gamesServer.checkPassword(username, password).then(() => {
-        gamesServer.authorize(username, socket).then(() => {
+      gamesServer.checkPassword(username, password)
+        .then(() => {
+          return gamesServer.authorize(username, socket);
+        })
+        .then(() => {
           socket.emit('updateCurrentUsername', username);
           updateUsersOnline();
           updateOpenGameInfo(username);
           socket.request.session.name = username;
           socket.request.session.save();
+        })
+        .catch(() => {
+          socket.emit('updateCurrentUsername', null);
         });
-      });
     });
 
     socket.on('register', (username, password) => {
