@@ -86,12 +86,16 @@ function socket(server) {
     });
 
     socket.on('register', (username, password) => {
-      gamesServer.register(username, password, socket).then(() => {
-        socket.emit('updateCurrentUsername', username);
-        updateUsersOnline();
-        socket.request.session.name = username;
-        socket.request.session.save();
-      });
+      gamesServer.register(username, password, socket)
+        .then(() => {
+          socket.emit('updateCurrentUsername', username);
+          updateUsersOnline();
+          socket.request.session.name = username;
+          socket.request.session.save();
+        })
+        .catch(() => {
+          socket.emit('updateCurrentUsername', null);
+        });
     });
 
     socket.on('logout', () => {

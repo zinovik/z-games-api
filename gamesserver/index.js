@@ -1,11 +1,8 @@
 // delete current games from user?
 // social login
 // check current user move
-// SASS
 // test
 // bot
-// ionic
-// vue
 const serverGames = {};
 serverGames['No, Thanks!'] = require('../games/nothanks');
 serverGames.Perudo = require('../games/perudo');
@@ -40,26 +37,26 @@ class GamesServer {
   }
 
   register(username, password, socket) {
-    return new Promise((resolve, reject) => {
-      redisClient.get(`user:${username}`).then((userdataJSON) => {
-        if (userdataJSON !== null) return;
-        if ((username.length < 3) || (password.length < 3)) return;
-        bcrypt.hash(password, saltRounds).then((hash) => {
-          this._usersOnline[username] = {
-            socket: socket,
-            currentGames: [],
-            openGameNumber: null,
-          };
-          const userdata = {
-            password: hash,
-            currentGames: [],
-            openGameNumber: null,
-          };
-          redisClient.set(`user:${username}`, JSON.stringify(userdata));
-          resolve();
-        });
+    return redisClient.get(`user:${username}`)
+      .then((userdataJSON) => {
+        if (userdataJSON !== null) return Promise.reject();
+        if ((username.length < 3) || (password.length < 3)) return Promise.reject();
+        return bcrypt.hash(password, saltRounds);
+      })
+      .then((hash) => {
+        this._usersOnline[username] = {
+          socket: socket,
+          currentGames: [],
+          openGameNumber: null,
+        };
+        const userdata = {
+          password: hash,
+          currentGames: [],
+          openGameNumber: null,
+        };
+        redisClient.set(`user:${username}`, JSON.stringify(userdata));
+        return Promise.resolve();
       });
-    });
   }
 
   checkUsername(username) {
