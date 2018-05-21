@@ -1,18 +1,18 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-var fs = require('fs');
+const express = require('express');
 
-var session = require('./session');
+const path = require('path');
+const logger = require('morgan');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
+const fs = require('fs');
 
-var app = express();
+const session = require('./session');
+
+const app = express();
 
 require('dotenv').load();
 
-fs.writeFile(__dirname + '/public/index.html', `<!DOCTYPE html>
+fs.writeFile(`${__dirname}/public/index.html`, `<!DOCTYPE html>
 <html>
   <head>
     <title>Games Server</title>
@@ -24,9 +24,9 @@ fs.writeFile(__dirname + '/public/index.html', `<!DOCTYPE html>
   </head>
   <body>
   </body>
-</html>`, function(err) {
+</html>`, (err) => {
   if (err) {
-    return console.error(err);
+    console.error(err);
   }
 });
 
@@ -38,14 +38,14 @@ app.use(session);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
+app.use((req, res, next) => {
+  const err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use((err, req, res, next) => {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
