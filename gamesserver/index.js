@@ -91,8 +91,8 @@ class GamesServer {
       };
 
       if (userdata.openGameNumber &&
-            this._games[userdata.openGameNumber] &&
-            this._games[userdata.openGameNumber].logNchat) {
+        this._games[userdata.openGameNumber] &&
+        this._games[userdata.openGameNumber].logNchat) {
         this._games[userdata.openGameNumber].logNchat.push({
           type: 'move',
           time: Date.now(),
