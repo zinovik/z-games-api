@@ -76,7 +76,7 @@ class Perudo {
         const fine = Math.min(this._currentDiceNumber - countDiceNumber, this._players[this._lastPlayerNumber].dicesCount);
         this._players[this._lastPlayerNumber].dicesCount = this._players[this._lastPlayerNumber].dicesCount - fine;
         messages.push({ playerNumber: this._lastPlayerNumber, text: `looses ${fine} dices` });
-        if (this._players[this._lastPlayerNumber].dicesCount == 0) {
+        if (this._players[this._lastPlayerNumber].dicesCount === 0) {
           this._players[this._lastPlayerNumber].place = this._activePlayersCount() + 1;
           messages.push({ playerNumber: this._lastPlayerNumber, text: `finishes on ${this._players[this._lastPlayerNumber].place} place` });
         } else {
@@ -86,7 +86,7 @@ class Perudo {
         const fine = Math.min(Math.max(countDiceNumber - this._currentDiceNumber, 1), this._players[this._nextPlayerNumber].dicesCount);
         this._players[this._nextPlayerNumber].dicesCount = this._players[this._nextPlayerNumber].dicesCount - fine;
         messages.push({ playerNumber: this._nextPlayerNumber, text: `looses ${fine} dices` });
-        if (this._players[this._nextPlayerNumber].dicesCount == 0) {
+        if (this._players[this._nextPlayerNumber].dicesCount === 0) {
           this._players[this._nextPlayerNumber].place = this._activePlayersCount() + 1;
           messages.push({ playerNumber: this._nextPlayerNumber, text: `finishes on ${this._players[this._nextPlayerNumber].place} place` });
         }

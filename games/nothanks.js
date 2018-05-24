@@ -114,7 +114,8 @@ class NoThanks {
         gameInfo.players[i].cards = this._players[i].cards;
       }
     }
-    if ((userNumber || userNumber === 0) && (this._players[userNumber] || this._players[userNumber] === 0)) {
+    if ((userNumber || userNumber === 0)
+      && (this._players[userNumber] || this._players[userNumber] === 0)) {
       gameInfo.players[userNumber] = this._players[userNumber];
     }
     return gameInfo;
@@ -180,16 +181,19 @@ class NoThanks {
 
   _updatePlaces() {
     const playersPlaces = [];
+
     for (let i = 0; i < this._players.length; i++) {
       playersPlaces.push({ number: i, points: this._players[i].points });
     }
-    function comparePlayers(a, b) {
+
+    playersPlaces.sort((a, b) => {
       if (a.points > b.points) return 1;
       if (a.points < b.points) return -1;
-    }
-    playersPlaces.sort(comparePlayers);
+      return 0;
+    });
+
     for (let i = 0; i < playersPlaces.length; i++) {
-      this._players[i].place = playersPlaces[i].number + 1;
+      this._players[i].place = i + 1;
     }
   }
 }
