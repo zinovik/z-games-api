@@ -1,8 +1,11 @@
 const socketIo = require('socket.io');
+const debug = require('debug');
 const session = require('../session');
 const gamesServer = require('../gamesserver');
 
-function socket(server) {
+const log = debug('app:socket');
+
+function listen(server) {
   const io = socketIo.listen(server);
 
   // update all users
@@ -69,6 +72,8 @@ function socket(server) {
 
     // authorize, register, logout
     socket.on('authorize', (username, password) => {
+      log(`on('authorize') - username: ${username}`);
+      log(`on('authorize') - username: ${password}`);
       gamesServer.checkPassword(username, password)
         .then(() => {
           return gamesServer.authorize(username, socket);
@@ -86,6 +91,8 @@ function socket(server) {
     });
 
     socket.on('register', (username, password) => {
+      log(`on('register') - username: ${username}`);
+      log(`on('register') - username: ${password}`);
       gamesServer.register(username, password, socket)
         .then(() => {
           socket.emit('updateCurrentUsername', username);
@@ -99,6 +106,7 @@ function socket(server) {
     });
 
     socket.on('logout', () => {
+      log(`on('logout') - socket.request.session.name: ${socket.request.session.name}`);
       if (socket.request.session.name) {
         gamesServer.logout(socket.request.session.name).then((gameNumber) => {
           socket.emit('updateCurrentUsername');
@@ -112,6 +120,7 @@ function socket(server) {
     });
 
     socket.on('disconnect', () => {
+      log(`on('disconnect') - socket.request.session.name: ${socket.request.session.name}`);
       if (socket.request.session.name) {
         gamesServer.logout(socket.request.session.name).then((gameNumber) => {
           updateUsersOnline();
@@ -123,12 +132,14 @@ function socket(server) {
 
     // game actions
     socket.on('newgame', (gameName) => {
+      log(`on('newgame') - gameName: ${gameName}`);
       if (gamesServer.newGame(gameName, socket.request.session.name)) {
         updateAllGamesInfo();
       }
     });
 
     socket.on('joingame', (gameNumber) => {
+      log(`on('joingame') - gameName: ${gameNumber}`);
       if (gamesServer.joinGame(socket.request.session.name, gameNumber)) {
         updateUsersOnline();
         updateAllGamesInfo();
@@ -137,6 +148,7 @@ function socket(server) {
     });
 
     socket.on('leavegame', () => {
+      log(`on('leavegame') - socket.request.session.name: ${socket.request.session.name}`);
       const gameNumber = gamesServer.leaveGame(socket.request.session.name);
       if (gameNumber || (gameNumber === 0)) {
         updateUsersOnline();
@@ -146,17 +158,20 @@ function socket(server) {
     });
 
     socket.on('readytogame', () => {
+      log(`on('readytogame') - socket.request.session.name: ${socket.request.session.name}`);
       gamesServer.readyToGame(socket.request.session.name);
       updateOpenGameInfo(socket.request.session.name);
     });
 
     socket.on('startgame', () => {
+      log(`on('startgame') - socket.request.session.name: ${socket.request.session.name}`);
       gamesServer.startGame(socket.request.session.name);
       updateAllGamesInfo();
       updateOpenGameInfo(socket.request.session.name);
     });
 
     socket.on('move', (move) => {
+      log(`on('move') - move: ${move}`);
       if (gamesServer.move(socket.request.session.name, move)) {
         updateAllGamesInfo();
       }
@@ -164,10 +179,11 @@ function socket(server) {
     });
 
     socket.on('message', (message) => {
+      log(`on('message') - message: ${message}`);
       gamesServer.addMessage(socket.request.session.name, message);
       updateOpenGameInfo(socket.request.session.name);
     });
   });
 }
 
-module.exports = socket;
+module.exports = listen;
