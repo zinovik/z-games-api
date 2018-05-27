@@ -19,7 +19,7 @@ fs.writeFile(`${__dirname}/public/index.html`, `<!DOCTYPE html>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
-      window.location.href = "${process.env.clientURL || 'http://localhost:8100'}";
+      window.location.href = "${process.env.CLIENT_URL || 'http://localhost:8100'}";
     </script>
   </head>
   <body>

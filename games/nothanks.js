@@ -56,11 +56,11 @@ class NoThanks {
 
     if (move.takeCard) {
       this._players[this._nextPlayerNumber].cards.push(this._currentCard);
-      function compareCards(a, b) {
+      this._players[this._nextPlayerNumber].cards.sort((a, b) => {
         if (+a > +b) return 1;
         if (+a < +b) return -1;
-      }
-      this._players[this._nextPlayerNumber].cards.sort(compareCards);
+        return 0;
+      });
 
       this._players[this._nextPlayerNumber].chips += this._currentCardCost;
       this._nextCard();
@@ -187,13 +187,18 @@ class NoThanks {
     }
 
     playersPlaces.sort((a, b) => {
-      if (a.points > b.points) return -1;
-      if (a.points < b.points) return 1;
+      if (a.points < b.points) return -1;
+      if (a.points > b.points) return 1;
       return 0;
     });
 
-    for (let i = 0; i < playersPlaces.length; i++) {
-      this._players[i].place = i + 1;
+    for (let i = 0; i < this._players.length; i++) {
+      for (let j = 0; j < playersPlaces.length; j++) {
+        if (playersPlaces[j].number === i) {
+          this._players[i].place = j + 1;
+          break;
+        }
+      }
     }
   }
 }
