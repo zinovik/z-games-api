@@ -3,15 +3,16 @@
 // check current user move
 // test
 // bot
+const bcrypt = require('bcrypt');
+
 const serverGames = {};
-serverGames['No, Thanks!'] = require('../games/nothanks');
-serverGames.Perudo = require('../games/perudo');
+serverGames['No, Thanks!'] = require('./games/nothanks');
+serverGames.Perudo = require('./games/perudo');
 
 const redis = require('promise-redis')();
+const db = require('./db');
 
 const redisClient = (process.env.REDIS_URL) ? redis.createClient(process.env.REDIS_URL) : redis.createClient('6379', '127.0.0.1');
-
-const bcrypt = require('bcrypt');
 
 const saltRounds = process.env.SALT_ROUNDS || 10;
 
@@ -20,20 +21,20 @@ class GamesServer {
     this._usersOnline = {};
     this._games = {};
     this._nextGameNumber = 0;
-    redisClient.get('server-info').then((serverInfoJSON) => {
-      if (serverInfoJSON === null) return;
-      const serverInfo = JSON.parse(serverInfoJSON);
-      this._nextGameNumber = serverInfo.nextGameNumber;
-      for (let i = 0; i < this._nextGameNumber; i++) {
-        redisClient.get(`game:${i}`).then((gamedataJSON) => {
-          if (gamedataJSON === null) return;
-          this._games[i] = JSON.parse(gamedataJSON);
-          this._games[i].engine = new serverGames[this._games[i].name]();
-          this._games[i].engine.setGamedata(this._games[i].gamedata);
-          delete this._games[i].gamedata;
-        });
-      }
-    });
+    db.getServerInfo()
+      .then((serverInfo) => {
+        this._nextGameNumber = serverInfo.nextGameNumber;
+        for (let i = 0; i < this._nextGameNumber; i++) {
+          redisClient.get(`game:${i}`)
+            .then((gamedataJSON) => {
+              if (gamedataJSON === null) return;
+              this._games[i] = JSON.parse(gamedataJSON);
+              this._games[i].engine = new serverGames[this._games[i].name]();
+              this._games[i].engine.setGamedata(this._games[i].gamedata);
+              delete this._games[i].gamedata;
+            });
+        }
+      });
   }
 
   register(username, password, socket) {
@@ -90,9 +91,9 @@ class GamesServer {
         openGameNumber: userdata.openGameNumber,
       };
 
-      if (userdata.openGameNumber &&
-        this._games[userdata.openGameNumber] &&
-        this._games[userdata.openGameNumber].logNchat) {
+      if (userdata.openGameNumber
+        && this._games[userdata.openGameNumber]
+        && this._games[userdata.openGameNumber].logNchat) {
         this._games[userdata.openGameNumber].logNchat.push({
           type: 'move',
           time: Date.now(),
@@ -174,8 +175,7 @@ class GamesServer {
   }
 
   getSocket(username) {
-    if (!this._usersOnline[username]) return;
-    return this._usersOnline[username].socket;
+    return this._usersOnline[username] || this._usersOnline[username].socket;
   }
 
   getGamePlayers(username, gameNumber) {
@@ -269,16 +269,17 @@ class GamesServer {
     this._updateGamedata(this._nextGameNumber);
 
     this._nextGameNumber++;
-    redisClient.get('server-info').then((serverInfoJSON) => {
-      let serverInfo;
-      if (serverInfoJSON === null) {
-        serverInfo = {};
-      } else {
-        serverInfo = JSON.parse(serverInfoJSON);
-      }
-      serverInfo.nextGameNumber = this._nextGameNumber;
-      redisClient.set('server-info', JSON.stringify(serverInfo));
-    });
+    redisClient.get('server-info')
+      .then((serverInfoJSON) => {
+        let serverInfo;
+        if (serverInfoJSON === null) {
+          serverInfo = {};
+        } else {
+          serverInfo = JSON.parse(serverInfoJSON);
+        }
+        serverInfo.nextGameNumber = this._nextGameNumber;
+        redisClient.set('server-info', JSON.stringify(serverInfo));
+      });
     return true;
   }
 
@@ -462,6 +463,7 @@ class GamesServer {
       this._updateGamedata(gameNumber);
       return true;
     }
+    return false;
   }
 
   move(username, move) {
@@ -480,7 +482,6 @@ class GamesServer {
         text: messages[i].text,
       });
     }
-
 
     this._games[gameNumber].gameInfo = this._games[gameNumber].engine.getCommonGameInfo();
     this._games[gameNumber].nextPlayersNames = [];
