@@ -22,7 +22,7 @@ function listen(server) {
     const gamePlayers = gamesServer.getGamePlayers(username, gameNumber);
     for (let i = 0; i < gamePlayers.length; i++) {
       const currentSocket = gamesServer.getSocket(gamePlayers[i].username);
-      if (currentSocket) {
+      if (currentSocket && currentSocket.emit) {
         currentSocket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gamePlayers[i].username));
       }
     }

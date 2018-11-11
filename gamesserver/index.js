@@ -175,7 +175,7 @@ class GamesServer {
   }
 
   getSocket(username) {
-    return this._usersOnline[username] || this._usersOnline[username].socket;
+    return this._usersOnline[username] && this._usersOnline[username].socket;
   }
 
   getGamePlayers(username, gameNumber) {
