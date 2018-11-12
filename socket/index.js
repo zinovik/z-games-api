@@ -1,11 +1,12 @@
 const socketIo = require('socket.io');
 const debug = require('debug');
+
 const session = require('../session');
 const gamesServer = require('../gamesserver');
 
 const log = debug('app:socket');
 
-function listen(server) {
+const listen = (server) => {
   const io = socketIo.listen(server);
 
   // update all users
@@ -20,19 +21,22 @@ function listen(server) {
   // update open game users
   function updateOpenGameInfo(username, gameNumber) {
     const gamePlayers = gamesServer.getGamePlayers(username, gameNumber);
-    for (let i = 0; i < gamePlayers.length; i++) {
-      const currentSocket = gamesServer.getSocket(gamePlayers[i].username);
+
+    gamePlayers.forEach((gamePlayer) => {
+      const currentSocket = gamesServer.getSocket(gamePlayer.username);
       if (currentSocket && currentSocket.emit) {
-        currentSocket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gamePlayers[i].username));
+        currentSocket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gamePlayer.username));
       }
-    }
+    });
+
     const gameWatchers = gamesServer.getGameWatchers(username, gameNumber);
-    for (let i = 0; i < gameWatchers.length; i++) {
-      const currentSocket = gamesServer.getSocket(gameWatchers[i].username);
+
+    gameWatchers.forEach((gameWatcher) => {
+      const currentSocket = gamesServer.getSocket(gameWatcher.username);
       if (currentSocket) {
-        currentSocket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gameWatchers[i].username));
+        currentSocket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gameWatcher.username));
       }
-    }
+    });
   }
 
   io.use((socket, next) => {
@@ -187,6 +191,6 @@ function listen(server) {
       updateOpenGameInfo(socket.request.session.name);
     });
   });
-}
+};
 
 module.exports = listen;
