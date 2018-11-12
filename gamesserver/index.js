@@ -1,8 +1,10 @@
-// delete current games from user?
+// delete current games from user
 // social login
 // check current user move
-// test
-// bot
+// tests
+// bots
+// typescript
+
 const bcrypt = require('bcrypt');
 
 const serverGames = {};
@@ -23,7 +25,7 @@ class GamesServer {
     this._nextGameNumber = 0;
     db.getServerInfo()
       .then((serverInfo) => {
-        this._nextGameNumber = serverInfo.nextGameNumber;
+        this._nextGameNumber = serverInfo.nextGameNumber || 0;
         for (let i = 0; i < this._nextGameNumber; i++) {
           redisClient.get(`game:${i}`)
             .then((gamedataJSON) => {
@@ -91,7 +93,7 @@ class GamesServer {
         openGameNumber: userdata.openGameNumber,
       };
 
-      if (userdata.openGameNumber
+      if ((userdata.openGameNumber || userdata.openGameNumber === 0)
         && this._games[userdata.openGameNumber]
         && this._games[userdata.openGameNumber].logNchat) {
         this._games[userdata.openGameNumber].logNchat.push({
@@ -221,7 +223,7 @@ class GamesServer {
   getOpenGameInfo(username) {
     if (!username) return;
     if (!this._usersOnline[username]) return;
-    if (!this._usersOnline[username].openGameNumber) return;
+    if (!this._usersOnline[username].openGameNumber && this._usersOnline[username].openGameNumber !== 0) return;
 
     const gameNumber = this._usersOnline[username].openGameNumber;
     let playerNumber = -1;
@@ -341,7 +343,7 @@ class GamesServer {
   leaveGame(username) {
     if (!username) return;
     if (!this._usersOnline[username]) return;
-    if (!this._usersOnline[username].openGameNumber) return;
+    if (!this._usersOnline[username].openGameNumber && this._usersOnline[username].openGameNumber !== 0) return;
 
     const gameNumber = this._usersOnline[username].openGameNumber;
 
@@ -432,7 +434,7 @@ class GamesServer {
     if (!username) return;
     if (!this._usersOnline[username]) return;
     const gameNumber = this._usersOnline[username].openGameNumber;
-    if (!gameNumber) return;
+    if (!gameNumber && gameNumber !== 0) return;
     if (!this._games[gameNumber]) return;
     if (this._games[gameNumber].gameInfo.started) return;
 
@@ -506,7 +508,7 @@ class GamesServer {
   addMessage(username, message) {
     if (!username) return;
     if (!this._usersOnline[username]) return;
-    if (!this._usersOnline[username].openGameNumber) return;
+    if (!this._usersOnline[username].openGameNumber && this._usersOnline[username].openGameNumber !== 0) return;
     if (!this._games[this._usersOnline[username].openGameNumber]) return;
     if (!this._games[this._usersOnline[username].openGameNumber].logNchat) return;
 
