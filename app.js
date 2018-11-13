@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 
 const path = require('path');
 const logger = require('morgan');
@@ -30,6 +31,12 @@ fs.writeFile(`${__dirname}/public/index.html`, `<!DOCTYPE html>
   }
 });
 
+app.use(cors({
+  origin: (origin, callback) => {
+    return callback(null, true);
+  },
+  credentials: true,
+}));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
