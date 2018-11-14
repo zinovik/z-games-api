@@ -55,11 +55,11 @@
             "ignore-params"
         ],
         "no-switch-case-fall-through": true,
-        "typedef": [
-            true,
-            "call-signature",
-            "parameter"
-        ],
+        // "typedef": [
+        //     true,
+        //     "call-signature",
+        //     "parameter"
+        // ],
         "trailing-comma": [
             true,
             {
