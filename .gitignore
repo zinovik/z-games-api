@@ -30,7 +30,7 @@ tsconfig.build.json
 .awcache
 
 # Generated source-code #
-src/**/*.js
+# src/**/*.js
 src/**/*.js.map
 !src/public/**/*
 test/**/*.js
@@ -38,3 +38,6 @@ test/**/*.js.map
 coverage/
 !test/preprocessor.js
 mydb.sql
+
+package-lock.json
+yarn.lock
