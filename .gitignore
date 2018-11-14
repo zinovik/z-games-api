@@ -30,7 +30,7 @@ tsconfig.build.json
 .awcache
 
 # Generated source-code #
-# src/**/*.js
+src/**/*.js
 src/**/*.js.map
 !src/public/**/*
 test/**/*.js

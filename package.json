@@ -6,10 +6,10 @@
   "scripts": {
     "start": "nps",
     "test": "npm start test",
-    "build": "npm start build && cp src/gamesserver/index.js dist/gamesserver/index.js && cp -r src/gamesserver/games dist/gamesserver/games",
+    "build": "npm start build",
     "presetup": "yarn install",
     "setup": "npm start config && npm start setup.script",
-    "postinstall": "npm start build && cp src/gamesserver/index.js dist/gamesserver/index.js && cp -r src/gamesserver/games dist/gamesserver/games"
+    "postinstall": "npm start build"
   },
   "engines": {
     "node": ">=8.0.0"
