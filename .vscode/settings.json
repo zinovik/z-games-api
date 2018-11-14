@@ -1,0 +1,10 @@
+{
+    "typescript.tsdk": "./node_modules/typescript/lib",
+    "cSpell.enabled": true,
+    "files.exclude": {
+        "tsconfig.build.json": true,
+    },
+    "importSorter.generalConfiguration.sortOnBeforeSave": true,
+    "files.trimTrailingWhitespace": true,
+    "editor.formatOnSave": false
+}
