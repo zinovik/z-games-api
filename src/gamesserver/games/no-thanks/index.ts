@@ -1,4 +1,20 @@
-class NoThanks {
+export class NoThanks {
+  private _MIN_NUMBER = 3;
+  private _MAX_NUMBER = 3;
+  private _START_CHIPS_COUTN = 11;
+  private _EXCESS_CARDS_NUMBER = 9;
+
+  private _PLAYERS_MIN = 1;
+  private _PLAYERS_MAX = 5;
+  private _started = false;
+  private _finished = false;
+  private _players = [];
+  private _nextPlayerNumber = 0;
+  private _currentCard = 0;
+  private _currentCardCost = 0;
+  private _cardsLeft = this._MAX_NUMBER - this._EXCESS_CARDS_NUMBER;
+  private _cards = [];
+
   constructor() {
     this._MIN_NUMBER = 3;
     this._MAX_NUMBER = 35;
@@ -18,10 +34,19 @@ class NoThanks {
   }
 
   getRules() {
-    let rules = '<p>No Thanks! is a card game for three to five players designed by Thorsten Gimmler. Originally called Geschenkt! (presented (as a gift) in German) and published by Amigo Spiele in 2004, it was translated into English by Z-Man Games.</p>';
-    rules += '<p>There are playing cards numbered 3 to 35 in the game, and nine cards are removed from the deck. Each player receives 11 chips. The first player flips over the top card and either takes it (earning him points according to the value) or passes on the card by paying a chip (placing it on the card). If a player takes a card, he/she also takes all chips that have been put on the card, that player then flips over the next card and decides if he/she want it, and so the game continues until all cards have been taken.</p>';
-    rules += '<p>At the end of the game, cards give points according to their value, but cards in a row only count as a single card with the lowest value (e.g. A run of 30, 29, 28, 27 is only worth 27 points.) Chips are worth one negative point each. The player(s) with the lowest number of points win the game.</p>';
-    rules += '<p>No Thanks! was nominated in 2005 for the German Spiel des Jahres (Game of the Year) award.</p>';
+    const rules = '';
+    // const rules = '<p>No Thanks! is a card game for three to five players designed by Thorsten Gimmler.
+    // Originally called Geschenkt! (presented (as a gift) in German) and published by Amigo Spiele in 2004,
+    // it was translated into English by Z-Man Games.</p>';
+    // rules += '<p>There are playing cards numbered 3 to 35 in the game, and nine cards are removed from the deck.
+    // Each player receives 11 chips. The first player flips over the top card and either takes it (earning him points according to the value)
+    //  or passes on the card by paying a chip (placing it on the card).
+    // If a player takes a card, he/she also takes all chips that have been put on the card, that player
+    // then flips over the next card and decides if he/she want it, and so the game continues until all cards have been taken.</p>';
+    // rules += '<p>At the end of the game, cards give points according to their value,
+    // but cards in a row only count as a single card with the lowest value (e.g. A run of 30, 29, 28, 27 is only worth 27 points.)
+    // Chips are worth one negative point each. The player(s) with the lowest number of points win the game.</p>';
+    // rules += '<p>No Thanks! was nominated in 2005 for the German Spiel des Jahres (Game of the Year) award.</p>';
     return rules;
   }
 
@@ -38,6 +63,7 @@ class NoThanks {
     for (let i = this._MIN_NUMBER; i <= this._MAX_NUMBER; i++) {
       this._cards.push(i);
     }
+
     for (let i = 0; i < this._EXCESS_CARDS_NUMBER; i++) {
       this._cards.splice(Math.floor(Math.random() * this._cards.length), 1);
     }
@@ -48,7 +74,9 @@ class NoThanks {
   }
 
   move(move) {
-    if (this._finished) return;
+    if (this._finished) {
+      return undefined;
+    }
 
     const card = this._currentCard;
     const cardCost = this._currentCardCost;
@@ -56,11 +84,7 @@ class NoThanks {
 
     if (move.takeCard) {
       this._players[this._nextPlayerNumber].cards.push(this._currentCard);
-      this._players[this._nextPlayerNumber].cards.sort((a, b) => {
-        if (+a > +b) return 1;
-        if (+a < +b) return -1;
-        return 0;
-      });
+      this._players[this._nextPlayerNumber].cards.sort((a, b) => (a - b));
 
       this._players[this._nextPlayerNumber].chips += this._currentCardCost;
       this._nextCard();
@@ -69,7 +93,8 @@ class NoThanks {
       this._nextPlayer();
 
       const messages = [];
-      messages.push({ playerNumber: currentPlayerNumber, text: `taked the card ${card} with ${cardCost} chips on it` });
+      messages.push({ playerNumber: currentPlayerNumber, text: `took the card ${card} with ${cardCost} chips on it` });
+
       return messages;
     } else if (this._players[this._nextPlayerNumber].chips !== 0) {
       this._players[this._nextPlayerNumber].chips--;
@@ -80,8 +105,11 @@ class NoThanks {
 
       const messages = [];
       messages.push({ playerNumber: currentPlayerNumber, text: `payed 1 chip on the card ${card}, ${cardCost + 1} chips total on the card` });
+
       return messages;
     }
+
+    return undefined;
   }
 
   getCommonGameInfo() {
@@ -106,6 +134,7 @@ class NoThanks {
       cardsLeft: this._cardsLeft,
       players: [],
     };
+
     for (let i = 0; i < this._players.length; i++) {
       if (this._finished) {
         gameInfo.players[i] = this._players[i];
@@ -114,6 +143,7 @@ class NoThanks {
         gameInfo.players[i].cards = this._players[i].cards;
       }
     }
+
     if ((userNumber || userNumber === 0)
       && (this._players[userNumber] || this._players[userNumber] === 0)) {
       gameInfo.players[userNumber] = this._players[userNumber];
@@ -135,7 +165,10 @@ class NoThanks {
   }
 
   setGamedata(gameInfo) {
-    if (!gameInfo) return;
+    if (!gameInfo) {
+      return undefined;
+    }
+
     this._started = gameInfo.started;
     this._finished = gameInfo.finished;
     this._nextPlayerNumber = gameInfo.nextPlayers[0];
@@ -144,6 +177,7 @@ class NoThanks {
     this._cardsLeft = gameInfo.cardsLeft;
     this._players = gameInfo.players;
     this._cards = gameInfo.cards;
+
     return true;
   }
 
@@ -154,6 +188,7 @@ class NoThanks {
     } else {
       this._finished = true;
     }
+
     this._cardsLeft = this._cards.length;
   }
 
@@ -168,10 +203,12 @@ class NoThanks {
   _updatePoints(player) {
     let points = 0;
     let lastCard = 0;
+
     for (const card of player.cards) {
       if (card !== lastCard + 1) {
         points += +card;
       }
+
       lastCard = card;
     }
 
@@ -186,21 +223,16 @@ class NoThanks {
       playersPlaces.push({ number: i, points: this._players[i].points });
     }
 
-    playersPlaces.sort((a, b) => {
-      if (a.points < b.points) return -1;
-      if (a.points > b.points) return 1;
-      return 0;
-    });
+    playersPlaces.sort((a, b) => (a.points - b.points));
 
     for (let i = 0; i < this._players.length; i++) {
       for (let j = 0; j < playersPlaces.length; j++) {
         if (playersPlaces[j].number === i) {
           this._players[i].place = j + 1;
+
           break;
         }
       }
     }
   }
 }
-
-module.exports = NoThanks;
