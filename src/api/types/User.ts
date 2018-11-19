@@ -1,6 +1,6 @@
 import { Field, ID, ObjectType } from 'type-graphql';
 
-import { Pet } from './Pet';
+import { Log } from './Log';
 
 @ObjectType({
     description: 'User object.',
@@ -25,9 +25,9 @@ export class User {
     })
     public email: string;
 
-    @Field(type => [Pet], {
-        description: 'A list of pets which belong to the user.',
+    @Field(type => [Log], {
+        description: 'A list of logs which belong to the user.',
     })
-    public pets: Pet[];
+    public logs: Log[];
 
 }

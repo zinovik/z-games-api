@@ -20,10 +20,16 @@ const redisClient = (process.env.REDIS_URL) ? redis.createClient(process.env.RED
 
 const saltRounds = process.env.SALT_ROUNDS || 10;
 
-class GamesServer {
+export class GamesServer {
+  private static instance: GamesServer;
+
   private _usersOnline: {};
   private _games: {};
   private _nextGameNumber = 0;
+
+  public static get Instance() {
+    return this.instance || (this.instance = new this());
+  }
 
   constructor() {
     this._usersOnline = {};
@@ -49,21 +55,21 @@ class GamesServer {
       });
   }
 
-  register(username, password, socket) {
-    return redisClient.get(`user:${username}`)
-      .then((userdataJSON) => {
-        if (!userdataJSON) {
+  register(email, password, socket) {
+    return redisClient.get(`user:${email}`)
+      .then(userdataJSON => {
+        if (userdataJSON) {
           return Promise.reject();
         }
 
-        if ((username.length < 3) || (password.length < 3)) {
+        if ((email.length < 3) || (password.length < 3)) {
           return Promise.reject();
         }
 
         return bcrypt.hash(password, saltRounds);
       })
       .then((hash) => {
-        this._usersOnline[username] = {
+        this._usersOnline[email] = {
           socket,
           currentGames: [],
           openGameNumber: undefined,
@@ -75,7 +81,7 @@ class GamesServer {
           openGameNumber: undefined,
         };
 
-        redisClient.set(`user:${username}`, JSON.stringify(userdata));
+        redisClient.set(`user:${email}`, JSON.stringify(userdata));
 
         return Promise.resolve();
       });
@@ -113,15 +119,15 @@ class GamesServer {
       });
   }
 
-  authorize(username, socket) {
-    return redisClient.get(`user:${username}`).then((userdataJSON) => {
+  authorize(email, socket) {
+    return redisClient.get(`user:${email}`).then((userdataJSON) => {
       if (!userdataJSON) {
         return Promise.reject();
       }
 
       const userdata = JSON.parse(userdataJSON);
 
-      this._usersOnline[username] = {
+      this._usersOnline[email] = {
         socket,
         currentGames: userdata.currentGames,
         openGameNumber: userdata.openGameNumber,
@@ -133,7 +139,7 @@ class GamesServer {
         this._games[userdata.openGameNumber].logNchat.push({
           type: 'move',
           time: Date.now(),
-          username,
+          email,
           text: 'opened the game',
         });
         this._updateGamedata(userdata.openGameNumber);
@@ -144,7 +150,7 @@ class GamesServer {
   }
 
   logout(username) {
-    if ((!username) || (!this._usersOnline[username])) {
+    if (!username || !this._usersOnline[username]) {
       return Promise.reject();
     }
 
@@ -634,7 +640,3 @@ class GamesServer {
     return true;
   }
 }
-
-const gameserver = new GamesServer();
-
-export default gameserver;
