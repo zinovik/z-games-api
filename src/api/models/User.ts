@@ -1,11 +1,15 @@
 import * as bcrypt from 'bcrypt';
-import { Exclude } from 'class-transformer';
+// import { Exclude } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
-import { BeforeInsert, Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
+import {
+    BeforeInsert, Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, Unique,
+    UpdateDateColumn
+} from 'typeorm';
 
-import { Pet } from './Pet';
+import { Log } from './Log';
 
 @Entity()
+@Unique(['email'])
 export class User {
 
     public static hashPassword(password: string): Promise<string> {
@@ -34,7 +38,6 @@ export class User {
     @Column({ name: 'first_name' })
     public firstName: string;
 
-    @IsNotEmpty()
     @Column({ name: 'last_name' })
     public lastName: string;
 
@@ -42,17 +45,39 @@ export class User {
     @Column()
     public email: string;
 
+    // @Exclude
     @IsNotEmpty()
     @Column()
-    @Exclude()
     public password: string;
 
-    @IsNotEmpty()
     @Column()
     public username: string;
 
-    @OneToMany(type => Pet, pet => pet.user)
-    public pets: Pet[];
+    @Column()
+    public confirmed: boolean;
+
+    @Column()
+    public provider: string;
+
+    @Column()
+    public avatar: string;
+
+    @Column({ name: 'open_game' })
+    public openGame: string; // TODO: Game relation
+
+    @Column({ name: 'current_games' })
+    public currentGames: string; // TODO: Game relation (many to many)
+
+    @IsNotEmpty()
+    @CreateDateColumn({ name: 'created_at' })
+    public createdAt: Date;
+
+    @IsNotEmpty()
+    @UpdateDateColumn({ name: 'updated_at' })
+    public updatedAt: Date;
+
+    @OneToMany(type => Log, log => log.user)
+    public logs: Log[];
 
     public toString(): string {
         return `${this.firstName} ${this.lastName} (${this.email})`;

@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
-export class CreatePetTable1512663524808 implements MigrationInterface {
+export class CreateLogTable1512663524808 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         const table = new Table({
-            name: 'pet',
+            name: 'log',
             columns: [
                 {
                     name: 'id',
@@ -13,14 +13,15 @@ export class CreatePetTable1512663524808 implements MigrationInterface {
                     isPrimary: true,
                     isNullable: false,
                 }, {
-                    name: 'name',
+                    name: 'type',
                     type: 'varchar',
                     length: '255',
                     isPrimary: false,
                     isNullable: false,
                 }, {
-                    name: 'age',
-                    type: 'int',
+                    name: 'text',
+                    type: 'varchar',
+                    length: '255',
                     isPrimary: false,
                     isNullable: false,
                 }, {
@@ -29,6 +30,18 @@ export class CreatePetTable1512663524808 implements MigrationInterface {
                     length: '255',
                     isPrimary: false,
                     isNullable: true,
+                }, {
+                    name: 'game',
+                    type: 'varchar',
+                    length: '255',
+                    isPrimary: false,
+                    isNullable: false,
+                }, {
+                    name: 'created_at',
+                    type: 'timestamptz',
+                    isPrimary: false,
+                    isNullable: false,
+                    default: 'NOW()',
                 },
             ],
         });
@@ -36,7 +49,7 @@ export class CreatePetTable1512663524808 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.dropTable('pet');
+        await queryRunner.dropTable('log');
     }
 
 }

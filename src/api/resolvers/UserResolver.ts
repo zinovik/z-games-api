@@ -2,7 +2,7 @@ import { FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { Service } from 'typedi';
 
 import { User as UserModel } from '../models/User';
-import { PetService } from '../services/PetService';
+import { LogService } from '../services/LogService';
 import { UserService } from '../services/UserService';
 import { User } from '../types/User';
 
@@ -12,7 +12,7 @@ export class UserResolver {
 
     constructor(
         private userService: UserService,
-        private petService: PetService
+        private logService: LogService
         ) {}
 
     @Query(returns => [User])
@@ -21,8 +21,8 @@ export class UserResolver {
     }
 
     @FieldResolver()
-    public async pets(@Root() user: UserModel): Promise<any> {
-        return this.petService.findByUser(user);
+    public async logs(@Root() user: UserModel): Promise<any> {
+        return this.logService.findByUser(user);
     }
 
 }

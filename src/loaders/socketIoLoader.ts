@@ -1,25 +1,30 @@
 import { MicroframeworkLoader, MicroframeworkSettings } from 'microframework-w3tec';
 import socketIo from 'socket.io';
 
-import gamesServer from '../gamesserver';
+import { GamesServer } from '../games-server';
 // import { env } from '../env';
 import session from '../session';
 
 export const socketIoLoader: MicroframeworkLoader = (settings: MicroframeworkSettings | undefined) => {
-    const listen = (server) => {
-        const io = socketIo.listen(server);
+
+    const gamesServer: GamesServer = GamesServer.Instance;
+
+    if (settings) {
+        const expressServer = settings.getData('express_server');
+
+        const io = socketIo.listen(expressServer);
 
         // update all users
-        function updateUsersOnline() {
+        const updateUsersOnline = () => {
             io.emit('updateUsersOnline', gamesServer.getUsersOnline());
-        }
+        };
 
-        function updateAllGamesInfo() {
+        const updateAllGamesInfo = () => {
             io.emit('updateAllGamesInfo', gamesServer.getAllGamesInfo());
-        }
+        };
 
         // update open game users
-        function updateOpenGameInfo(username, gameNumber) {
+        const updateOpenGameInfo = (username, gameNumber) => {
             const gamePlayers = gamesServer.getGamePlayers(username, gameNumber);
 
             gamePlayers.forEach((gamePlayer) => {
@@ -37,7 +42,7 @@ export const socketIoLoader: MicroframeworkLoader = (settings: MicroframeworkSet
                     currentSocket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gameWatcher.username));
                 }
             });
-        }
+        };
 
         io.use((socket, next) => {
             session(socket.request, socket.request.res, next);
@@ -93,12 +98,12 @@ export const socketIoLoader: MicroframeworkLoader = (settings: MicroframeworkSet
                     });
             });
 
-            socket.on('register', (username, password) => {
-                gamesServer.register(username, password, socket)
+            socket.on('register', (email, password) => {
+                gamesServer.register(email, password, socket)
                     .then(() => {
-                        socket.emit('updateCurrentUsername', username);
+                        socket.emit('updateCurrentUsername', email);
                         updateUsersOnline();
-                        socket.request.session.name = username;
+                        socket.request.session.name = email;
                         socket.request.session.save();
                     })
                     .catch(() => {
@@ -178,10 +183,5 @@ export const socketIoLoader: MicroframeworkLoader = (settings: MicroframeworkSet
                 updateOpenGameInfo(socket.request.session.name, undefined);
             });
         });
-    };
-
-    if (settings) {
-        const expressServer = settings.getData('express_server');
-        listen(expressServer);
     }
 };
