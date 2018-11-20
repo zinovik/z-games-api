@@ -10,34 +10,34 @@ import { LogService } from '../services/LogService';
 @JsonController('/logs')
 export class LogController {
 
-    constructor(
-        private logService: LogService
-    ) { }
+  constructor(
+    private logService: LogService
+  ) { }
 
-    @Get()
-    public find(): Promise<Log[]> {
-        return this.logService.find();
-    }
+  @Get()
+  public find(): Promise<Log[]> {
+    return this.logService.find();
+  }
 
-    @Get('/:id')
-    @OnUndefined(LogNotFoundError)
-    public one(@Param('id') id: string): Promise<Log | undefined> {
-        return this.logService.findOne(id);
-    }
+  @Get('/:id')
+  @OnUndefined(LogNotFoundError)
+  public one(@Param('id') id: string): Promise<Log | undefined> {
+    return this.logService.findOne(id);
+  }
 
-    @Post()
-    public create(@Body() log: Log): Promise<Log> {
-        return this.logService.create(log);
-    }
+  @Post()
+  public create(@Body() log: Log): Promise<Log> {
+    return this.logService.create(log);
+  }
 
-    @Put('/:id')
-    public update(@Param('id') id: string, @Body() log: Log): Promise<Log> {
-        return this.logService.update(id, log);
-    }
+  @Put('/:id')
+  public update(@Param('id') id: string, @Body() log: Log): Promise<Log> {
+    return this.logService.update(id, log);
+  }
 
-    @Delete('/:id')
-    public delete(@Param('id') id: string): Promise<void> {
-        return this.logService.delete(id);
-    }
+  @Delete('/:id')
+  public delete(@Param('id') id: string): Promise<void> {
+    return this.logService.delete(id);
+  }
 
 }

@@ -5,7 +5,7 @@ import { Log } from '../Log';
 @InputType()
 export class LogInput implements Partial<Log> {
 
-    @Field()
-    public text: string;
+  @Field()
+  public text: string;
 
 }

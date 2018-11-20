@@ -16,10 +16,7 @@ export const expressLoader: MicroframeworkLoader = (settings: MicroframeworkSett
          */
         const expressApp: Application = createExpressServer({
             cors: {
-                origin: (origin, callback) => {
-                    return callback(undefined, true);
-                },
-                credentials: true,
+                exposedHeaders: ['Authorization'],
             },
             classTransformer: true,
             routePrefix: env.app.routePrefix,
