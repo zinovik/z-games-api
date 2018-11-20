@@ -15,39 +15,39 @@ import { Log } from '../types/Log';
 @Resolver(of => Log)
 export class LogResolver {
 
-    constructor(
-        private logService: LogService,
-        @Logger(__filename) private log: LoggerInterface,
-        @DLoader(UserModel) private userLoader: DataLoader<string, UserModel>
-    ) { }
+  constructor(
+    private logService: LogService,
+    @Logger(__filename) private log: LoggerInterface,
+    @DLoader(UserModel) private userLoader: DataLoader<string, UserModel>
+  ) { }
 
-    @Query(returns => [Log])
-    public logs(@Ctx() { requestId }: Context): Promise<LogModel[]> {
-        this.log.info(`{${requestId}} Find all users`);
-        return this.logService.find();
+  @Query(returns => [Log])
+  public logs(@Ctx() { requestId }: Context): Promise<LogModel[]> {
+    this.log.info(`{${requestId}} Find all users`);
+    return this.logService.find();
+  }
+
+  @Mutation(returns => Log)
+  public async addLog(@Arg('log') log: LogInput): Promise<LogModel> {
+    const newLog = new LogModel();
+    newLog.text = log.text;
+    return this.logService.create(newLog);
+  }
+
+  @FieldResolver()
+  public async owner(@Root() log: LogModel): Promise<any> {
+    if (log.userId) {
+      return this.userLoader.load(log.userId);
     }
+    // return this.userService.findOne(`${log.userId}`);
+  }
 
-    @Mutation(returns => Log)
-    public async addLog(@Arg('log') log: LogInput): Promise<LogModel> {
-        const newLog = new LogModel();
-        newLog.text = log.text;
-        return this.logService.create(newLog);
-    }
+  // user: createDataLoader(UserRepository),
 
-    @FieldResolver()
-    public async owner(@Root() log: LogModel): Promise<any> {
-        if (log.userId) {
-            return this.userLoader.load(log.userId);
-        }
-        // return this.userService.findOne(`${log.userId}`);
-    }
-
-    // user: createDataLoader(UserRepository),
-
-    //     logsByUserIds: createDataLoader(LogRepository, {
-    //         method: 'findByUserIds',
-    //         key: 'userId',
-    //         multiple: true,
-    //     }),
+  //     logsByUserIds: createDataLoader(LogRepository, {
+  //         method: 'findByUserIds',
+  //         key: 'userId',
+  //         multiple: true,
+  //     }),
 
 }

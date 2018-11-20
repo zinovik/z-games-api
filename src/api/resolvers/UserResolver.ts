@@ -10,19 +10,19 @@ import { User } from '../types/User';
 @Resolver(of => User)
 export class UserResolver {
 
-    constructor(
-        private userService: UserService,
-        private logService: LogService
-        ) {}
+  constructor(
+    private userService: UserService,
+    private logService: LogService
+  ) { }
 
-    @Query(returns => [User])
-    public users(): Promise<any> {
-      return this.userService.find();
-    }
+  @Query(returns => [User])
+  public users(): Promise<any> {
+    return this.userService.find();
+  }
 
-    @FieldResolver()
-    public async logs(@Root() user: UserModel): Promise<any> {
-        return this.logService.findByUser(user);
-    }
+  @FieldResolver()
+  public async logs(@Root() user: UserModel): Promise<any> {
+    return this.logService.findByUser(user);
+  }
 
 }

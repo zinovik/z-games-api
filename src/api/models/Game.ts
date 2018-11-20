@@ -1,35 +1,14 @@
-import * as bcrypt from 'bcrypt';
 import { Exclude } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import {
-    BeforeInsert, Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, Unique,
-    UpdateDateColumn
+    Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, Unique, UpdateDateColumn
 } from 'typeorm';
 
 import { Log } from './Log';
 
 @Entity()
 @Unique(['email'])
-export class User {
-
-  public static hashPassword(password: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      bcrypt.hash(password, 10, (err, hash) => {
-        if (err) {
-          return reject(err);
-        }
-        resolve(hash);
-      });
-    });
-  }
-
-  public static comparePassword(user: User, password: string): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-      bcrypt.compare(password, user.password, (err, res) => {
-        resolve(res === true);
-      });
-    });
-  }
+export class Game {
 
   @PrimaryColumn('uuid')
   public id: string;
@@ -68,12 +47,6 @@ export class User {
   @Column({ name: 'current_games' })
   public currentGames: string; // TODO: Game relation (many to many)
 
-  @Column({ name: 'games_played' })
-  public gamesPlayed: number;
-
-  @Column({ name: 'games_won' })
-  public gamesWon: number;
-
   @IsNotEmpty()
   @CreateDateColumn({ name: 'created_at' })
   public createdAt: Date;
@@ -87,11 +60,6 @@ export class User {
 
   public toString(): string {
     return `${this.firstName} ${this.lastName} (${this.email})`;
-  }
-
-  @BeforeInsert()
-  public async hashPassword(): Promise<void> {
-    this.password = await User.hashPassword(this.password);
   }
 
 }

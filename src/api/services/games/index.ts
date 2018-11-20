@@ -3,22 +3,13 @@
 // check current user move
 // tests
 // bots
-import bcrypt from 'bcrypt';
-import promiseRedis from 'promise-redis';
-
-import * as db from './db';
-import { NoThanks, Perudo } from './games';
+import { NoThanks } from './no-thanks';
+import { Perudo } from './perudo';
 
 const serverGames = {
   'No, Thanks!': NoThanks,
   'Perudo': Perudo,
 };
-
-const redis = promiseRedis();
-
-const redisClient = (process.env.REDIS_URL) ? redis.createClient(process.env.REDIS_URL) : redis.createClient('6379', '127.0.0.1');
-
-const saltRounds = process.env.SALT_ROUNDS || 10;
 
 export class GamesServer {
   private static instance: GamesServer;
@@ -35,165 +26,18 @@ export class GamesServer {
     this._usersOnline = {};
     this._games = {};
     this._nextGameNumber = 0;
-
-    db.getServerInfo()
-      .then((serverInfo) => {
-        this._nextGameNumber = serverInfo.nextGameNumber || 0;
-        for (let i = 0; i < this._nextGameNumber; i++) {
-          redisClient.get(`game:${i}`)
-            .then((gamedataJSON) => {
-              if (!gamedataJSON) {
-                return;
-              }
-
-              this._games[i] = JSON.parse(gamedataJSON);
-              this._games[i].engine = new serverGames[this._games[i].name]();
-              this._games[i].engine.setGamedata(this._games[i].gamedata);
-              delete this._games[i].gamedata;
-            });
-        }
-      });
   }
 
-  register(email, password, socket) {
-    return redisClient.get(`user:${email}`)
-      .then(userdataJSON => {
-        if (userdataJSON) {
-          return Promise.reject();
-        }
-
-        if ((email.length < 3) || (password.length < 3)) {
-          return Promise.reject();
-        }
-
-        return bcrypt.hash(password, saltRounds);
-      })
-      .then((hash) => {
-        this._usersOnline[email] = {
-          socket,
-          currentGames: [],
-          openGameNumber: undefined,
-        };
-
-        const userdata = {
-          password: hash,
-          currentGames: [],
-          openGameNumber: undefined,
-        };
-
-        redisClient.set(`user:${email}`, JSON.stringify(userdata));
-
-        return Promise.resolve();
-      });
+  userOnline(user, socket) {
+    this._usersOnline[user.email] = {
+      socket,
+      currentGames: user.currentGames,
+      openGameNumber: user.openGameNumber,
+    };
   }
 
-  checkUsername(username) {
-    return redisClient.get(`user:${username}`)
-      .then((userdataJSON) => {
-        if (!userdataJSON) {
-          return Promise.reject();
-        }
-
-        return Promise.resolve();
-      });
-  }
-
-  checkPassword(username, password) {
-    return redisClient.get(`user:${username}`)
-      .then((userdataJSON) => {
-        if (!userdataJSON) {
-          return Promise.reject();
-        }
-
-        const userdata = JSON.parse(userdataJSON);
-
-        return bcrypt.compare(password, userdata.password);
-      })
-      .then((res) => {
-
-        if (res) {
-          return Promise.resolve();
-        }
-
-        return Promise.reject();
-      });
-  }
-
-  authorize(email, socket) {
-    return redisClient.get(`user:${email}`).then((userdataJSON) => {
-      if (!userdataJSON) {
-        return Promise.reject();
-      }
-
-      const userdata = JSON.parse(userdataJSON);
-
-      this._usersOnline[email] = {
-        socket,
-        currentGames: userdata.currentGames,
-        openGameNumber: userdata.openGameNumber,
-      };
-
-      if ((userdata.openGameNumber || userdata.openGameNumber === 0)
-        && this._games[userdata.openGameNumber]
-        && this._games[userdata.openGameNumber].logNchat) {
-        this._games[userdata.openGameNumber].logNchat.push({
-          type: 'move',
-          time: Date.now(),
-          email,
-          text: 'opened the game',
-        });
-        this._updateGamedata(userdata.openGameNumber);
-      }
-
-      return Promise.resolve();
-    });
-  }
-
-  logout(username) {
-    if (!username || !this._usersOnline[username]) {
-      return Promise.reject();
-    }
-
-    return new Promise((resolve, reject) => {
-      redisClient.get(`user:${username}`)
-        .then((userdataJSON) => {
-          const openGameNumber = this._usersOnline[username].openGameNumber;
-          delete this._usersOnline[username];
-
-          if (this._games[openGameNumber] && this._games[openGameNumber].logNchat) {
-            // logNchat
-            this._games[openGameNumber].logNchat.push({
-              type: 'move',
-              time: Date.now(),
-              username,
-              text: 'closed the game',
-            });
-
-            this._updateGamedata(openGameNumber);
-          }
-
-          resolve(openGameNumber);
-        });
-    });
-  }
-
-  _updateUserdata(username, currentGames, openGameNumber) {
-    if (!username) {
-      return;
-    }
-
-    redisClient.get(`user:${username}`).then((userdataJSON) => {
-      if (!userdataJSON) {
-        return;
-      }
-
-      const userdata = JSON.parse(userdataJSON);
-
-      userdata.currentGames = currentGames;
-      userdata.openGameNumber = openGameNumber;
-
-      redisClient.set(`user:${username}`, JSON.stringify(userdata));
-    });
+  userOffline(user) {
+    delete this._usersOnline[user.email];
   }
 
   _updateGamedata(gameNumber) {
@@ -202,11 +46,6 @@ export class GamesServer {
     }
 
     this._games[gameNumber].gamedata = this._games[gameNumber].engine.getGamedata();
-
-    redisClient.set(`game:${gameNumber}`, JSON.stringify(this._games[gameNumber]))
-      .then(() => {
-        delete this._games[gameNumber].gamedata;
-      });
   }
 
   getUsersOnline() {
@@ -343,20 +182,6 @@ export class GamesServer {
 
     this._nextGameNumber++;
 
-    redisClient.get('server-info')
-      .then((serverInfoJSON) => {
-        let serverInfo;
-
-        if (!serverInfoJSON) {
-          serverInfo = {};
-        } else {
-          serverInfo = JSON.parse(serverInfoJSON);
-        }
-
-        serverInfo.nextGameNumber = this._nextGameNumber;
-        redisClient.set('server-info', JSON.stringify(serverInfo));
-      });
-
     return true;
   }
 
@@ -415,7 +240,6 @@ export class GamesServer {
     }
 
     this._usersOnline[username].openGameNumber = gameNumber;
-    this._updateUserdata(username, this._usersOnline[username].currentGames, this._usersOnline[username].openGameNumber);
     this._updateGamedata(gameNumber);
 
     return true;
@@ -447,7 +271,6 @@ export class GamesServer {
         }
 
         delete this._usersOnline[username].openGameNumber;
-        this._updateUserdata(username, this._usersOnline[username].currentGames, undefined);
 
         // logNchat
         this._games[gameNumber].logNchat.push({
@@ -461,7 +284,6 @@ export class GamesServer {
         return gameNumber;
       } else {
         delete this._usersOnline[username].openGameNumber;
-        this._updateUserdata(username, this._usersOnline[username].currentGames, undefined);
 
         // logNchat
         this._games[gameNumber].logNchat.push({
@@ -482,7 +304,6 @@ export class GamesServer {
       }
 
       delete this._usersOnline[username].openGameNumber;
-      this._updateUserdata(username, this._usersOnline[username].currentGames, undefined);
 
       // logNchat
       this._games[gameNumber].logNchat.push({

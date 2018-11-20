@@ -1,187 +1,195 @@
 import { MicroframeworkLoader, MicroframeworkSettings } from 'microframework-w3tec';
 import socketIo from 'socket.io';
+import { Container } from 'typedi';
 
-import { GamesServer } from '../games-server';
-// import { env } from '../env';
-import session from '../session';
+import { GamesServer } from '../api/services/games';
+import { AuthService } from '../auth/AuthService';
 
 export const socketIoLoader: MicroframeworkLoader = (settings: MicroframeworkSettings | undefined) => {
 
-    const gamesServer: GamesServer = GamesServer.Instance;
+  if (!settings) {
+    return undefined;
+  }
 
-    if (settings) {
-        const expressServer = settings.getData('express_server');
+  const expressServer = settings.getData('express_server');
+  const io = socketIo.listen(expressServer);
+  const gamesServer: GamesServer = GamesServer.Instance;
+  const authService = Container.get<AuthService>(AuthService);
 
-        const io = socketIo.listen(expressServer);
+  // const userOnline = [];
 
-        // update all users
-        const updateUsersOnline = () => {
-            io.emit('updateUsersOnline', gamesServer.getUsersOnline());
-        };
+  // update all users
+  const updateUsersOnline = () => {
+    io.emit('updateUsersOnline', gamesServer.getUsersOnline());
+  };
 
-        const updateAllGamesInfo = () => {
-            io.emit('updateAllGamesInfo', gamesServer.getAllGamesInfo());
-        };
+  const updateAllGamesInfo = () => {
+    io.emit('updateAllGamesInfo', gamesServer.getAllGamesInfo());
+  };
 
-        // update open game users
-        const updateOpenGameInfo = (username, gameNumber) => {
-            const gamePlayers = gamesServer.getGamePlayers(username, gameNumber);
+  // update open game users
+  const updateOpenGameInfo = (username, gameNumber) => {
+    const gamePlayers = gamesServer.getGamePlayers(username, gameNumber);
 
-            gamePlayers.forEach((gamePlayer) => {
-                const currentSocket = gamesServer.getSocket(gamePlayer.username);
-                if (currentSocket && currentSocket.emit) {
-                    currentSocket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gamePlayer.username));
-                }
-            });
+    gamePlayers.forEach((gamePlayer) => {
+      const currentSocket = gamesServer.getSocket(gamePlayer.username);
 
-            const gameWatchers = gamesServer.getGameWatchers(username, gameNumber);
+      if (currentSocket && currentSocket.emit) {
+        currentSocket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gamePlayer.username));
+      }
+    });
 
-            gameWatchers.forEach((gameWatcher) => {
-                const currentSocket = gamesServer.getSocket(gameWatcher.username);
-                if (currentSocket) {
-                    currentSocket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gameWatcher.username));
-                }
-            });
-        };
+    const gameWatchers = gamesServer.getGameWatchers(username, gameNumber);
 
-        io.use((socket, next) => {
-            session(socket.request, socket.request.res, next);
-        });
+    gameWatchers.forEach((gameWatcher) => {
+      const currentSocket = gamesServer.getSocket(gameWatcher.username);
 
-        io.on('connection', (socket) => {
-            if (socket.request.session.name) {
-                socket.request.session._garbage = Date();
-                gamesServer.checkUsername(socket.request.session.name)
-                    .then(() => {
-                        gamesServer.authorize(socket.request.session.name, socket)
-                            .then(() => {
-                                socket.emit('setUsername', socket.request.session.name);
-                                updateUsersOnline();
-                            });
-                    });
-            }
+      if (currentSocket) {
+        currentSocket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(gameWatcher.username));
+      }
+    });
+  };
 
-            // update by browser request (e.g., page refresh)
-            socket.on('getAllGamesInfo', () => {
-                socket.emit('updateAllGamesInfo', gamesServer.getAllGamesInfo());
-            });
+  io.on('connection', async socket => {
+    const connectedUser = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
 
-            socket.on('getOpenGameInfo', () => {
-                if (socket.request.session.name) {
-                    socket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(socket.request.session.name));
-                }
-            });
-
-            socket.on('getUsersOnline', () => {
-                socket.emit('updateUsersOnline', gamesServer.getUsersOnline());
-            });
-
-            socket.on('getCurrentUsername', () => {
-                socket.emit('updateCurrentUsername', socket.request.session.name);
-            });
-
-            // authorize, register, logout
-            socket.on('authorize', (username, password) => {
-                gamesServer.checkPassword(username, password)
-                    .then(() => {
-                        return gamesServer.authorize(username, socket);
-                    })
-                    .then(() => {
-                        socket.emit('updateCurrentUsername', username);
-                        updateUsersOnline();
-                        updateOpenGameInfo(username, undefined);
-                        socket.request.session.name = username;
-                        socket.request.session.save();
-                    })
-                    .catch(() => {
-                        socket.emit('updateCurrentUsername', undefined);
-                    });
-            });
-
-            socket.on('register', (email, password) => {
-                gamesServer.register(email, password, socket)
-                    .then(() => {
-                        socket.emit('updateCurrentUsername', email);
-                        updateUsersOnline();
-                        socket.request.session.name = email;
-                        socket.request.session.save();
-                    })
-                    .catch(() => {
-                        socket.emit('updateCurrentUsername', undefined);
-                    });
-            });
-
-            socket.on('logout', () => {
-                if (socket.request.session.name) {
-                    gamesServer.logout(socket.request.session.name)
-                        .then((gameNumber) => {
-                            socket.emit('updateCurrentUsername');
-                            updateUsersOnline();
-                            updateAllGamesInfo();
-                            updateOpenGameInfo(undefined, gameNumber);
-                            delete socket.request.session.name;
-                            socket.request.session.save();
-                        });
-                }
-            });
-
-            socket.on('disconnect', () => {
-                if (socket.request.session.name) {
-                    gamesServer.logout(socket.request.session.name)
-                        .then((gameNumber) => {
-                            updateUsersOnline();
-                            updateAllGamesInfo();
-                            updateOpenGameInfo(undefined, gameNumber);
-                        });
-                }
-            });
-
-            // game actions
-            socket.on('newgame', (gameName) => {
-                if (gamesServer.newGame(gameName, socket.request.session.name)) {
-                    updateAllGamesInfo();
-                }
-            });
-
-            socket.on('joingame', (gameNumber) => {
-                if (gamesServer.joinGame(socket.request.session.name, gameNumber)) {
-                    updateUsersOnline();
-                    updateAllGamesInfo();
-                    updateOpenGameInfo(socket.request.session.name, undefined);
-                }
-            });
-
-            socket.on('leavegame', () => {
-                const gameNumber = gamesServer.leaveGame(socket.request.session.name);
-                if (gameNumber || (gameNumber === 0)) {
-                    updateUsersOnline();
-                    updateAllGamesInfo();
-                    updateOpenGameInfo(undefined, gameNumber);
-                }
-            });
-
-            socket.on('readytogame', () => {
-                gamesServer.readyToGame(socket.request.session.name);
-                updateOpenGameInfo(socket.request.session.name, undefined);
-            });
-
-            socket.on('startgame', () => {
-                gamesServer.startGame(socket.request.session.name);
-                updateAllGamesInfo();
-                updateOpenGameInfo(socket.request.session.name, undefined);
-            });
-
-            socket.on('move', (move) => {
-                if (gamesServer.move(socket.request.session.name, move)) {
-                    updateAllGamesInfo();
-                }
-                updateOpenGameInfo(socket.request.session.name, undefined);
-            });
-
-            socket.on('message', (message) => {
-                gamesServer.addMessage(socket.request.session.name, message);
-                updateOpenGameInfo(socket.request.session.name, undefined);
-            });
-        });
+    if (connectedUser) {
+      // socket.request.session._garbage = Date(); TODO: Update token
+      updateUsersOnline();
     }
+
+    // update by browser request (e.g., page refresh)
+    socket.on('getAllGamesInfo', () => {
+      socket.emit('updateAllGamesInfo', gamesServer.getAllGamesInfo());
+    });
+
+    socket.on('getOpenGameInfo', async () => {
+      const user = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
+
+      if (user) {
+        socket.emit('updateOpenGameInfo', gamesServer.getOpenGameInfo(user.email));
+      }
+    });
+
+    socket.on('getUsersOnline', () => {
+      socket.emit('updateUsersOnline', gamesServer.getUsersOnline());
+    });
+
+    socket.on('getCurrentUsername', async () => {
+      const user = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
+
+      socket.emit('updateCurrentUsername', user && user.email);
+    });
+
+    socket.on('logout', async () => {
+      const user = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
+
+      if (user) {
+        const gameNumber = await gamesServer.userOffline(user.email);
+
+        updateUsersOnline();
+        updateAllGamesInfo();
+        updateOpenGameInfo(undefined, gameNumber);
+      }
+
+      socket.emit('updateCurrentUsername', '');
+    });
+
+    socket.on('disconnect', async () => {
+      const user = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
+
+      if (user) {
+        const gameNumber = await gamesServer.userOffline(user.email);
+
+        updateUsersOnline();
+        updateAllGamesInfo();
+        updateOpenGameInfo(undefined, gameNumber);
+      }
+    });
+
+    // game actions
+    socket.on('newgame', async (gameName) => {
+      const user = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
+
+      if (!user) {
+        return;
+      }
+
+      await gamesServer.newGame(gameName, user.email);
+      updateAllGamesInfo();
+    });
+
+    socket.on('joingame', async (gameNumber) => {
+      const user = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
+
+      if (!user) {
+        return;
+      }
+
+      if (await gamesServer.joinGame(user.email, gameNumber)) {
+        updateUsersOnline();
+        updateAllGamesInfo();
+        updateOpenGameInfo(user.email, undefined);
+      }
+    });
+
+    socket.on('leavegame', async () => {
+      const user = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
+
+      if (!user) {
+        return;
+      }
+
+      const gameNumber = await gamesServer.leaveGame(user.email);
+
+      if (gameNumber || (gameNumber === 0)) {
+        updateUsersOnline();
+        updateAllGamesInfo();
+        updateOpenGameInfo(undefined, gameNumber);
+      }
+    });
+
+    socket.on('readytogame', async () => {
+      const user = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
+
+      await gamesServer.readyToGame(user.email);
+      updateOpenGameInfo(user.email, undefined);
+    });
+
+    socket.on('startgame', async () => {
+      const user = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
+
+      if (!user) {
+        return;
+      }
+
+      await gamesServer.startGame(user.email);
+      updateAllGamesInfo();
+      updateOpenGameInfo(user.email, undefined);
+    });
+
+    socket.on('move', async (move) => {
+      const user = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
+
+      if (!user) {
+        return;
+      }
+
+      if (await gamesServer.move(user.email, move)) {
+        updateAllGamesInfo();
+        updateOpenGameInfo(user.email, undefined);
+      }
+    });
+
+    socket.on('message', async (message) => {
+      const user = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
+
+      if (!user) {
+        return;
+      }
+
+      await gamesServer.addMessage(user.email, message);
+      updateOpenGameInfo(user.email, undefined);
+    });
+  });
 };

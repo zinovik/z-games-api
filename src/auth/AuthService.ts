@@ -4,45 +4,48 @@ import { OrmRepository } from 'typeorm-typedi-extensions';
 
 import { User } from '../api/models/User';
 import { UserRepository } from '../api/repositories/UserRepository';
+import { JwtService } from '../api/services/jwt';
 import { Logger, LoggerInterface } from '../decorators/Logger';
 
 @Service()
 export class AuthService {
 
-    constructor(
-        @Logger(__filename) private log: LoggerInterface,
-        @OrmRepository() private userRepository: UserRepository
-    ) { }
+  constructor(
+    @Logger(__filename) private log: LoggerInterface,
+    @OrmRepository() private userRepository: UserRepository,
+    private jwtService: JwtService
+  ) { }
 
-    public parseBasicAuthFromRequest(req: express.Request): { username: string, password: string } {
-        const authorization = req.header('authorization');
+  public async parseJwtFromRequest(req: express.Request): Promise<User> {
+    const authorization = req.header('Authorization');
 
-        if (authorization && authorization.split(' ')[0] === 'Basic') {
-            this.log.info('Credentials provided by the client');
-            const decodedBase64 = Buffer.from(authorization.split(' ')[1], 'base64').toString('ascii');
-            const username = decodedBase64.split(':')[0];
-            const password = decodedBase64.split(':')[1];
-            if (username && password) {
-                return { username, password };
-            }
-        }
+    if (!authorization || authorization.split(' ')[0] !== 'Bearer') {
+      this.log.info('No credentials provided by the client');
 
-        this.log.info('No credentials provided by the client');
-        return undefined;
+      return undefined;
     }
 
-    public async validateUser(username: string, password: string): Promise<User> {
-        const user = await this.userRepository.findOne({
-            where: {
-                username,
-            },
-        });
+    this.log.info('Credentials provided by the client');
 
-        if (await User.comparePassword(user, password)) {
-            return user;
-        }
+    const token = authorization.split(' ')[1];
 
-        return undefined;
+    return this.verifyAndDecodeJwt(token);
+  }
+
+  public async verifyAndDecodeJwt(token: string): Promise<User> {
+    const email = this.jwtService.verifyAndDecodeToken(token);
+
+    if (!email) {
+      return undefined;
     }
+
+    const user = await this.userRepository.findOne({
+      where: {
+        email,
+      },
+    });
+
+    return user;
+  }
 
 }
