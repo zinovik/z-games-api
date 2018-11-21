@@ -1,51 +1,51 @@
-import { Exclude } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import {
-    Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, Unique, UpdateDateColumn
+  BeforeInsert, Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToMany, PrimaryColumn,
+  UpdateDateColumn
 } from 'typeorm';
 
-import { Log } from './Log';
+import { Log } from '../models/Log';
+import { User } from '../models/User';
 
 @Entity()
-@Unique(['email'])
 export class Game {
 
   @PrimaryColumn('uuid')
   public id: string;
 
   @IsNotEmpty()
-  @Column({ name: 'first_name' })
-  public firstName: string;
-
-  @Column({ name: 'last_name' })
-  public lastName: string;
+  @Column()
+  public name: string;
 
   @IsNotEmpty()
   @Column()
-  public email: string;
+  public state: number;
 
   @IsNotEmpty()
-  @Column()
-  @Exclude({ toPlainOnly: true })
-  public password: string;
+  @Column({ name: 'players_max' })
+  public playersMax: number;
 
-  @Column()
-  public username: string;
+  @IsNotEmpty()
+  @Column({ name: 'players_min' })
+  public playersMin: number;
 
-  @Column()
-  public confirmed: boolean;
+  @IsNotEmpty()
+  @Column({ name: 'game_info' })
+  public gameInfo: string;
 
-  @Column()
-  public provider: string;
+  @Column({ name: 'is_private' })
+  public isPrivate: boolean;
 
-  @Column()
-  public avatar: string;
+  @OneToMany(type => User, user => user.openedGame)
+  public playersOnline: User[];
 
-  @Column({ name: 'open_game' })
-  public openGame: string; // TODO: Game relation
+  @ManyToMany(type => User, user => user.currentGames)
+  @JoinTable({ name: 'user_current_game_to_game_players' })
+  public players: User[];
 
-  @Column({ name: 'current_games' })
-  public currentGames: string; // TODO: Game relation (many to many)
+  @ManyToMany(type => User, user => user.currentGames)
+  @JoinTable({ name: 'user_current_move_to_game_next_players' })
+  public nextPlayers: User[];
 
   @IsNotEmpty()
   @CreateDateColumn({ name: 'created_at' })
@@ -55,11 +55,16 @@ export class Game {
   @UpdateDateColumn({ name: 'updated_at' })
   public updatedAt: Date;
 
-  @OneToMany(type => Log, log => log.user)
+  @OneToMany(type => Log, log => log.game)
   public logs: Log[];
 
   public toString(): string {
-    return `${this.firstName} ${this.lastName} (${this.email})`;
+    return `${this.name}`;
+  }
+
+  @BeforeInsert()
+  public async hashPassword(): Promise<void> {
+    this.state = 0;
   }
 
 }

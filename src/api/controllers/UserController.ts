@@ -1,20 +1,20 @@
 import {
-    Authorized, Body, Delete, Get, JsonController, OnUndefined, Param, Post, Put, Req, Res
+  Authorized, Body, Delete, Get, JsonController, OnUndefined, Param, Post, Put, Req, Res
 } from 'routing-controllers';
+import {
+  ConnectedSocket, OnConnect, OnDisconnect, SocketController, SocketQueryParam
+} from 'socket-controllers';
 
 import { UserNotFoundError } from '../errors/UserNotFoundError';
 import { User } from '../models/User';
-import { JwtService } from '../services/jwt';
 import { UserService } from '../services/UserService';
 
-// TODO: socket-controllers
-
 @JsonController('/users')
+@SocketController()
 export class UserController {
 
   constructor(
-    private userService: UserService,
-    private jwtService: JwtService
+    private userService: UserService
   ) { }
 
   @Get()
@@ -37,28 +37,9 @@ export class UserController {
   }
 
   @Post()
+  @Authorized()
   public async create(@Body() user: User): Promise<User> {
     return this.userService.create(user);
-  }
-
-  @Post('/authorize')
-  public async authorize(@Body() user: User, @Res() res: any): Promise<any> {
-    const { email, password } = user;
-
-    const userDb = await this.userService.findOne(email);
-
-    if (!userDb) {
-      return 'user not found';
-    }
-
-    if (!await User.comparePassword(userDb, password)) {
-      return 'wrong password';
-    }
-
-    const token = this.jwtService.generateToken({ email }, '7 days');
-    res.set('Authorization', token);
-
-    return 'authorized';
   }
 
   @Put('/:id')
@@ -71,6 +52,35 @@ export class UserController {
   @Delete('/:id')
   public delete(@Param('id') id: string): Promise<void> {
     return this.userService.delete(id);
+  }
+
+  @Post('/register')
+  public async register(@Body() { email, password }: { email: string, password: string }): Promise<User> {
+    const user = new User();
+
+    user.email = email;
+    user.password = password;
+
+    return this.userService.create(user);
+  }
+
+  @Post('/authorize')
+  public async authorize(@Body() { email, password }: { email: string, password: string }, @Res() res: any): Promise<any> {
+    const token = await this.userService.authorize({ email, password });
+
+    res.set('Authorization', token);
+
+    return 'authorized';
+  }
+
+  @OnConnect()
+  connection(@ConnectedSocket() socket: any, @SocketQueryParam('token') token: string) {
+    console.log(1, 'UserController', token);
+  }
+
+  @OnDisconnect()
+  disconnect(@ConnectedSocket() socket: any, @SocketQueryParam('token') token: string) {
+    console.log(token);
   }
 
 }
