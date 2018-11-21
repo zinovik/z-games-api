@@ -1,4 +1,5 @@
 import { MicroframeworkLoader, MicroframeworkSettings } from 'microframework-w3tec';
+import { useSocketServer } from 'socket-controllers';
 import socketIo from 'socket.io';
 import { Container } from 'typedi';
 
@@ -13,10 +14,10 @@ export const socketIoLoader: MicroframeworkLoader = (settings: MicroframeworkSet
 
   const expressServer = settings.getData('express_server');
   const io = socketIo.listen(expressServer);
+  useSocketServer(io);
+
   const gamesServer: GamesServer = GamesServer.Instance;
   const authService = Container.get<AuthService>(AuthService);
-
-  // const userOnline = [];
 
   // update all users
   const updateUsersOnline = () => {
@@ -108,7 +109,7 @@ export const socketIoLoader: MicroframeworkLoader = (settings: MicroframeworkSet
     });
 
     // game actions
-    socket.on('newgame', async (gameName) => {
+    socket.on('newGame', async (gameName) => {
       const user = await authService.verifyAndDecodeJwt(socket.handshake.query.token);
 
       if (!user) {

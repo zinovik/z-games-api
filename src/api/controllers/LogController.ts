@@ -1,5 +1,5 @@
 import {
-    Authorized, Body, Delete, Get, JsonController, OnUndefined, Param, Post, Put
+  Authorized, Body, Delete, Get, JsonController, OnUndefined, Param, Post, Put
 } from 'routing-controllers';
 
 import { LogNotFoundError } from '../errors/LogNotFoundError';

@@ -3,6 +3,7 @@
 // check current user move
 // tests
 // bots
+// game modules
 import { NoThanks } from './no-thanks';
 import { Perudo } from './perudo';
 

@@ -4,9 +4,12 @@ import uuid from 'uuid';
 
 import { EventDispatcher, EventDispatcherInterface } from '../../decorators/EventDispatcher';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
+import { UserNotFoundError } from '../errors/UserNotFoundError';
+import { WrongPasswordError } from '../errors/WrongPasswordError';
 import { User } from '../models/User';
 import { UserRepository } from '../repositories/UserRepository';
 import { events } from '../subscribers/events';
+import { JwtService } from './jwt';
 
 @Service()
 export class UserService {
@@ -14,7 +17,8 @@ export class UserService {
   constructor(
     @OrmRepository() private userRepository: UserRepository,
     @EventDispatcher() private eventDispatcher: EventDispatcherInterface,
-    @Logger(__filename) private log: LoggerInterface
+    @Logger(__filename) private log: LoggerInterface,
+    private jwtService: JwtService
   ) { }
 
   public find(): Promise<User[]> {
@@ -45,6 +49,24 @@ export class UserService {
     this.log.info('Delete a user');
     await this.userRepository.delete(id);
     return;
+  }
+
+  public async authorize({ email, password }: { email: string, password: string }): Promise<string> {
+    this.log.info('Authorize a user');
+
+    const user = await this.findOne(email);
+
+    if (!user) {
+      throw new UserNotFoundError();
+    }
+
+    if (!await User.comparePassword(user, password)) {
+      throw new WrongPasswordError();
+    }
+
+    const token = this.jwtService.generateToken({ email }, '7 days');
+
+    return token;
   }
 
 }

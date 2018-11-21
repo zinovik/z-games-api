@@ -1,7 +1,8 @@
 import { IsNotEmpty } from 'class-validator';
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
-import { User } from './User';
+import { Game } from '../models/Game';
+import { User } from '../models/User';
 
 @Entity()
 export class Log {
@@ -18,19 +19,21 @@ export class Log {
   public text: string;
 
   @IsNotEmpty()
-  @Column({
-    name: 'user_id',
-    nullable: true,
-  })
-  public userId: string;
+  @Column({ name: 'game_id', nullable: false })
+  public gameId: string;
 
   @IsNotEmpty()
-  @Column()
-  public game: string; // TODO: Game relation
+  @Column({ name: 'user_id', nullable: false })
+  public userId: string;
 
   @IsNotEmpty()
   @CreateDateColumn({ name: 'created_at' })
   public createdAt: Date;
+
+  @IsNotEmpty()
+  @ManyToOne(type => Game, game => game.logs)
+  @JoinColumn({ name: 'game_id' })
+  public game: Game;
 
   @IsNotEmpty()
   @ManyToOne(type => User, user => user.logs)

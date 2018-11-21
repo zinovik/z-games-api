@@ -2,14 +2,16 @@ import * as bcrypt from 'bcrypt';
 import { Exclude } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import {
-    BeforeInsert, Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, Unique,
-    UpdateDateColumn
+  BeforeInsert, Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne,
+  OneToMany, PrimaryColumn, Unique, UpdateDateColumn
 } from 'typeorm';
 
-import { Log } from './Log';
+import { Game } from '../models/Game';
+import { Log } from '../models/Log';
 
 @Entity()
 @Unique(['email'])
+@Unique(['username'])
 export class User {
 
   public static hashPassword(password: string): Promise<string> {
@@ -34,11 +36,10 @@ export class User {
   @PrimaryColumn('uuid')
   public id: string;
 
-  @IsNotEmpty()
-  @Column({ name: 'first_name' })
+  @Column({ name: 'first_name', nullable: true })
   public firstName: string;
 
-  @Column({ name: 'last_name' })
+  @Column({ name: 'last_name', nullable: true })
   public lastName: string;
 
   @IsNotEmpty()
@@ -50,27 +51,35 @@ export class User {
   @Exclude({ toPlainOnly: true })
   public password: string;
 
-  @Column()
+  @Column({ nullable: true })
   public username: string;
 
-  @Column()
-  public confirmed: boolean;
+  @Column({ name: 'is_confirmed', nullable: true })
+  public isConfirmed: boolean;
 
-  @Column()
+  @Column({ nullable: true })
   public provider: string;
 
-  @Column()
+  @Column({ nullable: true })
   public avatar: string;
 
-  @Column({ name: 'open_game' })
-  public openGame: string; // TODO: Game relation
+  @ManyToOne(type => Game, game => game.playersOnline)
+  @JoinColumn({ name: 'opened_game' })
+  public openedGame: Game;
 
-  @Column({ name: 'current_games' })
-  public currentGames: string; // TODO: Game relation (many to many)
+  @ManyToMany(type => Game, game => game.players)
+  @JoinTable({ name: 'user_current_game_to_game_players' })
+  public currentGames: Game[];
 
+  @ManyToMany(type => Game, game => game.players)
+  @JoinTable({ name: 'user_current_move_to_game_next_players' })
+  public currentMove: Game[];
+
+  @IsNotEmpty()
   @Column({ name: 'games_played' })
   public gamesPlayed: number;
 
+  @IsNotEmpty()
   @Column({ name: 'games_won' })
   public gamesWon: number;
 
@@ -92,6 +101,8 @@ export class User {
   @BeforeInsert()
   public async hashPassword(): Promise<void> {
     this.password = await User.hashPassword(this.password);
+    this.gamesPlayed = 0;
+    this.gamesWon = 0;
   }
 
 }
