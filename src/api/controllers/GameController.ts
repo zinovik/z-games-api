@@ -2,21 +2,31 @@ import {
   Authorized, Body, Delete, Get, JsonController, OnUndefined, Param, Post, Put, Req
 } from 'routing-controllers';
 import {
-  ConnectedSocket, MessageBody, OnConnect, OnDisconnect, OnMessage, SocketController,
-  SocketQueryParam
+  ConnectedSocket, EmitOnSuccess, MessageBody, OnConnect, OnDisconnect, OnMessage, SocketController,
+  SocketIO, SocketQueryParam
 } from 'socket-controllers';
+import { Container } from 'typedi';
 
+import { AuthService } from '../../auth/AuthService';
 import { GameNotFoundError } from '../errors/GameNotFoundError';
 import { Game } from '../models/Game';
+import { Log } from '../models/Log';
 import { GameService } from '../services/GameService';
+import { LogService } from '../services/LogService';
 
 @JsonController('/games')
 @SocketController()
 export class GameController {
 
-  constructor(
-    private gameService: GameService
-  ) { }
+  private gameService: GameService;
+  private authService: AuthService;
+  private logService: LogService;
+
+  constructor() {
+    this.gameService = Container.get(GameService);
+    this.authService = Container.get(AuthService);
+    this.logService = Container.get(LogService);
+  }
 
   @Get()
   @Authorized()
@@ -66,9 +76,28 @@ export class GameController {
   }
 
   @OnMessage('new-game')
-  public newGame(@MessageBody() name: string): void {
-    console.log(3, name);
-    const ret = this.gameService.newGame(name);
-    console.log(ret);
+  public async newGame(@MessageBody() name: string, @SocketIO() io: any, @SocketQueryParam('token') token: string): Promise<void> {
+    const user = await this.authService.verifyAndDecodeJwt(token);
+
+    if (!user) {
+      return;
+    }
+
+    const game = await this.gameService.newGame(name);
+
+    const log = new Log();
+    log.userId = user.id;
+    log.gameId = game.id;
+    log.type = 'create';
+    await this.logService.create(log);
+
+    io.emit('new-game', game);
+  }
+
+  @OnMessage('get-all-games')
+  @EmitOnSuccess('all-games')
+  public async getAllGames(@MessageBody() name: string, @SocketIO() io: any): Promise<Game[]> {
+    const allGames = await this.gameService.getAllGames();
+    return allGames;
   }
 }

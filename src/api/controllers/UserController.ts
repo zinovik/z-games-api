@@ -4,6 +4,7 @@ import {
 import {
   ConnectedSocket, OnConnect, OnDisconnect, SocketController, SocketQueryParam
 } from 'socket-controllers';
+import { Container } from 'typedi';
 
 import { UserNotFoundError } from '../errors/UserNotFoundError';
 import { User } from '../models/User';
@@ -13,9 +14,11 @@ import { UserService } from '../services/UserService';
 @SocketController()
 export class UserController {
 
-  constructor(
-    private userService: UserService
-  ) { }
+  private userService: UserService;
+
+  constructor() {
+    this.userService = Container.get(UserService);
+  }
 
   @Get()
   @Authorized()
@@ -74,12 +77,12 @@ export class UserController {
   }
 
   @OnConnect()
-  connection(@ConnectedSocket() socket: any, @SocketQueryParam('token') token: string) {
+  public async connection(@ConnectedSocket() socket: any, @SocketQueryParam('token') token: string) {
     console.log(1, 'UserController', token);
   }
 
   @OnDisconnect()
-  disconnect(@ConnectedSocket() socket: any, @SocketQueryParam('token') token: string) {
+  public async disconnect(@ConnectedSocket() socket: any, @SocketQueryParam('token') token: string) {
     console.log(token);
   }
 

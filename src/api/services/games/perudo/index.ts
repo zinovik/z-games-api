@@ -1,3 +1,6 @@
+import { Service } from 'typedi';
+
+@Service()
 export class Perudo {
   private _PLAYER_DICES_COUNT = 5;
   private _DICE_MAX_FIGURE = 6;
