@@ -31,7 +31,7 @@ export class Game {
 
   @IsNotEmpty()
   @Column({ name: 'game_info' })
-  public gameInfo: string;
+  public gameData: string;
 
   @Column({ name: 'is_private' })
   public isPrivate: boolean;
@@ -63,7 +63,7 @@ export class Game {
   }
 
   @BeforeInsert()
-  public async hashPassword(): Promise<void> {
+  public async setState(): Promise<void> {
     this.state = 0;
   }
 

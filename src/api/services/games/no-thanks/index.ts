@@ -1,36 +1,53 @@
-export class NoThanks {
-  private _MIN_NUMBER = 3;
-  private _MAX_NUMBER = 3;
-  private _START_CHIPS_COUTN = 11;
-  private _EXCESS_CARDS_NUMBER = 9;
+import { Service } from 'typedi';
 
-  private _PLAYERS_MIN = 1;
-  private _PLAYERS_MAX = 5;
+const PLAYERS_MIN = 1; // TODO: 3
+const PLAYERS_MAX = 5;
+
+const MIN_NUMBER = 3;
+const MAX_NUMBER = 35;
+const START_CHIPS_COUNT = 11;
+const EXCESS_CARDS_NUMBER = 9;
+
+interface GameData {
+  cards: number[];
+  currentCard: number;
+  currentCardCost: number;
+  cardsLeft: number;
+}
+
+@Service()
+export class NoThanks {
   private _started = false;
   private _finished = false;
   private _players = [];
   private _nextPlayerNumber = 0;
   private _currentCard = 0;
   private _currentCardCost = 0;
-  private _cardsLeft = this._MAX_NUMBER - this._EXCESS_CARDS_NUMBER;
+  private _cardsLeft = MAX_NUMBER - EXCESS_CARDS_NUMBER;
   private _cards = [];
 
   constructor() {
-    this._MIN_NUMBER = 3;
-    this._MAX_NUMBER = 35;
-    this._START_CHIPS_COUTN = 11;
-    this._EXCESS_CARDS_NUMBER = 9;
-
-    this._PLAYERS_MIN = 1; // TODO: 3
-    this._PLAYERS_MAX = 5;
     this._started = false;
     this._finished = false;
     this._players = [];
     this._nextPlayerNumber = 0;
     this._currentCard = 0;
     this._currentCardCost = 0;
-    this._cardsLeft = this._MAX_NUMBER - this._EXCESS_CARDS_NUMBER;
+    this._cardsLeft = MAX_NUMBER - EXCESS_CARDS_NUMBER;
     this._cards = [];
+  }
+
+  getNewGame(): { playersMax: number, playersMin: number, gameData: GameData } {
+    return {
+      playersMax: PLAYERS_MAX,
+      playersMin: PLAYERS_MIN,
+      gameData: {
+        cards: [],
+        currentCard: 0,
+        currentCardCost: 0,
+        cardsLeft: 0,
+      },
+    };
   }
 
   getRules() {
@@ -54,17 +71,17 @@ export class NoThanks {
     for (let i = 0; i < playersNumber; i++) {
       this._players.push({
         cards: [],
-        chips: this._START_CHIPS_COUTN,
-        points: -this._START_CHIPS_COUTN,
+        chips: START_CHIPS_COUNT,
+        points: -START_CHIPS_COUNT,
         place: 0,
       });
     }
 
-    for (let i = this._MIN_NUMBER; i <= this._MAX_NUMBER; i++) {
+    for (let i = MIN_NUMBER; i <= MAX_NUMBER; i++) {
       this._cards.push(i);
     }
 
-    for (let i = 0; i < this._EXCESS_CARDS_NUMBER; i++) {
+    for (let i = 0; i < EXCESS_CARDS_NUMBER; i++) {
       this._cards.splice(Math.floor(Math.random() * this._cards.length), 1);
     }
 
@@ -84,7 +101,7 @@ export class NoThanks {
 
     if (move.takeCard) {
       this._players[this._nextPlayerNumber].cards.push(this._currentCard);
-      this._players[this._nextPlayerNumber].cards.sort((a, b) => (a - b));
+      this._players[this._nextPlayerNumber].cards.sort((a, b) => a - b);
 
       this._players[this._nextPlayerNumber].chips += this._currentCardCost;
       this._nextCard();
@@ -114,8 +131,8 @@ export class NoThanks {
 
   getCommonGameInfo() {
     return {
-      PLAYERS_MIN: this._PLAYERS_MIN,
-      PLAYERS_MAX: this._PLAYERS_MAX,
+      PLAYERS_MIN,
+      PLAYERS_MAX,
       started: this._started,
       finished: this._finished,
       nextPlayers: [this._nextPlayerNumber],
@@ -124,8 +141,8 @@ export class NoThanks {
 
   getGameInfo(userNumber) {
     const gameInfo = {
-      PLAYERS_MIN: this._PLAYERS_MIN,
-      PLAYERS_MAX: this._PLAYERS_MAX,
+      PLAYERS_MIN,
+      PLAYERS_MAX,
       started: this._started,
       finished: this._finished,
       nextPlayers: [this._nextPlayerNumber],

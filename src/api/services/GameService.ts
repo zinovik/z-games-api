@@ -1,22 +1,32 @@
-import { Service } from 'typedi';
+import { Container, Service } from 'typedi';
 import { OrmRepository } from 'typeorm-typedi-extensions';
 import uuid from 'uuid';
 
 import { Logger, LoggerInterface } from '../../decorators/Logger';
+import { WrongGameName } from '../errors/WrongGameName';
 import { Game } from '../models/Game';
 import { GameRepository } from '../repositories/GameRepository';
+import { NoThanks } from '../services/games/no-thanks';
+
+// import { Perudo } from '../services/games/perudo';
 
 @Service()
 export class GameService {
 
+  private noThanks: NoThanks;
+  // private perudo: Perudo;
+
   constructor(
     @OrmRepository() private gameRepository: GameRepository,
     @Logger(__filename) private log: LoggerInterface
-  ) { }
+  ) {
+    this.noThanks = Container.get(NoThanks);
+    // this.perudo = Container.get(Perudo);
+  }
 
   public find(): Promise<Game[]> {
     this.log.info('Find all games');
-    return this.gameRepository.find({ relations: ['logs'] });
+    return this.gameRepository.find();
   }
 
   public findOne(id: string): Promise<Game | undefined> {
@@ -43,10 +53,49 @@ export class GameService {
     return;
   }
 
-  public newGame(name: string): boolean {
-    this.log.info(name);
-    console.log(4, name);
-    return true;
+  public async getAllGames(): Promise<Game[]> {
+    return this.gameRepository.find({
+      select: [
+        'id',
+        'name',
+        'state',
+        'playersMax',
+        'playersMin',
+        'createdAt',
+      ],
+      relations: ['players'],
+      where: { isPrivate: false },
+    });
+  }
+
+  public async newGame(name: string): Promise<Game> {
+    this.log.info(`New ${name} game`);
+
+    const game = new Game();
+    game.name = name;
+    game.isPrivate = false;
+
+    let currentGameService;
+
+    switch (name) {
+      case 'No, Thanks!':
+        currentGameService = this.noThanks;
+        break;
+      case 'Perudo': {
+        // currentGameService = this.perudo;
+        break;
+      }
+      default:
+        throw new WrongGameName();
+    }
+
+    const { playersMax, playersMin, gameData } = currentGameService.getNewGame();
+
+    game.playersMax = playersMax;
+    game.playersMin = playersMin;
+    game.gameData = JSON.stringify(gameData);
+
+    return await this.create(game);
   }
 
 }

@@ -14,16 +14,15 @@ export class Log {
   @Column()
   public type: string;
 
-  @IsNotEmpty()
-  @Column()
+  @Column({ nullable: true })
   public text: string;
 
   @IsNotEmpty()
-  @Column({ name: 'game_id', nullable: false })
+  @Column({ name: 'game_id' })
   public gameId: string;
 
   @IsNotEmpty()
-  @Column({ name: 'user_id', nullable: false })
+  @Column({ name: 'user_id' })
   public userId: string;
 
   @IsNotEmpty()
