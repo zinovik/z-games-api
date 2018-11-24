@@ -8,7 +8,7 @@ const MAX_NUMBER = 35;
 const START_CHIPS_COUNT = 11;
 const EXCESS_CARDS_NUMBER = 9;
 
-interface GameData {
+export interface NoThanksData {
   cards: number[];
   currentCard: number;
   currentCardCost: number;
@@ -37,7 +37,7 @@ export class NoThanks {
     this._cards = [];
   }
 
-  getNewGame(): { playersMax: number, playersMin: number, gameData: GameData } {
+  getNewGame(): { playersMax: number, playersMin: number, gameData: NoThanksData } {
     return {
       playersMax: PLAYERS_MAX,
       playersMin: PLAYERS_MIN,

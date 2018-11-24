@@ -2,8 +2,8 @@ import * as bcrypt from 'bcrypt';
 import { Exclude } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import {
-  BeforeInsert, Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne,
-  OneToMany, PrimaryColumn, Unique, UpdateDateColumn
+  BeforeInsert, Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany,
+  PrimaryColumn, Unique, UpdateDateColumn
 } from 'typeorm';
 
 import { Game } from '../models/Game';
@@ -68,11 +68,12 @@ export class User {
   public openedGame: Game;
 
   @ManyToMany(type => Game, game => game.players)
-  @JoinTable({ name: 'user_current_game_to_game_players' })
   public currentGames: Game[];
 
-  @ManyToMany(type => Game, game => game.players)
-  @JoinTable({ name: 'user_current_move_to_game_next_players' })
+  @ManyToMany(type => Game, game => game.watchers)
+  public currentWatch: Game[];
+
+  @ManyToMany(type => Game, game => game.nextPlayers)
   public currentMove: Game[];
 
   @IsNotEmpty()
