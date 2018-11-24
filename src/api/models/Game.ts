@@ -1,7 +1,7 @@
 import { IsNotEmpty } from 'class-validator';
 import {
-  BeforeInsert, Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToMany, PrimaryColumn,
-  PrimaryGeneratedColumn, Unique, UpdateDateColumn
+    BeforeInsert, Column, CreateDateColumn, Entity, Generated, JoinTable, ManyToMany, OneToMany,
+    PrimaryColumn, Unique, UpdateDateColumn
 } from 'typeorm';
 
 import { Log } from '../models/Log';
@@ -14,7 +14,8 @@ export class Game {
   @PrimaryColumn('uuid')
   public id: string;
 
-  @PrimaryGeneratedColumn()
+  @Column()
+  @Generated('increment')
   public number: number;
 
   @IsNotEmpty()

@@ -33,16 +33,17 @@ export class AuthService {
   }
 
   public async verifyAndDecodeJwt(token: string): Promise<User> {
-    const email = this.jwtService.verifyAndDecodeToken(token);
+    const username = this.jwtService.verifyAndDecodeToken(token);
 
-    if (!email) {
+    if (!username) {
       return undefined;
     }
 
     const user = await this.userRepository.findOne({
       where: {
-        email,
+        username,
       },
+      relations: ['openedGame'],
     });
 
     return user;

@@ -29,18 +29,6 @@ export class GamesServer {
     this._nextGameNumber = 0;
   }
 
-  userOnline(user, socket) {
-    this._usersOnline[user.email] = {
-      socket,
-      currentGames: user.currentGames,
-      openGameNumber: user.openGameNumber,
-    };
-  }
-
-  userOffline(user) {
-    delete this._usersOnline[user.email];
-  }
-
   _updateGamedata(gameNumber) {
     if (!gameNumber && gameNumber !== 0) {
       return;

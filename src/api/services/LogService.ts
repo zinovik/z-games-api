@@ -32,29 +32,22 @@ export class LogService {
     });
   }
 
-  public findOne(id: string): Promise<Log | undefined> {
-    this.log.info('Find all logs');
-    return this.logRepository.findOne({ id });
-  }
+  public async create({ type, userId, gameId, text }: { type: string, userId: string, gameId: string, text?: string }): Promise<Log> {
+    this.log.info('Create a new log => ', type, text);
 
-  public async create(log: Log): Promise<Log> {
-    this.log.info('Create a new log => ', log.toString());
+    const log = new Log();
+
+    log.type = type;
+    log.userId = userId;
+    log.gameId = gameId;
+    log.text = text;
     log.id = uuid.v1();
+
     const newLog = await this.logRepository.save(log);
+
     this.eventDispatcher.dispatch(events.log.created, newLog);
+
     return newLog;
-  }
-
-  public update(id: string, log: Log): Promise<Log> {
-    this.log.info('Update a log');
-    log.id = id;
-    return this.logRepository.save(log);
-  }
-
-  public async delete(id: string): Promise<void> {
-    this.log.info('Delete a log');
-    await this.logRepository.delete(id);
-    return;
   }
 
 }

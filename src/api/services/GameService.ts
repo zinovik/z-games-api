@@ -57,6 +57,7 @@ export class GameService {
     return this.gameRepository.find({
       select: [
         'id',
+        'number',
         'name',
         'state',
         'playersMax',
@@ -93,19 +94,111 @@ export class GameService {
 
     game.playersMax = playersMax;
     game.playersMin = playersMin;
+    game.players = [];
     game.gameData = JSON.stringify(gameData);
 
     return await this.create(game);
   }
 
-  public async joinGame({ user, gameId }: { user: User, gameId: string }): Promise<Game> {
-    const game = await this.gameRepository.findOne({ id: gameId }, { relations: ['players'] });
+  public async joinGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
+    const game = await this.gameRepository.findOne({ number: gameNumber }, { relations: ['players', 'playersOnline'] });
 
-    if (game.state || game.players.length >= game.playersMax || game.players.some(player => player.id === user.id)) {
+    if (game.state) {
+      throw new Error(); // TODO
+    }
+
+    if (game.players.length >= game.playersMax) {
+      throw new Error(); // TODO
+    }
+
+    if (game.players.some(player => player.id === user.id)) {
+      throw new Error(); // TODO
+    }
+
+    if (game.playersOnline.some(playerOnline => playerOnline.id === user.id)) {
       throw new Error(); // TODO
     }
 
     game.players.push(user);
+    game.playersOnline.push(user);
+
+    return this.gameRepository.save(game);
+  }
+
+  public async openGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
+    const game = await this.gameRepository.findOne({ number: gameNumber }, { relations: ['players', 'playersOnline'] });
+
+    if (!game.players.some(player => player.id === user.id)) {
+      throw new Error(); // TODO
+    }
+
+    if (game.playersOnline.some(playerOnline => playerOnline.id === user.id)) {
+      throw new Error(); // TODO
+    }
+
+    game.playersOnline.push(user);
+
+    return this.gameRepository.save(game);
+  }
+
+  public async watchGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
+    const game = await this.gameRepository.findOne({ number: gameNumber }, { relations: ['players', 'watchers'] });
+
+    if (!game.state) {
+      throw new Error(); // TODO
+    }
+
+    if (!game.players.some(player => player.id === user.id)) {
+      throw new Error(); // TODO
+    }
+
+    if (!game.watchers.some(watcher => watcher.id === user.id)) {
+      throw new Error(); // TODO
+    }
+
+    game.watchers.push(user);
+
+    return this.gameRepository.save(game);
+  }
+
+  public async leaveGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
+    const game = await this.gameRepository.findOne({ number: gameNumber }, { relations: ['players', 'playersOnline'] });
+
+    if (game.state === 1) {
+      throw new Error(); // TODO
+    }
+
+    if (!game.players.some(player => player.id === user.id)) {
+      throw new Error(); // TODO
+    }
+
+    game.players = game.players.filter(player => player.id !== user.id);
+    game.playersOnline = game.players.filter(player => player.id !== user.id);
+
+    return this.gameRepository.save(game);
+  }
+
+  public async closeGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
+    const game = await this.gameRepository.findOne({ number: gameNumber }, { relations: ['players', 'watchers', 'playersOnline'] });
+
+    if (game.state === 1) {
+      throw new Error(); // TODO
+    }
+
+    const isUserInPlayers = game.players.some(player => player.id === user.id);
+    const isUserInWatchers = game.watchers.some(player => player.id === user.id);
+
+    if (!isUserInPlayers && !isUserInWatchers) {
+      throw new Error(); // TODO
+    }
+
+    if (isUserInWatchers) {
+      game.watchers = game.watchers.filter(watcher => watcher.id !== user.id);
+    }
+
+    if (isUserInPlayers) {
+      game.playersOnline = game.players.filter(player => player.id !== user.id);
+    }
 
     return this.gameRepository.save(game);
   }
