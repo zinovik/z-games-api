@@ -1,17 +1,21 @@
 import { IsNotEmpty } from 'class-validator';
 import {
   BeforeInsert, Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToMany, PrimaryColumn,
-  UpdateDateColumn
+  PrimaryGeneratedColumn, Unique, UpdateDateColumn
 } from 'typeorm';
 
 import { Log } from '../models/Log';
 import { User } from '../models/User';
 
 @Entity()
+@Unique(['number'])
 export class Game {
 
   @PrimaryColumn('uuid')
   public id: string;
+
+  @PrimaryGeneratedColumn()
+  public number: number;
 
   @IsNotEmpty()
   @Column()
@@ -33,17 +37,22 @@ export class Game {
   @Column({ name: 'game_info' })
   public gameData: string;
 
+  @IsNotEmpty()
   @Column({ name: 'is_private' })
   public isPrivate: boolean;
 
   @OneToMany(type => User, user => user.openedGame)
   public playersOnline: User[];
 
-  @ManyToMany(type => User, user => user.currentGames)
+  @ManyToMany(type => User, user => user.currentGames, { cascade: true })
   @JoinTable({ name: 'user_current_game_to_game_players' })
   public players: User[];
 
-  @ManyToMany(type => User, user => user.currentGames)
+  @ManyToMany(type => User, user => user.currentWatch, { cascade: true })
+  @JoinTable({ name: 'user_current_watch_to_game_watchers' })
+  public watchers: User[];
+
+  @ManyToMany(type => User, user => user.currentMove, { cascade: true })
   @JoinTable({ name: 'user_current_move_to_game_next_players' })
   public nextPlayers: User[];
 

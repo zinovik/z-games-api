@@ -3,7 +3,7 @@ import * as path from 'path';
 
 import * as pkg from '../package.json';
 import {
-    getOsEnv, getOsEnvOptional, getOsPath, getOsPaths, normalizePort, toBool, toNumber
+  getOsEnv, getOsEnvOptional, getOsPath, getOsPaths, normalizePort, toBool, toNumber
 } from './lib/env';
 
 /**
@@ -54,7 +54,7 @@ export const env = {
     password: getOsEnvOptional('TYPEORM_PASSWORD'),
     database: getOsEnv('TYPEORM_DATABASE'),
     synchronize: toBool(getOsEnvOptional('TYPEORM_SYNCHRONIZE')),
-    logging: toBool(getOsEnv('TYPEORM_LOGGING')),
+    logging: getOsEnv('TYPEORM_LOGGING'),
   },
   graphql: {
     enabled: toBool(getOsEnv('GRAPHQL_ENABLED')),

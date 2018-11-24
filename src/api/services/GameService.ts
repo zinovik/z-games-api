@@ -5,23 +5,23 @@ import uuid from 'uuid';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import { WrongGameName } from '../errors/WrongGameName';
 import { Game } from '../models/Game';
+import { User } from '../models/User';
 import { GameRepository } from '../repositories/GameRepository';
 import { NoThanks } from '../services/games/no-thanks';
-
-// import { Perudo } from '../services/games/perudo';
+import { Perudo } from '../services/games/perudo';
 
 @Service()
 export class GameService {
 
   private noThanks: NoThanks;
-  // private perudo: Perudo;
+  private perudo: Perudo;
 
   constructor(
     @OrmRepository() private gameRepository: GameRepository,
     @Logger(__filename) private log: LoggerInterface
   ) {
     this.noThanks = Container.get(NoThanks);
-    // this.perudo = Container.get(Perudo);
+    this.perudo = Container.get(Perudo);
   }
 
   public find(): Promise<Game[]> {
@@ -82,7 +82,7 @@ export class GameService {
         currentGameService = this.noThanks;
         break;
       case 'Perudo': {
-        // currentGameService = this.perudo;
+        currentGameService = this.perudo;
         break;
       }
       default:
@@ -96,6 +96,18 @@ export class GameService {
     game.gameData = JSON.stringify(gameData);
 
     return await this.create(game);
+  }
+
+  public async joinGame({ user, gameId }: { user: User, gameId: string }): Promise<Game> {
+    const game = await this.gameRepository.findOne({ id: gameId }, { relations: ['players'] });
+
+    if (game.state || game.players.length >= game.playersMax || game.players.some(player => player.id === user.id)) {
+      throw new Error(); // TODO
+    }
+
+    game.players.push(user);
+
+    return this.gameRepository.save(game);
   }
 
 }

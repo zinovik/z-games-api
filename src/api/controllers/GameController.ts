@@ -96,8 +96,33 @@ export class GameController {
 
   @OnMessage('get-all-games')
   @EmitOnSuccess('all-games')
-  public async getAllGames(@MessageBody() name: string, @SocketIO() io: any): Promise<Game[]> {
-    const allGames = await this.gameService.getAllGames();
-    return allGames;
+  public async getAllGames(): Promise<Game[]> {
+    return await this.gameService.getAllGames();
+  }
+
+  @OnMessage('join-game')
+  public async joinGame(
+    @ConnectedSocket() socket: any,
+    @MessageBody() gameId: string,
+    @SocketIO() io: any,
+    @SocketQueryParam('token') token: string
+  ): Promise<void> {
+    const user = await this.authService.verifyAndDecodeJwt(token);
+
+    if (!user) {
+      throw new Error(); // TODO
+    }
+    const game = await this.gameService.joinGame({ user, gameId });
+
+    io.emit('update-game', game);
+
+    const log = new Log();
+    log.userId = user.id;
+    log.gameId = game.id;
+    log.type = 'join';
+    await this.logService.create(log);
+
+    socket.join(game.id);
+    io.to(game.id).emit('update-open-game', game);
   }
 }
