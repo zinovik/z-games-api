@@ -40,7 +40,7 @@ export class Log {
   public user: User;
 
   public toString(): string {
-    return `${this.text}`;
+    return `${this.type}`;
   }
 
 }

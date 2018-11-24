@@ -22,9 +22,9 @@ export class JwtService {
     try {
       const jwtDecoded = jwt.verify(token, env.app.jwtSecret);
 
-      this.log.info(`Token successfully decoded: ${(jwtDecoded as any).email}`);
+      this.log.info(`Token successfully decoded: ${(jwtDecoded as any).username}`);
 
-      return (jwtDecoded as any).email;
+      return (jwtDecoded as any).username;
     } catch (err) {
       this.log.warn(`Error verifying token: ${err.name}`);
       return undefined;

@@ -51,10 +51,10 @@ export class UserService {
     return;
   }
 
-  public async authorize({ email, password }: { email: string, password: string }): Promise<string> {
+  public async authorize({ username, password }: { username: string, password: string }): Promise<{ user: User, token: string }> {
     this.log.info('Authorize a user');
 
-    const user = await this.findOne(email);
+    const user = await this.userRepository.findOne({ username });
 
     if (!user) {
       throw new UserNotFoundError();
@@ -64,9 +64,9 @@ export class UserService {
       throw new WrongPasswordError();
     }
 
-    const token = this.jwtService.generateToken({ email }, '7 days');
+    const token = this.jwtService.generateToken({ username }, '7 days');
 
-    return token;
+    return { user, token };
   }
 
 }
