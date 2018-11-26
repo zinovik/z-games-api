@@ -33,7 +33,7 @@ export class LogService {
   }
 
   public async create({ type, userId, gameId, text }: { type: string, userId: string, gameId: string, text?: string }): Promise<Log> {
-    this.log.info('Create a new log => ', type, text);
+    this.log.info('Create a new log => ', type, userId, gameId, text);
 
     const log = new Log();
 

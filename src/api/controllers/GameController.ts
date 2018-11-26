@@ -116,119 +116,193 @@ export class GameController {
     return await this.gameService.getAllGames();
   }
 
+  @OnMessage('get-opened-game')
+  @EmitOnSuccess('update-opened-game')
+  public async getOpenedGame(
+    @SocketQueryParam('token') token: string,
+    @ConnectedSocket() socket: any
+  ): Promise<Game> {
+    const user = await this.authService.verifyAndDecodeJwt(token);
+
+    if (!user) {
+      throw new Error(); // TODO
+    }
+
+    socket.join(user.openedGame.id);
+    return user.openedGame;
+  }
+
   @OnMessage('join-game')
   public async joinGame(
-    @ConnectedSocket() socket: any,
-    @MessageBody() gameNumber: number,
+    @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
-    @SocketQueryParam('token') token: string
+    @ConnectedSocket() socket: any,
+    @MessageBody() gameNumber: number
   ): Promise<void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
       throw new Error(); // TODO
     }
+
     const game = await this.gameService.joinGame({ user, gameNumber });
 
     io.emit('update-game', game);
 
-    await this.logService.create({ type: 'join', userId: user.id, gameId: game.id });
+    const log = await this.logService.create({ type: 'join', userId: user.id, gameId: game.id });
+    game.logs.push(log);
 
     socket.join(game.id);
-    io.to(game.id).emit('update-open-game', game);
+    io.to(game.id).emit('update-opened-game', game);
   }
 
   @OnMessage('open-game')
   public async openGame(
-    @ConnectedSocket() socket: any,
-    @MessageBody() gameNumber: number,
+    @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
-    @SocketQueryParam('token') token: string
+    @ConnectedSocket() socket: any,
+    @MessageBody() gameNumber: number
   ): Promise<void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
       throw new Error(); // TODO
     }
+
     const game = await this.gameService.openGame({ user, gameNumber });
 
     io.emit('update-game', game);
 
-    await this.logService.create({ type: 'open', userId: user.id, gameId: game.id });
+    const log = await this.logService.create({ type: 'open', userId: user.id, gameId: game.id });
+    game.logs.push(log);
 
     socket.join(game.id);
-    io.to(game.id).emit('update-open-game', game);
+    io.to(game.id).emit('update-opened-game', game);
   }
 
   @OnMessage('watch-game')
   public async watchGame(
-    @ConnectedSocket() socket: any,
-    @MessageBody() gameNumber: number,
+    @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
-    @SocketQueryParam('token') token: string
+    @ConnectedSocket() socket: any,
+    @MessageBody() gameNumber: number
   ): Promise<void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
       throw new Error(); // TODO
     }
+
     const game = await this.gameService.watchGame({ user, gameNumber });
 
     io.emit('update-game', game);
 
-    await this.logService.create({ type: 'watch', userId: user.id, gameId: game.id });
+    const log = await this.logService.create({ type: 'watch', userId: user.id, gameId: game.id });
+    game.logs.push(log);
 
     socket.join(game.id);
-    io.to(game.id).emit('update-open-game', game);
+    io.to(game.id).emit('update-opened-game', game);
   }
 
   @OnMessage('leave-game')
-  @EmitOnSuccess('update-open-game')
+  @EmitOnSuccess('update-opened-game')
   public async leaveGame(
-    @ConnectedSocket() socket: any,
-    @MessageBody() gameNumber: number,
+    @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
-    @SocketQueryParam('token') token: string
+    @ConnectedSocket() socket: any,
+    @MessageBody() gameNumber: number
   ): Promise<undefined> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
       throw new Error(); // TODO
     }
+
     const game = await this.gameService.leaveGame({ user, gameNumber });
 
     io.emit('update-game', game);
 
-    await this.logService.create({ type: 'leave', userId: user.id, gameId: game.id });
+    const log = await this.logService.create({ type: 'leave', userId: user.id, gameId: game.id });
+    game.logs.push(log);
 
     socket.leave(game.id);
-    io.to(game.id).emit('update-open-game', game);
+    io.to(game.id).emit('update-opened-game', game);
 
     return undefined;
   }
 
   @OnMessage('close-game')
-  @EmitOnSuccess('update-open-game')
+  @EmitOnSuccess('update-opened-game')
   public async closeGame(
-    @ConnectedSocket() socket: any,
-    @MessageBody() gameNumber: number,
+    @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
-    @SocketQueryParam('token') token: string
-  ): Promise<undefined> {
+    @ConnectedSocket() socket: any,
+    @MessageBody() gameNumber: number
+  ): Promise<void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
       throw new Error(); // TODO
     }
+
     const game = await this.gameService.closeGame({ user, gameNumber });
 
     io.emit('update-game', game);
 
-    await this.logService.create({ type: 'create', userId: user.id, gameId: game.id });
+    const log = await this.logService.create({ type: 'close', userId: user.id, gameId: game.id });
+    game.logs.push(log);
 
     socket.leave(game.id);
-    io.to(game.id).emit('update-open-game', game);
+    io.to(game.id).emit('update-opened-game', game);
 
     return undefined;
   }
+
+  @OnMessage('ready-to-game')
+  public async readyToGame(
+    @SocketQueryParam('token') token: string,
+    @SocketIO() io: any,
+    @MessageBody() gameNumber: number
+  ): Promise<void> {
+    const user = await this.authService.verifyAndDecodeJwt(token);
+
+    if (!user) {
+      throw new Error(); // TODO
+    }
+
+    const game = await this.gameService.readyToGame({ user, gameNumber });
+
+    const log = await this.logService.create({ type: 'ready', userId: user.id, gameId: game.id });
+    game.logs.push(log);
+
+    io.to(game.id).emit('update-opened-game', game);
+  }
+
+  @OnMessage('start-game')
+  public async startGame(
+    @SocketQueryParam('token') token: string,
+    @SocketIO() io: any,
+    @MessageBody() gameNumber: number
+  ): Promise<void> {
+    const user = await this.authService.verifyAndDecodeJwt(token);
+
+    if (!user) {
+      throw new Error(); // TODO
+    }
+
+    const game = await this.gameService.startGame({ gameNumber });
+
+    const log = await this.logService.create({ type: 'start', userId: user.id, gameId: game.id });
+    game.logs.push(log);
+
+    io.to(game.id).emit('update-opened-game', game);
+  }
 }
+
+// TODO: move token check into separate decorator
+// TODO: Add and check error conditions, add errors
+// social login
+// check current user move
+// tests
+// bots
+// game modules

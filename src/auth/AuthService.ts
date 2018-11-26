@@ -43,7 +43,7 @@ export class AuthService {
       where: {
         username,
       },
-      relations: ['openedGame'],
+      relations: ['openedGame', 'openedGame.players', 'openedGame.logs'],
     });
 
     return user;

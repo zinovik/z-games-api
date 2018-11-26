@@ -1,5 +1,5 @@
 import {
-  Authorized, Body, Delete, Get, JsonController, OnUndefined, Param, Post, Put, Req, Res
+  Authorized, Body, Get, JsonController, OnUndefined, Param, Post, Put, Req, Res
 } from 'routing-controllers';
 import { EmitOnSuccess, OnMessage, SocketController, SocketQueryParam } from 'socket-controllers';
 import { Container } from 'typedi';
@@ -50,12 +50,6 @@ export class UserController {
   @Authorized()
   public update(@Param('id') id: string, @Body() user: User): Promise<User> {
     return this.userService.update(id, user);
-  }
-
-  @Authorized()
-  @Delete('/:id')
-  public delete(@Param('id') id: string): Promise<void> {
-    return this.userService.delete(id);
   }
 
   @Post('/register')
