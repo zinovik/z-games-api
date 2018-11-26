@@ -13,7 +13,7 @@ define(Game, (faker: typeof Faker) => {
   game.playersMax = 10;
   game.playersMin = 2;
   game.id = uuid.v1();
-  game.gameData = JSON.stringify({});
+  game.gameData = JSON.stringify({ players: {} });
   game.isPrivate = false;
 
   return game;

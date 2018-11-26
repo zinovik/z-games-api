@@ -13,6 +13,7 @@ export interface NoThanksData {
   currentCard: number;
   currentCardCost: number;
   cardsLeft: number;
+  players: any;
 }
 
 @Service()
@@ -37,17 +38,48 @@ export class NoThanks {
     this._cards = [];
   }
 
-  getNewGame(): { playersMax: number, playersMin: number, gameData: NoThanksData } {
+  getNewGame(): { playersMax: number, playersMin: number, gameData: string } {
+    const gameData: NoThanksData = {
+      cards: [],
+      cardsLeft: 0,
+      currentCard: 0,
+      currentCardCost: 0,
+      players: {},
+    };
+
     return {
       playersMax: PLAYERS_MAX,
       playersMin: PLAYERS_MIN,
-      gameData: {
-        cards: [],
-        currentCard: 0,
-        currentCardCost: 0,
-        cardsLeft: 0,
-      },
+      gameData: JSON.stringify(gameData),
     };
+  }
+
+  startGame(gameData: string): { gameData: string, nextPlayerId: string } {
+    const { cards, cardsLeft, players } = JSON.parse(gameData);
+
+    Object.keys(players).forEach(username => {
+      players[username] = {
+        cards: [],
+        chips: START_CHIPS_COUNT,
+        point: -START_CHIPS_COUNT,
+        place: 0,
+      };
+    });
+
+    for (let i = MIN_NUMBER; i <= MAX_NUMBER; i++) {
+      cards.push(i);
+    }
+
+    for (let i = 0; i < EXCESS_CARDS_NUMBER; i++) {
+      cards.splice(Math.floor(Math.random() * cards.length), 1);
+    }
+
+    const [currentCard] = cards.splice(Math.floor(Math.random() * cards.length), 1);
+    const currentCardCost = 0;
+
+    const nextPlayerId = Object.keys(players)[Math.floor(Math.random() * Object.keys(players).length)];
+
+    return { gameData: JSON.stringify({ cards, cardsLeft, currentCard, currentCardCost, players }), nextPlayerId };
   }
 
   getRules() {

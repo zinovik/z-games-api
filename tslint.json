@@ -1,5 +1,10 @@
 {
   "extends": "tslint:recommended",
+  "linterOptions": {
+    "exclude": [
+      "src/database/migrations/*.*"
+    ]
+  },
   "rules": {
     "max-line-length": [
       true,

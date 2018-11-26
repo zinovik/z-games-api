@@ -1,5 +1,12 @@
 import { Service } from 'typedi';
 
+const PLAYERS_MIN = 2;
+const PLAYERS_MAX = 10;
+
+export interface PerudoData {
+  players: any;
+}
+
 @Service()
 export class Perudo {
   private _PLAYER_DICES_COUNT = 5;
@@ -34,6 +41,36 @@ export class Perudo {
     this._currentDiceFigure = 0;
     this._currentDiceNumber = 0;
     this._lastRoundResults = {};
+  }
+
+  getNewGame(): { playersMax: number, playersMin: number, gameData: string } {
+    const gameData: PerudoData = {
+      players: {},
+    };
+
+    return {
+      playersMax: PLAYERS_MAX,
+      playersMin: PLAYERS_MIN,
+      gameData: JSON.stringify(gameData),
+    };
+  }
+
+  startGame(gameData: string): { gameData: string, nextPlayerId: string } {
+    const { cards, cardsLeft, players } = JSON.parse(gameData);
+
+    Object.keys(players).forEach(username => {
+      players[username] = {
+        cards: [],
+        place: 0,
+      };
+    });
+
+    const [currentCard] = cards.splice(Math.floor(Math.random() * cards.length), 1);
+    const currentCardCost = 0;
+
+    const nextPlayerId = Object.keys(players)[Math.floor(Math.random() * Object.keys(players).length)];
+
+    return { gameData: JSON.stringify({ cards, cardsLeft, currentCard, currentCardCost, players }), nextPlayerId };
   }
 
   getRules() {

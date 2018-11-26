@@ -45,12 +45,6 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  public async delete(id: string): Promise<void> {
-    this.log.info('Delete a user');
-    await this.userRepository.delete(id);
-    return;
-  }
-
   public async authorize({ username, password }: { username: string, password: string }): Promise<{ user: User, token: string }> {
     this.log.info('Authorize a user');
 

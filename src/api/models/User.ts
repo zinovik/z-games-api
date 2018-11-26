@@ -42,8 +42,7 @@ export class User {
   @Column({ name: 'last_name', nullable: true })
   public lastName: string;
 
-  @IsNotEmpty()
-  @Column()
+  @Column({ nullable: true })
   public email: string;
 
   @IsNotEmpty()
