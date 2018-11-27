@@ -12,49 +12,42 @@ import { events } from '../subscribers/events';
 @Service()
 export class LogService {
 
-    constructor(
-        @OrmRepository() private logRepository: LogRepository,
-        @EventDispatcher() private eventDispatcher: EventDispatcherInterface,
-        @Logger(__filename) private log: LoggerInterface
-    ) { }
+  constructor(
+    @OrmRepository() private logRepository: LogRepository,
+    @EventDispatcher() private eventDispatcher: EventDispatcherInterface,
+    @Logger(__filename) private log: LoggerInterface
+  ) { }
 
-    public find(): Promise<Log[]> {
-        this.log.info('Find all logs');
-        return this.logRepository.find();
-    }
+  public find(): Promise<Log[]> {
+    this.log.info('Find all logs');
+    return this.logRepository.find();
+  }
 
-    public findByUser(user: User): Promise<Log[]> {
-        this.log.info('Find all logs of the user', user.toString());
-        return this.logRepository.find({
-            where: {
-                userId: user.id,
-            },
-        });
-    }
+  public findByUser(user: User): Promise<Log[]> {
+    this.log.info('Find all logs of the user', user.toString());
+    return this.logRepository.find({
+      where: {
+        userId: user.id,
+      },
+    });
+  }
 
-    public findOne(id: string): Promise<Log | undefined> {
-        this.log.info('Find all logs');
-        return this.logRepository.findOne({ id });
-    }
+  public async create({ type, userId, gameId, text }: { type: string, userId: string, gameId: string, text?: string }): Promise<Log> {
+    this.log.info('Create a new log => ', type, userId, gameId, text);
 
-    public async create(log: Log): Promise<Log> {
-        this.log.info('Create a new log => ', log.toString());
-        log.id = uuid.v1();
-        const newLog = await this.logRepository.save(log);
-        this.eventDispatcher.dispatch(events.log.created, newLog);
-        return newLog;
-    }
+    const log = new Log();
 
-    public update(id: string, log: Log): Promise<Log> {
-        this.log.info('Update a log');
-        log.id = id;
-        return this.logRepository.save(log);
-    }
+    log.type = type;
+    log.userId = userId;
+    log.gameId = gameId;
+    log.text = text;
+    log.id = uuid.v1();
 
-    public async delete(id: string): Promise<void> {
-        this.log.info('Delete a log');
-        await this.logRepository.delete(id);
-        return;
-    }
+    const newLog = await this.logRepository.save(log);
+
+    this.eventDispatcher.dispatch(events.log.created, newLog);
+
+    return newLog;
+  }
 
 }

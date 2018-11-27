@@ -1,12 +1,12 @@
 import { Factory, Seed } from 'typeorm-seeding';
 import { Connection } from 'typeorm/connection/Connection';
 
-import { User } from '../../../src/api/models/User';
+import { Game } from '../../../src/api/models/Game';
 
-export class CreateUsers implements Seed {
+export class CreateGames implements Seed {
 
   public async seed(factory: Factory, connection: Connection): Promise<any> {
-    await factory(User)().seedMany(10);
+    await factory(Game)().seedMany(10);
   }
 
 }

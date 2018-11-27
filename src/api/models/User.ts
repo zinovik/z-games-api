@@ -1,91 +1,108 @@
 import * as bcrypt from 'bcrypt';
-// import { Exclude } from 'class-transformer';
+import { Exclude } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import {
-    BeforeInsert, Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, Unique,
-    UpdateDateColumn
+  BeforeInsert, Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany,
+  PrimaryColumn, Unique, UpdateDateColumn
 } from 'typeorm';
 
-import { Log } from './Log';
+import { Game } from '../models/Game';
+import { Log } from '../models/Log';
 
 @Entity()
 @Unique(['email'])
+@Unique(['username'])
 export class User {
 
-    public static hashPassword(password: string): Promise<string> {
-        return new Promise((resolve, reject) => {
-            bcrypt.hash(password, 10, (err, hash) => {
-                if (err) {
-                    return reject(err);
-                }
-                resolve(hash);
-            });
-        });
-    }
+  public static hashPassword(password: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      bcrypt.hash(password, 10, (err, hash) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve(hash);
+      });
+    });
+  }
 
-    public static comparePassword(user: User, password: string): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            bcrypt.compare(password, user.password, (err, res) => {
-                resolve(res === true);
-            });
-        });
-    }
+  public static comparePassword(user: User, password: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      bcrypt.compare(password, user.password, (err, res) => {
+        resolve(res === true);
+      });
+    });
+  }
 
-    @PrimaryColumn('uuid')
-    public id: string;
+  @PrimaryColumn('uuid')
+  public id: string;
 
-    @IsNotEmpty()
-    @Column({ name: 'first_name' })
-    public firstName: string;
+  @Column({ name: 'first_name', nullable: true })
+  public firstName: string;
 
-    @Column({ name: 'last_name' })
-    public lastName: string;
+  @Column({ name: 'last_name', nullable: true })
+  public lastName: string;
 
-    @IsNotEmpty()
-    @Column()
-    public email: string;
+  @Column({ nullable: true })
+  public email: string;
 
-    // @Exclude
-    @IsNotEmpty()
-    @Column()
-    public password: string;
+  @IsNotEmpty()
+  @Column()
+  @Exclude({ toPlainOnly: true })
+  public password: string;
 
-    @Column()
-    public username: string;
+  @Column({ nullable: true })
+  public username: string;
 
-    @Column()
-    public confirmed: boolean;
+  @Column({ name: 'is_confirmed', nullable: true })
+  public isConfirmed: boolean;
 
-    @Column()
-    public provider: string;
+  @Column({ nullable: true })
+  public provider: string;
 
-    @Column()
-    public avatar: string;
+  @Column({ nullable: true })
+  public avatar: string;
 
-    @Column({ name: 'open_game' })
-    public openGame: string; // TODO: Game relation
+  @ManyToOne(type => Game, game => game.playersOnline)
+  @JoinColumn({ name: 'opened_game' })
+  public openedGame: Game;
 
-    @Column({ name: 'current_games' })
-    public currentGames: string; // TODO: Game relation (many to many)
+  @ManyToMany(type => Game, game => game.players)
+  public currentGames: Game[];
 
-    @IsNotEmpty()
-    @CreateDateColumn({ name: 'created_at' })
-    public createdAt: Date;
+  @ManyToMany(type => Game, game => game.watchers)
+  public currentWatch: Game[];
 
-    @IsNotEmpty()
-    @UpdateDateColumn({ name: 'updated_at' })
-    public updatedAt: Date;
+  @ManyToMany(type => Game, game => game.nextPlayers)
+  public currentMove: Game[];
 
-    @OneToMany(type => Log, log => log.user)
-    public logs: Log[];
+  @IsNotEmpty()
+  @Column({ name: 'games_played' })
+  public gamesPlayed: number;
 
-    public toString(): string {
-        return `${this.firstName} ${this.lastName} (${this.email})`;
-    }
+  @IsNotEmpty()
+  @Column({ name: 'games_won' })
+  public gamesWon: number;
 
-    @BeforeInsert()
-    public async hashPassword(): Promise<void> {
-        this.password = await User.hashPassword(this.password);
-    }
+  @IsNotEmpty()
+  @CreateDateColumn({ name: 'created_at' })
+  public createdAt: Date;
+
+  @IsNotEmpty()
+  @UpdateDateColumn({ name: 'updated_at' })
+  public updatedAt: Date;
+
+  @OneToMany(type => Log, log => log.user)
+  public logs: Log[];
+
+  public toString(): string {
+    return `${this.firstName} ${this.lastName} (${this.email})`;
+  }
+
+  @BeforeInsert()
+  public async hashPassword(): Promise<void> {
+    this.password = await User.hashPassword(this.password);
+    this.gamesPlayed = 0;
+    this.gamesWon = 0;
+  }
 
 }
