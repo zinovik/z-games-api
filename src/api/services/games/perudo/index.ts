@@ -7,6 +7,10 @@ export interface PerudoData {
   players: any;
 }
 
+export interface PerudoPlayer {
+  id: any;
+}
+
 @Service()
 export class Perudo {
   private _PLAYER_DICES_COUNT = 5;
@@ -55,7 +59,42 @@ export class Perudo {
     };
   }
 
-  startGame(gameData: string): { gameData: string, nextPlayerId: string } {
+  addPlayer({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
+    const gameData: PerudoData = JSON.parse(gameDataJSON);
+    const { players } = gameData;
+
+    players.push({
+      id: userId,
+      ready: false,
+    } as PerudoPlayer);
+
+    return JSON.stringify({ ...gameData, players });
+  }
+
+  toggleReady({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
+    const gameData: PerudoData = JSON.parse(gameDataJSON);
+    let { players } = gameData;
+
+    players = players.map(player => {
+      if (player.id === userId) {
+        return { ...player, ready: !player.ready };
+      }
+      return player;
+    });
+
+    return JSON.stringify({ ...gameData, players });
+  }
+
+  removePlayer({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
+    const gameData: PerudoData = JSON.parse(gameDataJSON);
+    let { players } = gameData;
+
+    players = players.filter(player => player.id !== userId);
+
+    return JSON.stringify({ ...gameData, players });
+  }
+
+  startGame(gameData: string): { gameData: string, nextPlayersIds: string[] } {
     const { cards, cardsLeft, players } = JSON.parse(gameData);
 
     Object.keys(players).forEach(username => {
@@ -68,9 +107,21 @@ export class Perudo {
     const [currentCard] = cards.splice(Math.floor(Math.random() * cards.length), 1);
     const currentCardCost = 0;
 
-    const nextPlayerId = Object.keys(players)[Math.floor(Math.random() * Object.keys(players).length)];
+    const nextPlayersIds = [Object.keys(players)[Math.floor(Math.random() * Object.keys(players).length)]];
 
-    return { gameData: JSON.stringify({ cards, cardsLeft, currentCard, currentCardCost, players }), nextPlayerId };
+    return { gameData: JSON.stringify({ cards, cardsLeft, currentCard, currentCardCost, players }), nextPlayersIds };
+  }
+
+  parseGameDataForUser({ gameData, userId }: { gameData: string, userId: string }) {
+    return gameData;
+  }
+
+  makeMove({ gameData, move, userId }: { gameData: string, move: string, userId: string }): {
+    gameData: string,
+    nextPlayersIds: string[],
+  } {
+    console.log({ gameData, move, userId });
+    return { gameData: '', nextPlayersIds: [] };
   }
 
   getRules() {

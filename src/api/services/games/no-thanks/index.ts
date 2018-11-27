@@ -13,30 +13,24 @@ export interface NoThanksData {
   currentCard: number;
   currentCardCost: number;
   cardsLeft: number;
-  players: any;
+  players: NoThanksPlayer[];
+}
+
+export interface NoThanksPlayer {
+  id: string;
+  ready: boolean;
+  cards: number[];
+  chips: number;
+  points: number;
+  place: number;
+}
+
+export interface NoThanksMove {
+  takeCard: boolean;
 }
 
 @Service()
 export class NoThanks {
-  private _started = false;
-  private _finished = false;
-  private _players = [];
-  private _nextPlayerNumber = 0;
-  private _currentCard = 0;
-  private _currentCardCost = 0;
-  private _cardsLeft = MAX_NUMBER - EXCESS_CARDS_NUMBER;
-  private _cards = [];
-
-  constructor() {
-    this._started = false;
-    this._finished = false;
-    this._players = [];
-    this._nextPlayerNumber = 0;
-    this._currentCard = 0;
-    this._currentCardCost = 0;
-    this._cardsLeft = MAX_NUMBER - EXCESS_CARDS_NUMBER;
-    this._cards = [];
-  }
 
   getNewGame(): { playersMax: number, playersMin: number, gameData: string } {
     const gameData: NoThanksData = {
@@ -44,7 +38,7 @@ export class NoThanks {
       cardsLeft: 0,
       currentCard: 0,
       currentCardCost: 0,
-      players: {},
+      players: [],
     };
 
     return {
@@ -54,11 +48,49 @@ export class NoThanks {
     };
   }
 
-  startGame(gameData: string): { gameData: string, nextPlayerId: string } {
-    const { cards, cardsLeft, players } = JSON.parse(gameData);
+  addPlayer({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
+    const gameData: NoThanksData = JSON.parse(gameDataJSON);
+    const { players } = gameData;
 
-    Object.keys(players).forEach(username => {
-      players[username] = {
+    players.push({
+      id: userId,
+      ready: false,
+    } as NoThanksPlayer);
+
+    return JSON.stringify({ ...gameData, players });
+  }
+
+  toggleReady({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
+    const gameData: NoThanksData = JSON.parse(gameDataJSON);
+    let { players } = gameData;
+
+    players = players.map(player => {
+      if (player.id === userId) {
+        return { ...player, ready: !player.ready };
+      }
+      return player;
+    });
+
+    return JSON.stringify({ ...gameData, players });
+  }
+
+  removePlayer({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
+    const gameData: NoThanksData = JSON.parse(gameDataJSON);
+    let { players } = gameData;
+
+    players = players.filter(player => player.id !== userId);
+
+    return JSON.stringify({ ...gameData, players });
+  }
+
+  startGame(gameDataJSON: string): { gameData: string, nextPlayersIds: string[] } {
+    const gameData: NoThanksData = JSON.parse(gameDataJSON);
+    const { cards } = gameData;
+    let { players } = gameData;
+
+    players = players.map(player => {
+      return {
+        ...player,
         cards: [],
         chips: START_CHIPS_COUNT,
         point: -START_CHIPS_COUNT,
@@ -76,212 +108,141 @@ export class NoThanks {
 
     const [currentCard] = cards.splice(Math.floor(Math.random() * cards.length), 1);
     const currentCardCost = 0;
+    const cardsLeft = cards.length;
 
-    const nextPlayerId = Object.keys(players)[Math.floor(Math.random() * Object.keys(players).length)];
+    const nextPlayersIds = [players[Math.floor(Math.random() * players.length)].id];
 
-    return { gameData: JSON.stringify({ cards, cardsLeft, currentCard, currentCardCost, players }), nextPlayerId };
+    return { gameData: JSON.stringify({ cards, cardsLeft, currentCard, currentCardCost, players }), nextPlayersIds };
+  }
+
+  parseGameDataForUser({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }) {
+    const gameData: NoThanksData = JSON.parse(gameDataJSON);
+
+    gameData.players.forEach((player, index) => {
+      if (player.id !== userId) {
+        gameData.players[index] = {
+          ...gameData.players[index],
+          chips: 0,
+          points: 0,
+        };
+      }
+    });
+
+    return JSON.stringify({ ...gameData, cards: [] });
+  }
+
+  makeMove({ gameData: gameDataJSON, move: moveJSON, userId }: { gameData: string, move: string, userId: string }): {
+    gameData: string,
+    nextPlayersIds: string[],
+  } {
+    const gameData: NoThanksData = JSON.parse(gameDataJSON);
+    const move: NoThanksMove = JSON.parse(moveJSON);
+
+    const { cards } = gameData;
+    let { currentCard, currentCardCost, cardsLeft, players } = gameData;
+
+    let playerNumber;
+    players.forEach((player, index) => {
+      if (player.id === userId) {
+        playerNumber = index;
+      }
+    });
+
+    if (move.takeCard) {
+      players[playerNumber].cards.push(currentCard);
+      players[playerNumber].cards.sort((a, b) => a - b);
+      players[playerNumber].chips += currentCardCost;
+
+      [currentCard] = cards.splice(Math.floor(Math.random() * cards.length), 1);
+      cardsLeft = cards.length;
+      currentCardCost = 0;
+    } else {
+      if (!players[playerNumber].chips) {
+        throw new Error();
+      }
+
+      players[playerNumber].chips--;
+      currentCardCost++;
+    }
+
+    players[playerNumber].points = this.getPointsForPlayer(players[playerNumber]);
+
+    const nextPlayersIds = [];
+
+    if (cardsLeft) {
+      if (playerNumber >= players.length - 1) {
+        nextPlayersIds.push(players[0].id);
+      } else {
+        nextPlayersIds.push(players[playerNumber + 1].id);
+      }
+    } else {
+      players = this.updatePlayerPlaces(players);
+    }
+
+    return {
+      gameData: JSON.stringify({
+        ...gameData,
+        cards,
+        players,
+        currentCard,
+        currentCardCost,
+        cardsLeft,
+      }),
+      nextPlayersIds,
+    };
   }
 
   getRules() {
-    const rules = '';
-    // const rules = '<p>No Thanks! is a card game for three to five players designed by Thorsten Gimmler.
-    // Originally called Geschenkt! (presented (as a gift) in German) and published by Amigo Spiele in 2004,
-    // it was translated into English by Z-Man Games.</p>';
-    // rules += '<p>There are playing cards numbered 3 to 35 in the game, and nine cards are removed from the deck.
-    // Each player receives 11 chips. The first player flips over the top card and either takes it (earning him points according to the value)
-    //  or passes on the card by paying a chip (placing it on the card).
-    // If a player takes a card, he/she also takes all chips that have been put on the card, that player
-    // then flips over the next card and decides if he/she want it, and so the game continues until all cards have been taken.</p>';
-    // rules += '<p>At the end of the game, cards give points according to their value,
-    // but cards in a row only count as a single card with the lowest value (e.g. A run of 30, 29, 28, 27 is only worth 27 points.)
-    // Chips are worth one negative point each. The player(s) with the lowest number of points win the game.</p>';
-    // rules += '<p>No Thanks! was nominated in 2005 for the German Spiel des Jahres (Game of the Year) award.</p>';
+    const rules = `No Thanks! is a card game for three to five players designed by Thorsten Gimmler.
+Originally called Geschenkt! (presented (as a gift) in German) and published by Amigo Spiele in 2004, it was translated into English by Z-Man Games.
+
+There are playing cards numbered 3 to 35 in the game, and nine cards are removed from the deck.
+Each player receives 11 chips. The first player flips over the top card and either takes it (earning him points according to the value)
+or passes on the card by paying a chip (placing it on the card).
+
+If a player takes a card, he/she also takes all chips that have been put on the card, that player then flips over the next card
+and decides if he/she want it, and so the game continues until all cards have been taken.
+
+At the end of the game, cards give points according to their value,
+but cards in a row only count as a single card with the lowest value (e.g. A run of 30, 29, 28, 27 is only worth 27 points.)
+Chips are worth one negative point each. The player(s) with the lowest number of points win the game.
+
+No Thanks! was nominated in 2005 for the German Spiel des Jahres (Game of the Year) award`;
     return rules;
   }
 
-  start(playersNumber) {
-    for (let i = 0; i < playersNumber; i++) {
-      this._players.push({
-        cards: [],
-        chips: START_CHIPS_COUNT,
-        points: -START_CHIPS_COUNT,
-        place: 0,
-      });
-    }
-
-    for (let i = MIN_NUMBER; i <= MAX_NUMBER; i++) {
-      this._cards.push(i);
-    }
-
-    for (let i = 0; i < EXCESS_CARDS_NUMBER; i++) {
-      this._cards.splice(Math.floor(Math.random() * this._cards.length), 1);
-    }
-
-    this._nextPlayerNumber = Math.floor(Math.random() * this._players.length);
-    this._nextCard();
-    this._started = true;
-  }
-
-  move(move) {
-    if (this._finished) {
-      return undefined;
-    }
-
-    const card = this._currentCard;
-    const cardCost = this._currentCardCost;
-    const currentPlayerNumber = this._nextPlayerNumber;
-
-    if (move.takeCard) {
-      this._players[this._nextPlayerNumber].cards.push(this._currentCard);
-      this._players[this._nextPlayerNumber].cards.sort((a, b) => a - b);
-
-      this._players[this._nextPlayerNumber].chips += this._currentCardCost;
-      this._nextCard();
-
-      this._updatePoints(this._players[this._nextPlayerNumber]);
-      this._nextPlayer();
-
-      const messages = [];
-      messages.push({ playerNumber: currentPlayerNumber, text: `took the card ${card} with ${cardCost} chips on it` });
-
-      return messages;
-    } else if (this._players[this._nextPlayerNumber].chips !== 0) {
-      this._players[this._nextPlayerNumber].chips--;
-      this._currentCardCost++;
-
-      this._updatePoints(this._players[this._nextPlayerNumber]);
-      this._nextPlayer();
-
-      const messages = [];
-      messages.push({ playerNumber: currentPlayerNumber, text: `payed 1 chip on the card ${card}, ${cardCost + 1} chips total on the card` });
-
-      return messages;
-    }
-
-    return undefined;
-  }
-
-  getCommonGameInfo() {
-    return {
-      PLAYERS_MIN,
-      PLAYERS_MAX,
-      started: this._started,
-      finished: this._finished,
-      nextPlayers: [this._nextPlayerNumber],
-    };
-  }
-
-  getGameInfo(userNumber) {
-    const gameInfo = {
-      PLAYERS_MIN,
-      PLAYERS_MAX,
-      started: this._started,
-      finished: this._finished,
-      nextPlayers: [this._nextPlayerNumber],
-      currentCard: this._currentCard,
-      currentCardCost: this._currentCardCost,
-      cardsLeft: this._cardsLeft,
-      players: [],
-    };
-
-    for (let i = 0; i < this._players.length; i++) {
-      if (this._finished) {
-        gameInfo.players[i] = this._players[i];
-      } else {
-        gameInfo.players[i] = {};
-        gameInfo.players[i].cards = this._players[i].cards;
-      }
-    }
-
-    if ((userNumber || userNumber === 0)
-      && (this._players[userNumber] || this._players[userNumber] === 0)) {
-      gameInfo.players[userNumber] = this._players[userNumber];
-    }
-    return gameInfo;
-  }
-
-  getGamedata() {
-    return {
-      started: this._started,
-      finished: this._finished,
-      nextPlayers: [this._nextPlayerNumber],
-      currentCard: this._currentCard,
-      currentCardCost: this._currentCardCost,
-      cardsLeft: this._cardsLeft,
-      players: this._players,
-      cards: this._cards,
-    };
-  }
-
-  setGamedata(gameInfo) {
-    if (!gameInfo) {
-      return undefined;
-    }
-
-    this._started = gameInfo.started;
-    this._finished = gameInfo.finished;
-    this._nextPlayerNumber = gameInfo.nextPlayers[0];
-    this._currentCard = gameInfo.currentCard;
-    this._currentCardCost = gameInfo.currentCardCost;
-    this._cardsLeft = gameInfo.cardsLeft;
-    this._players = gameInfo.players;
-    this._cards = gameInfo.cards;
-
-    return true;
-  }
-
-  _nextCard() {
-    if (this._cards.length > 0) {
-      this._currentCard = this._cards.splice(Math.floor(Math.random() * this._cards.length), 1)[0];
-      this._currentCardCost = 0;
-    } else {
-      this._finished = true;
-    }
-
-    this._cardsLeft = this._cards.length;
-  }
-
-  _nextPlayer() {
-    if (this._nextPlayerNumber >= this._players.length - 1) {
-      this._nextPlayerNumber = 0;
-    } else {
-      this._nextPlayerNumber++;
-    }
-  }
-
-  _updatePoints(player) {
+  private getPointsForPlayer(player: NoThanksPlayer): number {
     let points = 0;
     let lastCard = 0;
 
-    for (const card of player.cards) {
+    player.cards.forEach(card => {
       if (card !== lastCard + 1) {
-        points += +card;
+        points += card;
       }
 
       lastCard = card;
-    }
+    });
 
-    player.points = points - player.chips;
-    this._updatePlaces();
+    return points - player.chips;
   }
 
-  _updatePlaces() {
+  private updatePlayerPlaces(players: NoThanksPlayer[]): NoThanksPlayer[] {
     const playersPlaces = [];
 
-    for (let i = 0; i < this._players.length; i++) {
-      playersPlaces.push({ number: i, points: this._players[i].points });
-    }
+    players.forEach(player => {
+      playersPlaces.push({ id: player.id, points: player.points });
+    });
 
-    playersPlaces.sort((a, b) => (a.points - b.points));
+    playersPlaces.sort((a, b) => a.points - b.points);
 
-    for (let i = 0; i < this._players.length; i++) {
-      for (let j = 0; j < playersPlaces.length; j++) {
-        if (playersPlaces[j].number === i) {
-          this._players[i].place = j + 1;
-
-          break;
+    players.forEach(player => {
+      playersPlaces.forEach((playersPlace, place) => {
+        if (player.id === playersPlace.id) {
+          player.place = place + 1;
         }
-      }
-    }
+      });
+    });
+
+    return players;
   }
 }

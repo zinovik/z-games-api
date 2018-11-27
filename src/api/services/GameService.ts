@@ -18,6 +18,14 @@ const ALL_GAMES_SELECT: Array<keyof Game> = [
   'createdAt',
 ];
 
+const GAME_RELATIONS = [
+  'players',
+  'watchers',
+  'playersOnline',
+  'logs',
+  'nextPlayers',
+];
+
 @Service()
 export class GameService {
 
@@ -37,9 +45,9 @@ export class GameService {
     return this.gameRepository.find();
   }
 
-  public findOne(id: string): Promise<Game | undefined> {
+  public findOne(number: number): Promise<Game | undefined> {
     this.log.info('Find one game');
-    return this.gameRepository.findOne({ id });
+    return this.gameRepository.findOne({ number }, { relations: GAME_RELATIONS });
   }
 
   public async create(game: Game): Promise<Game> {
@@ -95,7 +103,7 @@ export class GameService {
   }
 
   public async joinGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
-    const game = await this.gameRepository.findOne({ number: gameNumber }, { relations: ['players', 'playersOnline', 'logs'] });
+    const game = await this.findOne(gameNumber);
 
     if (game.state) {
       this.log.warn('Can\'t join started or finished game');
@@ -120,15 +128,14 @@ export class GameService {
     game.players.push(user);
     game.playersOnline.push(user);
 
-    const gameData = JSON.parse(game.gameData);
-    gameData.players[user.id] = { ready: false };
-    game.gameData = JSON.stringify(gameData);
+    const currentGameService = this.getGameServiceByName(game.name);
+    game.gameData = currentGameService.addPlayer({ gameData: game.gameData, userId: user.id });
 
     return this.gameRepository.save(game);
   }
 
   public async openGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
-    const game = await this.gameRepository.findOne({ number: gameNumber }, { relations: ['players', 'playersOnline', 'logs'] });
+    const game = await this.findOne(gameNumber);
 
     if (!game.players.some(player => player.id === user.id)) {
       this.log.warn('Can\'t open game without joining');
@@ -146,7 +153,7 @@ export class GameService {
   }
 
   public async watchGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
-    const game = await this.gameRepository.findOne({ number: gameNumber }, { relations: ['players', 'watchers', 'logs'] });
+    const game = await this.findOne(gameNumber);
 
     if (!game.state) {
       this.log.warn('Can\'t watch not started game');
@@ -159,7 +166,7 @@ export class GameService {
     }
 
     if (!game.watchers.some(watcher => watcher.id === user.id)) {
-      this.log.warn('Can\'t watch gae twice');
+      this.log.warn('Can\'t watch game twice');
       throw new Error(); // TODO
     }
 
@@ -169,7 +176,7 @@ export class GameService {
   }
 
   public async leaveGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
-    const game = await this.gameRepository.findOne({ number: gameNumber }, { relations: ['players', 'playersOnline', 'logs'] });
+    const game = await this.findOne(gameNumber);
 
     if (game.state === 1) {
       this.log.warn('Can\'t leave started and not finished game');
@@ -184,15 +191,14 @@ export class GameService {
     game.players = game.players.filter(player => player.id !== user.id);
     game.playersOnline = game.players.filter(player => player.id !== user.id);
 
-    const gameData = JSON.parse(game.gameData);
-    delete gameData.players[user.id];
-    game.gameData = JSON.stringify(gameData);
+    const currentGameService = this.getGameServiceByName(game.name);
+    game.gameData = currentGameService.removePlayer({ gameData: game.gameData, userId: user.id });
 
     return this.gameRepository.save(game);
   }
 
   public async closeGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
-    const game = await this.gameRepository.findOne({ number: gameNumber }, { relations: ['players', 'watchers', 'playersOnline', 'logs'] });
+    const game = await this.findOne(gameNumber);
 
     const isUserInPlayers = game.players.some(player => player.id === user.id);
     const isUserInWatchers = game.watchers.some(player => player.id === user.id);
@@ -214,33 +220,64 @@ export class GameService {
   }
 
   public async readyToGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
-    const game = await this.gameRepository.findOne({ number: gameNumber }, { relations: ['players', 'watchers', 'playersOnline', 'logs'] });
+    const game = await this.findOne(gameNumber);
 
-    const gameData = JSON.parse(game.gameData);
-    gameData.players[user.id].ready = !gameData.players[user.id].ready;
-    game.gameData = JSON.stringify(gameData);
+    const currentGameService = this.getGameServiceByName(game.name);
+    game.gameData = currentGameService.toggleReady({ gameData: game.gameData, userId: user.id });
 
     return this.gameRepository.save(game);
   }
 
   public async startGame({ gameNumber }: { gameNumber: number }): Promise<Game> {
-    const game = await this.gameRepository.findOne({ number: gameNumber }, { relations: ['players', 'watchers', 'playersOnline', 'logs'] });
+    const game = await this.findOne(gameNumber);
 
     const currentGameService = this.getGameServiceByName(game.name);
 
-    const { gameData, nextPlayerId } = currentGameService.startGame(game.gameData);
+    const { gameData, nextPlayersIds } = currentGameService.startGame(game.gameData);
     game.gameData = gameData;
     game.state = 1;
     const nextUser = new User();
-    nextUser.id = nextPlayerId;
+    nextUser.id = nextPlayersIds[0]; // TODO: Many next players
     game.nextPlayers = [nextUser];
 
     return this.gameRepository.save(game);
   }
 
+  public async makeMove({ move, gameNumber, userId }: { move: string, gameNumber: number, userId: string }): Promise<Game> {
+    const game = await this.findOne(gameNumber);
+
+    const currentGameService = this.getGameServiceByName(game.name);
+
+    const { gameData, nextPlayersIds } = currentGameService.makeMove({ gameData: game.gameData, move, userId });
+    game.gameData = gameData;
+
+    if (nextPlayersIds.length) {
+      const nextUser = new User();
+      nextUser.id = nextPlayersIds[0]; // TODO: Many next players
+      game.nextPlayers = [nextUser];
+    } else {
+      game.state = 2;
+    }
+
+    return this.gameRepository.save(game);
+  }
+
+  public parseGameForUser({ game, user }: { game: Game, user: User }): Game {
+    const currentGameService = this.getGameServiceByName(game.name);
+
+    const gameData = currentGameService.parseGameDataForUser({ gameData: game.gameData, userId: user.id });
+
+    return { ...game, gameData } as Game;
+  }
+
   private getGameServiceByName(name: string): {
     getNewGame: () => { playersMax: number, playersMin: number, gameData: string },
-    startGame: (gameData: string) => { gameData: string, nextPlayerId: string },
+    addPlayer: ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }) => string,
+    toggleReady: ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }) => string,
+    removePlayer: ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }) => string,
+    startGame: (gameData: string) => { gameData: string, nextPlayersIds: string[] },
+    parseGameDataForUser: ({ gameData, userId }: { gameData: string, userId: string }) => string,
+    makeMove: ({ gameData, move, userId }: { gameData: string, move: string, userId: string }) => { gameData: string, nextPlayersIds: string[] },
   } {
     switch (name) {
       case 'No, Thanks!':
