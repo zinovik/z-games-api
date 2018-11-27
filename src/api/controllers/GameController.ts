@@ -1,5 +1,5 @@
 import {
-  Authorized, Body, Delete, Get, JsonController, OnUndefined, Param, Post, Put, Req
+  Authorized, Body, Delete, Get, JsonController, Param, Post, Put, Req
 } from 'routing-controllers';
 import {
   ConnectedSocket, EmitOnSuccess, MessageBody, OnConnect, OnDisconnect, OnMessage, SocketController,
@@ -8,7 +8,6 @@ import {
 import { Container } from 'typedi';
 
 import { AuthService } from '../../auth/AuthService';
-import { GameNotFoundError } from '../errors/GameNotFoundError';
 import { Game } from '../models/Game';
 import { Log } from '../models/Log';
 import { GameService } from '../services/GameService';
@@ -40,13 +39,6 @@ export class GameController {
     return req.game;
   }
 
-  @Get('/:email')
-  @Authorized()
-  @OnUndefined(GameNotFoundError)
-  public one(@Param('email') email: string): Promise<Game | undefined> {
-    return this.gameService.findOne(email);
-  }
-
   @Post()
   @Authorized()
   public async create(@Body() game: Game): Promise<Game> {
@@ -73,8 +65,6 @@ export class GameController {
       return;
     }
 
-    console.log(user);
-
     // user.
   }
 
@@ -85,8 +75,6 @@ export class GameController {
     if (!user) {
       return;
     }
-
-    console.log(user);
 
     // user.
   }
@@ -128,8 +116,10 @@ export class GameController {
       throw new Error(); // TODO
     }
 
+    const game = await this.gameService.findOne(user.openedGame.number);
+
     socket.join(user.openedGame.id);
-    return user.openedGame;
+    return this.gameService.parseGameForUser({ game, user });
   }
 
   @OnMessage('join-game')
@@ -153,7 +143,8 @@ export class GameController {
     game.logs.push(log);
 
     socket.join(game.id);
-    io.to(game.id).emit('update-opened-game', game);
+
+    this.sendGameToGameUsers({ game, io });
   }
 
   @OnMessage('open-game')
@@ -177,7 +168,8 @@ export class GameController {
     game.logs.push(log);
 
     socket.join(game.id);
-    io.to(game.id).emit('update-opened-game', game);
+
+    this.sendGameToGameUsers({ game, io });
   }
 
   @OnMessage('watch-game')
@@ -201,7 +193,8 @@ export class GameController {
     game.logs.push(log);
 
     socket.join(game.id);
-    io.to(game.id).emit('update-opened-game', game);
+
+    this.sendGameToGameUsers({ game, io });
   }
 
   @OnMessage('leave-game')
@@ -226,7 +219,8 @@ export class GameController {
     game.logs.push(log);
 
     socket.leave(game.id);
-    io.to(game.id).emit('update-opened-game', game);
+
+    this.sendGameToGameUsers({ game, io });
 
     return undefined;
   }
@@ -253,7 +247,8 @@ export class GameController {
     game.logs.push(log);
 
     socket.leave(game.id);
-    io.to(game.id).emit('update-opened-game', game);
+
+    this.sendGameToGameUsers({ game, io });
 
     return undefined;
   }
@@ -275,7 +270,7 @@ export class GameController {
     const log = await this.logService.create({ type: 'ready', userId: user.id, gameId: game.id });
     game.logs.push(log);
 
-    io.to(game.id).emit('update-opened-game', game);
+    this.sendGameToGameUsers({ game, io });
   }
 
   @OnMessage('start-game')
@@ -295,14 +290,49 @@ export class GameController {
     const log = await this.logService.create({ type: 'start', userId: user.id, gameId: game.id });
     game.logs.push(log);
 
-    io.to(game.id).emit('update-opened-game', game);
+    this.sendGameToGameUsers({ game, io });
+  }
+
+  @OnMessage('make-move')
+  public async move(
+    @SocketQueryParam('token') token: string,
+    @SocketIO() io: any,
+    @MessageBody() move: string
+  ): Promise<void> {
+    const user = await this.authService.verifyAndDecodeJwt(token);
+
+    if (!user) {
+      throw new Error(); // TODO
+    }
+
+    console.log(123, user);
+
+    // TODO: Check current move user
+    const game = await this.gameService.makeMove({ move, gameNumber: user.openedGame.number, userId: user.id });
+
+    const log = await this.logService.create({ type: 'move', userId: user.id, gameId: game.id, text: move });
+    game.logs.push(log);
+
+    this.sendGameToGameUsers({ game, io });
+  }
+
+  private sendGameToGameUsers({ game, io }: { game: Game, io: any }): void {
+    if (!io.sockets.adapter.rooms[game.id]) {
+      return;
+    }
+
+    Object.keys(io.sockets.adapter.rooms[game.id].sockets).forEach(async socketId => {
+      const socketInGame = io.sockets.connected[socketId];
+      const userInGame = await this.authService.verifyAndDecodeJwt(socketInGame.handshake.query.token);
+      socketInGame.emit('update-opened-game', this.gameService.parseGameForUser({ game, user: userInGame }));
+    });
   }
 }
 
 // TODO: move token check into separate decorator
 // TODO: Add and check error conditions, add errors
-// social login
-// check current user move
-// tests
-// bots
-// game modules
+// TODO: social login
+// TODO: check current user move
+// TODO: tests
+// TODO: bots
+// TODO: game modules

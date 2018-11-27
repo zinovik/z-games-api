@@ -1,7 +1,7 @@
 import { IsNotEmpty } from 'class-validator';
 import {
-    BeforeInsert, Column, CreateDateColumn, Entity, Generated, JoinTable, ManyToMany, OneToMany,
-    PrimaryColumn, Unique, UpdateDateColumn
+  BeforeInsert, Column, CreateDateColumn, Entity, Generated, JoinTable, ManyToMany, OneToMany,
+  PrimaryColumn, Unique, UpdateDateColumn
 } from 'typeorm';
 
 import { Log } from '../models/Log';
@@ -45,15 +45,15 @@ export class Game {
   @OneToMany(type => User, user => user.openedGame)
   public playersOnline: User[];
 
-  @ManyToMany(type => User, user => user.currentGames, { cascade: true })
+  @ManyToMany(type => User, user => user.currentGames)
   @JoinTable({ name: 'user_current_game_to_game_players' })
   public players: User[];
 
-  @ManyToMany(type => User, user => user.currentWatch, { cascade: true })
+  @ManyToMany(type => User, user => user.currentWatch)
   @JoinTable({ name: 'user_current_watch_to_game_watchers' })
   public watchers: User[];
 
-  @ManyToMany(type => User, user => user.currentMove, { cascade: true })
+  @ManyToMany(type => User, user => user.currentMove)
   @JoinTable({ name: 'user_current_move_to_game_next_players' })
   public nextPlayers: User[];
 
