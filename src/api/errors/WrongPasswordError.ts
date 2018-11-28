@@ -1,7 +1,7 @@
-import { HttpError } from 'routing-controllers';
+import { UnauthorizedError } from 'routing-controllers';
 
-export class WrongPasswordError extends HttpError {
+export class WrongPasswordError extends UnauthorizedError {
   constructor() {
-    super(404, 'Wrong password!');
+    super('Wrong password!');
   }
 }

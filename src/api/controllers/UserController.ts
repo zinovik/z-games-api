@@ -40,12 +40,6 @@ export class UserController {
     return this.userService.findOne(email);
   }
 
-  @Post()
-  @Authorized()
-  public async create(@Body() user: User): Promise<User> {
-    return this.userService.create(user);
-  }
-
   @Put('/:id')
   @Authorized()
   public update(@Param('id') id: string, @Body() user: User): Promise<User> {
@@ -53,13 +47,8 @@ export class UserController {
   }
 
   @Post('/register')
-  public async register(@Body() { username, password }: { username: string, password: string }): Promise<User> {
-    const user = new User();
-
-    user.username = username;
-    user.password = password;
-
-    return this.userService.create(user);
+  public async register(@Body() { username, password }: { username: string, password: string }): Promise<string> {
+    return this.userService.register({ username, password });
   }
 
   @Post('/authorize')
