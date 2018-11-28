@@ -32,7 +32,7 @@ export class LogController {
       return;
     }
 
-    const log = await this.logService.create({ type: 'message', userId: user.id, gameId: user.openedGame.id, text });
+    const log = await this.logService.create({ type: 'message', user, gameId: user.openedGame.id, text });
 
     io.to(user.openedGame.id).emit('new-log', log);
   }

@@ -4,6 +4,7 @@ import { OrmRepository } from 'typeorm-typedi-extensions';
 
 import { User } from '../api/models/User';
 import { UserRepository } from '../api/repositories/UserRepository';
+import { USER_FIELDS, USER_JOIN_OPENED_GAME } from '../api/scopes';
 import { JwtService } from '../api/services/jwt';
 import { Logger, LoggerInterface } from '../decorators/Logger';
 
@@ -34,17 +35,15 @@ export class AuthService {
 
   public async verifyAndDecodeJwt(token: string): Promise<User> {
     const username = this.jwtService.verifyAndDecodeToken(token);
-
     if (!username) {
       return undefined;
     }
 
-    const user = await this.userRepository.findOne({
-      where: {
-        username,
-      },
-      relations: ['openedGame', 'openedGame.players', 'openedGame.logs'],
-    });
+    const user = await this.userRepository.createQueryBuilder('user')
+      .select(USER_FIELDS)
+      .leftJoin(...USER_JOIN_OPENED_GAME)
+      .where({ username })
+      .getOne();
 
     return user;
   }

@@ -3,51 +3,45 @@ import { OrmRepository } from 'typeorm-typedi-extensions';
 import uuid from 'uuid';
 
 import { Logger, LoggerInterface } from '../../decorators/Logger';
-import { WrongGameName } from '../errors';
+import { JoiningGameError } from '../errors';
 import { Game } from '../models/Game';
 import { User } from '../models/User';
 import { GameRepository } from '../repositories/GameRepository';
+import {
+  ALL_GAMES_FIELDS, ALL_GAMES_JOIN_PLAYERS, FIELDS_TO_REMOVE_IN_ALL_GAMES, OPEN_GAME_FIELDS,
+  OPEN_GAME_JOIN_LOGS, OPEN_GAME_JOIN_LOGS_USERNAMES, OPEN_GAME_JOIN_NEXT_PLAYERS,
+  OPEN_GAME_JOIN_PLAYERS_ONLINE, OPEN_GAME_JOIN_WATCHERS
+} from '../scopes';
 import { NoThanks, Perudo } from '../services/games';
+import { BaseGame } from './games/base-game';
 
-const ALL_GAMES_SELECT: Array<keyof Game> = [
-  'number',
-  'name',
-  'state',
-  'playersMax',
-  'playersMin',
-  'createdAt',
-];
-
-const GAME_RELATIONS = [
-  'players',
-  'watchers',
-  'playersOnline',
-  'logs',
-  'nextPlayers',
-];
+const gamesServices: { [key: string]: BaseGame } = {
+  'No, Thanks!': Container.get(NoThanks),
+  'Perudo': Container.get(Perudo),
+};
 
 @Service()
 export class GameService {
-
-  private noThanks: NoThanks;
-  private perudo: Perudo;
 
   constructor(
     @OrmRepository() private gameRepository: GameRepository,
     @Logger(__filename) private log: LoggerInterface
   ) {
-    this.noThanks = Container.get(NoThanks);
-    this.perudo = Container.get(Perudo);
-  }
-
-  public find(): Promise<Game[]> {
-    this.log.info('Find all games');
-    return this.gameRepository.find();
   }
 
   public findOne(number: number): Promise<Game | undefined> {
     this.log.info('Find one game');
-    return this.gameRepository.findOne({ number }, { relations: GAME_RELATIONS });
+
+    return this.gameRepository.createQueryBuilder('game')
+      .select(OPEN_GAME_FIELDS)
+      .leftJoin(...ALL_GAMES_JOIN_PLAYERS)
+      .leftJoin(...OPEN_GAME_JOIN_WATCHERS)
+      .leftJoin(...OPEN_GAME_JOIN_PLAYERS_ONLINE)
+      .leftJoin(...OPEN_GAME_JOIN_NEXT_PLAYERS)
+      .leftJoin(...OPEN_GAME_JOIN_LOGS)
+      .leftJoin(...OPEN_GAME_JOIN_LOGS_USERNAMES)
+      .where({ number })
+      .getOne();
   }
 
   public async create(game: Game): Promise<Game> {
@@ -57,39 +51,18 @@ export class GameService {
     return newGame;
   }
 
-  public update(id: string, game: Game): Promise<Game> {
-    this.log.info('Update a game');
-    game.id = id;
-    return this.gameRepository.save(game);
-  }
-
-  public async delete(id: string): Promise<void> {
-    this.log.info('Delete a game');
-    await this.gameRepository.delete(id);
-    return;
-  }
-
   public async getAllGames(): Promise<Game[]> {
-
-    console.log(
-      await this.gameRepository.createQueryBuilder()
-        .select(['players_max'])
-        .getMany()
-    );
-
-    return this.gameRepository.find({
-      select: ALL_GAMES_SELECT,
-      relations: ['players'],
-      where: { isPrivate: false },
-      order: { number: 'DESC' } as {},
-    });
+    return this.gameRepository.createQueryBuilder('game')
+      .select(ALL_GAMES_FIELDS)
+      .leftJoin(...ALL_GAMES_JOIN_PLAYERS)
+      .orderBy({ number: 'DESC' })
+      .getMany();
   }
 
   public async newGame(name: string): Promise<Game> {
     this.log.info(`New ${name} game`);
 
-    const currentGameService = this.getGameServiceByName(name);
-    const { playersMax, playersMin, gameData } = currentGameService.getNewGame();
+    const { playersMax, playersMin, gameData } = gamesServices[name].getNewGame();
 
     const game = new Game();
     game.name = name;
@@ -106,30 +79,29 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (game.state) {
-      this.log.warn('Can\'t join started or finished game');
-      throw new Error();
+      throw new JoiningGameError('Can\'t join started or finished game');
     }
 
     if (game.players.length >= game.playersMax) {
-      this.log.warn('Can\'t join game with maximum players inside');
-      throw new Error();
+      throw new JoiningGameError('Can\'t join game with maximum players inside');
     }
 
     if (game.players.some(player => player.id === user.id)) {
-      this.log.warn('Can\'t join game twice');
-      throw new Error();
+      throw new JoiningGameError('Can\'t join game twice');
     }
 
     if (game.playersOnline.some(playerOnline => playerOnline.id === user.id)) {
-      this.log.warn('Can\'t join opened game');
-      throw new Error();
+      throw new JoiningGameError('Can\'t join opened game');
     }
 
-    game.players.push(user);
-    game.playersOnline.push(user);
+    const newUser = new User();
+    newUser.id = user.id;
+    newUser.username = user.username;
 
-    const currentGameService = this.getGameServiceByName(game.name);
-    game.gameData = currentGameService.addPlayer({ gameData: game.gameData, userId: user.id });
+    game.players.push(newUser);
+    game.playersOnline.push(newUser);
+
+    game.gameData = gamesServices[game.name].addPlayer({ gameData: game.gameData, userId: user.id });
 
     return this.gameRepository.save(game);
   }
@@ -191,8 +163,7 @@ export class GameService {
     game.players = game.players.filter(player => player.id !== user.id);
     game.playersOnline = game.players.filter(player => player.id !== user.id);
 
-    const currentGameService = this.getGameServiceByName(game.name);
-    game.gameData = currentGameService.removePlayer({ gameData: game.gameData, userId: user.id });
+    game.gameData = gamesServices[game.name].removePlayer({ gameData: game.gameData, userId: user.id });
 
     return this.gameRepository.save(game);
   }
@@ -219,11 +190,10 @@ export class GameService {
     return this.gameRepository.save(game);
   }
 
-  public async readyToGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
+  public async toggleReady({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
     const game = await this.findOne(gameNumber);
 
-    const currentGameService = this.getGameServiceByName(game.name);
-    game.gameData = currentGameService.toggleReady({ gameData: game.gameData, userId: user.id });
+    game.gameData = gamesServices[game.name].toggleReady({ gameData: game.gameData, userId: user.id });
 
     return this.gameRepository.save(game);
   }
@@ -231,9 +201,7 @@ export class GameService {
   public async startGame({ gameNumber }: { gameNumber: number }): Promise<Game> {
     const game = await this.findOne(gameNumber);
 
-    const currentGameService = this.getGameServiceByName(game.name);
-
-    const { gameData, nextPlayersIds } = currentGameService.startGame(game.gameData);
+    const { gameData, nextPlayersIds } = gamesServices[game.name].startGame(game.gameData);
     game.gameData = gameData;
     game.state = 1;
     const nextUser = new User();
@@ -246,9 +214,7 @@ export class GameService {
   public async makeMove({ move, gameNumber, userId }: { move: string, gameNumber: number, userId: string }): Promise<Game> {
     const game = await this.findOne(gameNumber);
 
-    const currentGameService = this.getGameServiceByName(game.name);
-
-    const { gameData, nextPlayersIds } = currentGameService.makeMove({ gameData: game.gameData, move, userId });
+    const { gameData, nextPlayersIds } = gamesServices[game.name].makeMove({ gameData: game.gameData, move, userId });
     game.gameData = gameData;
 
     if (nextPlayersIds.length) {
@@ -263,31 +229,21 @@ export class GameService {
   }
 
   public parseGameForUser({ game, user }: { game: Game, user: User }): Game {
-    const currentGameService = this.getGameServiceByName(game.name);
-
-    const gameData = currentGameService.parseGameDataForUser({ gameData: game.gameData, userId: user.id });
+    const gameData = gamesServices[game.name].parseGameDataForUser({ gameData: game.gameData, userId: user.id });
 
     return { ...game, gameData } as Game;
   }
 
-  private getGameServiceByName(name: string): {
-    getNewGame: () => { playersMax: number, playersMin: number, gameData: string },
-    addPlayer: ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }) => string,
-    toggleReady: ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }) => string,
-    removePlayer: ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }) => string,
-    startGame: (gameData: string) => { gameData: string, nextPlayersIds: string[] },
-    parseGameDataForUser: ({ gameData, userId }: { gameData: string, userId: string }) => string,
-    makeMove: ({ gameData, move, userId }: { gameData: string, move: string, userId: string }) => { gameData: string, nextPlayersIds: string[] },
-  } {
-    switch (name) {
-      case 'No, Thanks!':
-        return this.noThanks;
-      case 'Perudo': {
-        return this.perudo;
+  public parseGameForAllUsers(game: Game): Game {
+    const newGame = { ...game } as Game;
+
+    FIELDS_TO_REMOVE_IN_ALL_GAMES.forEach(field => {
+      if (newGame[field]) {
+        delete newGame[field];
       }
-      default:
-        throw new WrongGameName();
-    }
+    });
+
+    return newGame;
   }
 
 }

@@ -8,6 +8,7 @@ import { UserNotFoundError } from '../errors/UserNotFoundError';
 import { WrongPasswordError } from '../errors/WrongPasswordError';
 import { User } from '../models/User';
 import { UserRepository } from '../repositories/UserRepository';
+import { USER_FIELDS, USER_JOIN_OPENED_GAME } from '../scopes';
 import { events } from '../subscribers/events';
 import { JwtService } from './jwt';
 
@@ -23,32 +24,51 @@ export class UserService {
 
   public find(): Promise<User[]> {
     this.log.info('Find all users');
-    return this.userRepository.find({ relations: ['logs'] });
+
+    return this.userRepository.createQueryBuilder('user')
+      .select()
+      .getMany();
   }
 
-  public findOne(email: string): Promise<User | undefined> {
+  public findOne(username: string): Promise<User | undefined> {
     this.log.info('Find one user');
-    return this.userRepository.findOne({ email });
-  }
 
-  public async create(user: User): Promise<User> {
-    this.log.info('Create a new user => ', user.toString());
-    user.id = uuid.v1();
-    const newUser = await this.userRepository.save(user);
-    this.eventDispatcher.dispatch(events.user.created, newUser);
-    return newUser;
+    return this.userRepository.createQueryBuilder('user')
+      .select(USER_FIELDS)
+      .leftJoin(...USER_JOIN_OPENED_GAME)
+      .where({ username })
+      .getOne();
   }
 
   public update(id: string, user: User): Promise<User> {
     this.log.info('Update a user');
     user.id = id;
+
     return this.userRepository.save(user);
+  }
+
+  public async register({ username, password }: { username: string, password: string }): Promise<string> {
+    this.log.info('Create a new user => ', username);
+
+    const user = new User();
+    user.username = username;
+    user.password = password;
+    user.id = uuid.v1();
+
+    try {
+      const newUser = await this.userRepository.save(user);
+      this.eventDispatcher.dispatch(events.user.created, newUser);
+    } catch (error) {
+      return error.message; // TODO Error
+    }
+
+    return 'Check email';
   }
 
   public async authorize({ username, password }: { username: string, password: string }): Promise<{ user: User, token: string }> {
     this.log.info('Authorize a user');
 
-    const user = await this.userRepository.findOne({ username });
+    const user = await this.findOne(username);
 
     if (!user) {
       throw new UserNotFoundError();

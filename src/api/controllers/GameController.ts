@@ -1,15 +1,15 @@
+import { JsonController } from 'routing-controllers';
 import {
-  Authorized, Body, Delete, Get, JsonController, Param, Post, Put, Req
-} from 'routing-controllers';
-import {
-  ConnectedSocket, EmitOnSuccess, MessageBody, OnConnect, OnDisconnect, OnMessage, SocketController,
-  SocketIO, SocketQueryParam
+  ConnectedSocket, EmitOnFail, EmitOnSuccess, MessageBody, OnConnect, OnDisconnect, OnMessage,
+  SocketController, SocketIO, SocketQueryParam
 } from 'socket-controllers';
 import { Container } from 'typedi';
 
 import { AuthService } from '../../auth/AuthService';
+import { Logger, LoggerInterface } from '../../decorators/Logger';
+import { VerifyingTokenError } from '../errors';
+import { JoiningGameError } from '../errors/JoiningGameError';
 import { Game } from '../models/Game';
-import { Log } from '../models/Log';
 import { GameService } from '../services/GameService';
 import { LogService } from '../services/LogService';
 
@@ -21,81 +21,89 @@ export class GameController {
   private authService: AuthService;
   private logService: LogService;
 
-  constructor() {
+  constructor(
+    @Logger(__filename) private log: LoggerInterface
+  ) {
     this.gameService = Container.get(GameService);
     this.authService = Container.get(AuthService);
     this.logService = Container.get(LogService);
   }
 
-  @Get()
-  @Authorized()
-  public find(): Promise<Game[]> {
-    return this.gameService.find();
-  }
-
-  @Get('/me')
-  @Authorized()
-  public findMe(@Req() req: any): Promise<Game[]> {
-    return req.game;
-  }
-
-  @Post()
-  @Authorized()
-  public async create(@Body() game: Game): Promise<Game> {
-    return this.gameService.create(game);
-  }
-
-  @Put('/:id')
-  @Authorized()
-  public update(@Param('id') id: string, @Body() game: Game): Promise<Game> {
-    return this.gameService.update(id, game);
-  }
-
-  @Authorized()
-  @Delete('/:id')
-  public delete(@Param('id') id: string): Promise<void> {
-    return this.gameService.delete(id);
-  }
-
   @OnConnect()
-  public async connection(@ConnectedSocket() socket: any, @SocketQueryParam('token') token: string) {
+  public async connection(
+    @SocketQueryParam('token') token: string,
+    @SocketIO() io: any,
+    @ConnectedSocket() socket: any
+  ) {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
       return;
     }
 
-    // user.
+    if (!user.openedGame) {
+      return;
+    }
+
+    const game = await this.gameService.findOne(user.openedGame.number);
+
+    const log = await this.logService.create({ type: 'connect', user, gameId: game.id });
+    game.logs.push(log);
+
+    socket.join(game.id);
+
+    await this.sendGameToGameUsers({ game, io });
+    await this.sendGameUpdateToAllUsers({ game, io });
   }
 
   @OnDisconnect()
-  public async disconnect(@ConnectedSocket() socket: any, @SocketQueryParam('token') token: string): Promise<void> {
+  public async disconnect(
+    @SocketQueryParam('token') token: string,
+    @SocketIO() io: any,
+    @ConnectedSocket() socket: any
+  ): Promise<void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
       return;
     }
 
-    // user.
+    if (!user.openedGame) {
+      return;
+    }
+
+    const game = await this.gameService.findOne(user.openedGame.number);
+
+    const log = await this.logService.create({ type: 'disconnect', user, gameId: game.id });
+    game.logs.push(log);
+
+    socket.leave(game.id);
+
+    await this.sendGameToGameUsers({ game, io });
+    await this.sendGameUpdateToAllUsers({ game, io });
   }
 
   @OnMessage('new-game')
-  public async newGame(@MessageBody() name: string, @SocketIO() io: any, @SocketQueryParam('token') token: string): Promise<void> {
+  @EmitOnFail('error-message')
+  public async newGame(
+    @SocketQueryParam('token') token: string,
+    @SocketIO() io: any,
+    @ConnectedSocket() socket: any,
+    @MessageBody() name: string
+  ): Promise<void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      return;
+      socket.emit('error-message', 'Error verifying token!');
+      this.log.warn('Error verifying token!');
+      throw new VerifyingTokenError();
     }
 
     const game = await this.gameService.newGame(name);
 
-    const log = new Log();
-    log.userId = user.id;
-    log.gameId = game.id;
-    log.type = 'create';
-    await this.logService.create(log);
+    await this.logService.create({ type: 'create', user, gameId: game.id });
 
-    io.emit('new-game', game);
+    io.emit('new-game', this.gameService.parseGameForAllUsers(game));
   }
 
   @OnMessage('get-all-games')
@@ -113,7 +121,11 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new Error(); // TODO
+      throw new VerifyingTokenError();
+    }
+
+    if (!user.openedGame) {
+      return undefined;
     }
 
     const game = await this.gameService.findOne(user.openedGame.number);
@@ -123,6 +135,7 @@ export class GameController {
   }
 
   @OnMessage('join-game')
+  @EmitOnFail('error-message')
   public async joinGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -132,22 +145,27 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new Error(); // TODO
+      throw new VerifyingTokenError();
     }
 
-    const game = await this.gameService.joinGame({ user, gameNumber });
+    let game: Game;
+    try {
+      game = await this.gameService.joinGame({ user, gameNumber });
+    } catch (error) {
+      throw new JoiningGameError(error.message);
+    }
 
-    io.emit('update-game', game);
-
-    const log = await this.logService.create({ type: 'join', userId: user.id, gameId: game.id });
+    const log = await this.logService.create({ type: 'join', user, gameId: game.id });
     game.logs.push(log);
 
     socket.join(game.id);
 
-    this.sendGameToGameUsers({ game, io });
+    await this.sendGameToGameUsers({ game, io });
+    await this.sendGameUpdateToAllUsers({ game, io });
   }
 
   @OnMessage('open-game')
+  @EmitOnFail('error-message')
   public async openGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -157,22 +175,22 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new Error(); // TODO
+      throw new VerifyingTokenError();
     }
 
     const game = await this.gameService.openGame({ user, gameNumber });
 
-    io.emit('update-game', game);
-
-    const log = await this.logService.create({ type: 'open', userId: user.id, gameId: game.id });
+    const log = await this.logService.create({ type: 'open', user, gameId: game.id });
     game.logs.push(log);
 
     socket.join(game.id);
 
-    this.sendGameToGameUsers({ game, io });
+    await this.sendGameToGameUsers({ game, io });
+    await this.sendGameUpdateToAllUsers({ game, io });
   }
 
   @OnMessage('watch-game')
+  @EmitOnFail('error-message')
   public async watchGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -182,23 +200,23 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new Error(); // TODO
+      throw new VerifyingTokenError();
     }
 
     const game = await this.gameService.watchGame({ user, gameNumber });
 
-    io.emit('update-game', game);
-
-    const log = await this.logService.create({ type: 'watch', userId: user.id, gameId: game.id });
+    const log = await this.logService.create({ type: 'watch', user, gameId: game.id });
     game.logs.push(log);
 
     socket.join(game.id);
 
-    this.sendGameToGameUsers({ game, io });
+    await this.sendGameToGameUsers({ game, io });
+    await this.sendGameUpdateToAllUsers({ game, io });
   }
 
   @OnMessage('leave-game')
   @EmitOnSuccess('update-opened-game')
+  @EmitOnFail('error-message')
   public async leaveGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -208,25 +226,25 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new Error(); // TODO
+      throw new VerifyingTokenError();
     }
 
     const game = await this.gameService.leaveGame({ user, gameNumber });
 
-    io.emit('update-game', game);
-
-    const log = await this.logService.create({ type: 'leave', userId: user.id, gameId: game.id });
+    const log = await this.logService.create({ type: 'leave', user, gameId: game.id });
     game.logs.push(log);
 
     socket.leave(game.id);
 
-    this.sendGameToGameUsers({ game, io });
+    await this.sendGameToGameUsers({ game, io });
+    await this.sendGameUpdateToAllUsers({ game, io });
 
     return undefined;
   }
 
   @OnMessage('close-game')
   @EmitOnSuccess('update-opened-game')
+  @EmitOnFail('error-message')
   public async closeGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -236,25 +254,25 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new Error(); // TODO
+      throw new VerifyingTokenError();
     }
 
     const game = await this.gameService.closeGame({ user, gameNumber });
 
-    io.emit('update-game', game);
-
-    const log = await this.logService.create({ type: 'close', userId: user.id, gameId: game.id });
+    const log = await this.logService.create({ type: 'close', user, gameId: game.id });
     game.logs.push(log);
 
     socket.leave(game.id);
 
-    this.sendGameToGameUsers({ game, io });
+    await this.sendGameToGameUsers({ game, io });
+    await this.sendGameUpdateToAllUsers({ game, io });
 
     return undefined;
   }
 
-  @OnMessage('ready-to-game')
-  public async readyToGame(
+  @OnMessage('toggle-ready')
+  @EmitOnFail('error-message')
+  public async toggleReady(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
     @MessageBody() gameNumber: number
@@ -262,18 +280,19 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new Error(); // TODO
+      throw new VerifyingTokenError();
     }
 
-    const game = await this.gameService.readyToGame({ user, gameNumber });
+    const game = await this.gameService.toggleReady({ user, gameNumber });
 
-    const log = await this.logService.create({ type: 'ready', userId: user.id, gameId: game.id });
+    const log = await this.logService.create({ type: 'ready', user, gameId: game.id });
     game.logs.push(log);
 
-    this.sendGameToGameUsers({ game, io });
+    await this.sendGameToGameUsers({ game, io });
   }
 
   @OnMessage('start-game')
+  @EmitOnFail('error-message')
   public async startGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -282,18 +301,19 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new Error(); // TODO
+      throw new VerifyingTokenError();
     }
 
     const game = await this.gameService.startGame({ gameNumber });
 
-    const log = await this.logService.create({ type: 'start', userId: user.id, gameId: game.id });
+    const log = await this.logService.create({ type: 'start', user, gameId: game.id });
     game.logs.push(log);
 
-    this.sendGameToGameUsers({ game, io });
+    await this.sendGameToGameUsers({ game, io });
   }
 
   @OnMessage('make-move')
+  @EmitOnFail('error-message')
   public async move(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -302,21 +322,19 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new Error(); // TODO
+      throw new VerifyingTokenError();
     }
-
-    console.log(123, user);
 
     // TODO: Check current move user
     const game = await this.gameService.makeMove({ move, gameNumber: user.openedGame.number, userId: user.id });
 
-    const log = await this.logService.create({ type: 'move', userId: user.id, gameId: game.id, text: move });
+    const log = await this.logService.create({ type: 'move', user, gameId: game.id, text: move });
     game.logs.push(log);
 
-    this.sendGameToGameUsers({ game, io });
+    await this.sendGameToGameUsers({ game, io });
   }
 
-  private sendGameToGameUsers({ game, io }: { game: Game, io: any }): void {
+  private async sendGameToGameUsers({ game, io }: { game: Game, io: any }): Promise<void> {
     if (!io.sockets.adapter.rooms[game.id]) {
       return;
     }
@@ -327,12 +345,16 @@ export class GameController {
       socketInGame.emit('update-opened-game', this.gameService.parseGameForUser({ game, user: userInGame }));
     });
   }
+
+  private async sendGameUpdateToAllUsers({ game, io }: { game: Game, io: any }): Promise<void> {
+    io.emit('update-game', this.gameService.parseGameForAllUsers(game));
+  }
+
 }
 
 // TODO: move token check into separate decorator
 // TODO: Add and check error conditions, add errors
 // TODO: social login
-// TODO: check current user move
 // TODO: tests
 // TODO: bots
 // TODO: game modules

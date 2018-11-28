@@ -1,5 +1,7 @@
 import { Service } from 'typedi';
 
+import { BaseGame, BaseGameData, BaseGameMove, BaseGamePlayer } from '../base-game';
+
 const PLAYERS_MIN = 1; // TODO: 3
 const PLAYERS_MAX = 5;
 
@@ -8,7 +10,7 @@ const MAX_NUMBER = 35;
 const START_CHIPS_COUNT = 11;
 const EXCESS_CARDS_NUMBER = 9;
 
-export interface NoThanksData {
+export interface NoThanksData extends BaseGameData {
   cards: number[];
   currentCard: number;
   currentCardCost: number;
@@ -16,23 +18,20 @@ export interface NoThanksData {
   players: NoThanksPlayer[];
 }
 
-export interface NoThanksPlayer {
-  id: string;
-  ready: boolean;
+export interface NoThanksPlayer extends BaseGamePlayer {
   cards: number[];
   chips: number;
   points: number;
-  place: number;
 }
 
-export interface NoThanksMove {
+export interface NoThanksMove extends BaseGameMove {
   takeCard: boolean;
 }
 
 @Service()
-export class NoThanks {
+export class NoThanks extends BaseGame {
 
-  getNewGame(): { playersMax: number, playersMin: number, gameData: string } {
+  getNewGame = (): { playersMax: number, playersMin: number, gameData: string } => {
     const gameData: NoThanksData = {
       cards: [],
       cardsLeft: 0,
@@ -48,42 +47,7 @@ export class NoThanks {
     };
   }
 
-  addPlayer({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
-    const gameData: NoThanksData = JSON.parse(gameDataJSON);
-    const { players } = gameData;
-
-    players.push({
-      id: userId,
-      ready: false,
-    } as NoThanksPlayer);
-
-    return JSON.stringify({ ...gameData, players });
-  }
-
-  toggleReady({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
-    const gameData: NoThanksData = JSON.parse(gameDataJSON);
-    let { players } = gameData;
-
-    players = players.map(player => {
-      if (player.id === userId) {
-        return { ...player, ready: !player.ready };
-      }
-      return player;
-    });
-
-    return JSON.stringify({ ...gameData, players });
-  }
-
-  removePlayer({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
-    const gameData: NoThanksData = JSON.parse(gameDataJSON);
-    let { players } = gameData;
-
-    players = players.filter(player => player.id !== userId);
-
-    return JSON.stringify({ ...gameData, players });
-  }
-
-  startGame(gameDataJSON: string): { gameData: string, nextPlayersIds: string[] } {
+  startGame = (gameDataJSON: string): { gameData: string, nextPlayersIds: string[] } => {
     const gameData: NoThanksData = JSON.parse(gameDataJSON);
     const { cards } = gameData;
     let { players } = gameData;
@@ -112,10 +76,19 @@ export class NoThanks {
 
     const nextPlayersIds = [players[Math.floor(Math.random() * players.length)].id];
 
-    return { gameData: JSON.stringify({ cards, cardsLeft, currentCard, currentCardCost, players }), nextPlayersIds };
+    return {
+      gameData: JSON.stringify({
+        ...gameData,
+        cards,
+        cardsLeft,
+        currentCard,
+        currentCardCost,
+        players,
+      }), nextPlayersIds,
+    };
   }
 
-  parseGameDataForUser({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }) {
+  parseGameDataForUser = ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string => {
     const gameData: NoThanksData = JSON.parse(gameDataJSON);
 
     gameData.players.forEach((player, index) => {
@@ -131,22 +104,17 @@ export class NoThanks {
     return JSON.stringify({ ...gameData, cards: [] });
   }
 
-  makeMove({ gameData: gameDataJSON, move: moveJSON, userId }: { gameData: string, move: string, userId: string }): {
+  makeMove = ({ gameData: gameDataJSON, move: moveJSON, userId }: { gameData: string, move: string, userId: string }): {
     gameData: string,
     nextPlayersIds: string[],
-  } {
+  } => {
     const gameData: NoThanksData = JSON.parse(gameDataJSON);
     const move: NoThanksMove = JSON.parse(moveJSON);
 
     const { cards } = gameData;
     let { currentCard, currentCardCost, cardsLeft, players } = gameData;
 
-    let playerNumber;
-    players.forEach((player, index) => {
-      if (player.id === userId) {
-        playerNumber = index;
-      }
-    });
+    const playerNumber = this.getPlayerNumber({ userId, players });
 
     if (move.takeCard) {
       players[playerNumber].cards.push(currentCard);
@@ -192,7 +160,7 @@ export class NoThanks {
     };
   }
 
-  getRules() {
+  getRules = (): string => {
     const rules = `No Thanks! is a card game for three to five players designed by Thorsten Gimmler.
 Originally called Geschenkt! (presented (as a gift) in German) and published by Amigo Spiele in 2004, it was translated into English by Z-Man Games.
 
@@ -211,7 +179,7 @@ No Thanks! was nominated in 2005 for the German Spiel des Jahres (Game of the Ye
     return rules;
   }
 
-  private getPointsForPlayer(player: NoThanksPlayer): number {
+  private getPointsForPlayer = (player: NoThanksPlayer): number => {
     let points = 0;
     let lastCard = 0;
 
@@ -226,7 +194,7 @@ No Thanks! was nominated in 2005 for the German Spiel des Jahres (Game of the Ye
     return points - player.chips;
   }
 
-  private updatePlayerPlaces(players: NoThanksPlayer[]): NoThanksPlayer[] {
+  private updatePlayerPlaces = (players: NoThanksPlayer[]): NoThanksPlayer[] => {
     const playersPlaces = [];
 
     players.forEach(player => {
@@ -235,14 +203,31 @@ No Thanks! was nominated in 2005 for the German Spiel des Jahres (Game of the Ye
 
     playersPlaces.sort((a, b) => a.points - b.points);
 
-    players.forEach(player => {
-      playersPlaces.forEach((playersPlace, place) => {
+    return players.map(player => {
+      let place;
+
+      playersPlaces.forEach((playersPlace, i) => {
         if (player.id === playersPlace.id) {
-          player.place = place + 1;
+          place = i + 1;
         }
       });
+
+      return {
+        ...player,
+        place,
+      };
+    });
+  }
+
+  private getPlayerNumber = ({ userId, players }: { userId: string, players: NoThanksPlayer[] }): number => {
+    let playerNumber;
+
+    players.forEach((player, index) => {
+      if (player.id === userId) {
+        playerNumber = index;
+      }
     });
 
-    return players;
+    return playerNumber;
   }
 }

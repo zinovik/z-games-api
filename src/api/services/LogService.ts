@@ -20,25 +20,31 @@ export class LogService {
 
   public find(): Promise<Log[]> {
     this.log.info('Find all logs');
-    return this.logRepository.find();
+    return this.logRepository.createQueryBuilder('log')
+      .select()
+      .getMany();
   }
 
   public findByUser(user: User): Promise<Log[]> {
     this.log.info('Find all logs of the user', user.toString());
-    return this.logRepository.find({
-      where: {
-        userId: user.id,
-      },
-    });
+
+    return this.logRepository.createQueryBuilder('log')
+      .select()
+      .where({ userId: user.id })
+      .getMany();
   }
 
-  public async create({ type, userId, gameId, text }: { type: string, userId: string, gameId: string, text?: string }): Promise<Log> {
-    this.log.info('Create a new log => ', type, userId, gameId, text);
+  public async create({ type, user, gameId, text }: { type: string, user: User, gameId: string, text?: string }): Promise<Log> {
+    this.log.info('Create a new log => ', type, user, gameId, text);
 
     const log = new Log();
 
+    const newUser = new User();
+    newUser.id = user.id;
+    newUser.username = user.username;
+
     log.type = type;
-    log.userId = userId;
+    log.user = newUser;
     log.gameId = gameId;
     log.text = text;
     log.id = uuid.v1();

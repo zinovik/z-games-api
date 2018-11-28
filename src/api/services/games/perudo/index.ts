@@ -1,55 +1,46 @@
 import { Service } from 'typedi';
 
+import { BaseGame, BaseGameData, BaseGameMove, BaseGamePlayer } from '../base-game';
+
 const PLAYERS_MIN = 2;
 const PLAYERS_MAX = 10;
 
-export interface PerudoData {
-  players: any;
+const PLAYER_DICES_COUNT = 5;
+const DICE_MAX_FIGURE = 6;
+const JOKER_FIGURE = 1;
+
+export interface PerudoData extends BaseGameData {
+  currentRound: number;
+  isMaputo: boolean;
+  currentDiceFigure: number;
+  currentDiceNumber: number;
+  players: PerudoPlayer[];
+  lastPlayerId: string;
 }
 
-export interface PerudoPlayer {
-  id: any;
+export interface PerudoPlayer extends BaseGamePlayer {
+  dices: number[];
+  dicesCount: number;
+  isMaputoAble: boolean;
+}
+
+export interface PerudoMove extends BaseGameMove {
+  number: number;
+  figure: number;
+  notBelieve: boolean;
 }
 
 @Service()
-export class Perudo {
-  private _PLAYER_DICES_COUNT = 5;
-  private _DICE_MAX_FIGURE = 6;
-  private _JOKER_FIGURE = 1;
+export class Perudo extends BaseGame {
 
-  private _PLAYERS_MIN = 2;
-  private _PLAYERS_MAX = 10;
-  private _started = false;
-  private _finished = false;
-  private _players = [];
-  private _nextPlayerNumber = 0;
-  private _lastPlayerNumber = 0;
-  private _currentRound = 0;
-  private _currentDiceFigure = 0;
-  private _currentDiceNumber = 0;
-  private _lastRoundResults = {};
-
-  constructor() {
-    this._PLAYER_DICES_COUNT = 5;
-    this._DICE_MAX_FIGURE = 6;
-    this._JOKER_FIGURE = 1;
-
-    this._PLAYERS_MIN = 2;
-    this._PLAYERS_MAX = 10;
-    this._started = false;
-    this._finished = false;
-    this._players = [];
-    this._nextPlayerNumber = 0;
-    this._lastPlayerNumber = 0;
-    this._currentRound = 0;
-    this._currentDiceFigure = 0;
-    this._currentDiceNumber = 0;
-    this._lastRoundResults = {};
-  }
-
-  getNewGame(): { playersMax: number, playersMin: number, gameData: string } {
+  getNewGame = (): { playersMax: number, playersMin: number, gameData: string } => {
     const gameData: PerudoData = {
-      players: {},
+      currentRound: 0,
+      currentDiceFigure: 0,
+      currentDiceNumber: 0,
+      players: [],
+      lastPlayerId: '',
+      isMaputo: false,
     };
 
     return {
@@ -59,302 +50,180 @@ export class Perudo {
     };
   }
 
-  addPlayer({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
-    const gameData: PerudoData = JSON.parse(gameDataJSON);
-    const { players } = gameData;
+  startGame = (gameDataJSON: string): { gameData: string, nextPlayersIds: string[] } => {
+    let gameData: PerudoData = JSON.parse(gameDataJSON);
 
-    players.push({
-      id: userId,
-      ready: false,
-    } as PerudoPlayer);
-
-    return JSON.stringify({ ...gameData, players });
-  }
-
-  toggleReady({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
-    const gameData: PerudoData = JSON.parse(gameDataJSON);
-    let { players } = gameData;
-
-    players = players.map(player => {
-      if (player.id === userId) {
-        return { ...player, ready: !player.ready };
-      }
-      return player;
-    });
-
-    return JSON.stringify({ ...gameData, players });
-  }
-
-  removePlayer({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
-    const gameData: PerudoData = JSON.parse(gameDataJSON);
-    let { players } = gameData;
-
-    players = players.filter(player => player.id !== userId);
-
-    return JSON.stringify({ ...gameData, players });
-  }
-
-  startGame(gameData: string): { gameData: string, nextPlayersIds: string[] } {
-    const { cards, cardsLeft, players } = JSON.parse(gameData);
-
-    Object.keys(players).forEach(username => {
-      players[username] = {
-        cards: [],
-        place: 0,
+    gameData.players = gameData.players.map(player => {
+      return {
+        ...player,
+        dices: [],
+        dicesCount: PLAYER_DICES_COUNT,
+        place: 1,
+        isMaputoAble: false,
       };
     });
 
-    const [currentCard] = cards.splice(Math.floor(Math.random() * cards.length), 1);
-    const currentCardCost = 0;
+    gameData = this.nextRound(gameData);
 
-    const nextPlayersIds = [Object.keys(players)[Math.floor(Math.random() * Object.keys(players).length)]];
+    const nextPlayersIds = [gameData.players[Math.floor(Math.random() * gameData.players.length)].id];
 
-    return { gameData: JSON.stringify({ cards, cardsLeft, currentCard, currentCardCost, players }), nextPlayersIds };
+    return {
+      gameData: JSON.stringify({ ...gameData }), nextPlayersIds,
+    };
   }
 
-  parseGameDataForUser({ gameData, userId }: { gameData: string, userId: string }) {
-    return gameData;
+  parseGameDataForUser = ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string => {
+    const gameData: PerudoData = JSON.parse(gameDataJSON);
+
+    gameData.players.forEach((player, index) => {
+      if (player.id !== userId) {
+        gameData.players[index] = {
+          ...gameData.players[index],
+          dices: [],
+        };
+      }
+    });
+
+    return JSON.stringify(gameData);
   }
 
-  makeMove({ gameData, move, userId }: { gameData: string, move: string, userId: string }): {
+  makeMove = ({ gameData: gameDataJSON, move: moveJSON, userId }: { gameData: string, move: string, userId: string }): {
     gameData: string,
     nextPlayersIds: string[],
-  } {
-    console.log({ gameData, move, userId });
-    return { gameData: '', nextPlayersIds: [] };
-  }
+  } => {
+    let gameData: PerudoData = JSON.parse(gameDataJSON);
+    const move: PerudoMove = JSON.parse(moveJSON);
 
-  getRules() {
-    const rules = '';
-    return rules;
-  }
-
-  start(playersNumber) {
-    for (let i = 0; i < playersNumber; i++) {
-      this._players.push({
-        dicesCount: this._PLAYER_DICES_COUNT,
-        dices: [],
-        place: 0,
-      });
-    }
-
-    this._nextPlayerNumber = Math.floor(Math.random() * this._players.length);
-    this._nextRound();
-    this._started = true;
-  }
-
-  move(move) {
-    if (this._finished) {
-      return undefined;
-    }
+    let nextPlayerId: string;
 
     if (move.notBelieve) {
-      if (!this._currentDiceNumber || !this._currentDiceFigure) {
-        return undefined;
+      if (!gameData.currentDiceNumber || !gameData.currentDiceFigure) {
+        return undefined; // TODO: Error
       }
 
-      const messages = [];
-
-      messages.push({
-        playerNumber: this._nextPlayerNumber,
-        text: `doesn't believe that on the table ${this._currentDiceNumber} dices with "${this._currentDiceFigure}"`,
-      });
-
-      const allDices = [];
       let countDiceNumber = 0;
 
-      this._players.forEach((player) => {
-        player.dices.forEach((dice) => {
-          allDices.push(dice);
-
-          if (dice === this._currentDiceFigure || dice === this._JOKER_FIGURE) {
+      gameData.players.forEach(player => {
+        player.dices.forEach(dice => {
+          if (dice === gameData.currentDiceFigure || dice === JOKER_FIGURE) {
             countDiceNumber++;
           }
         });
       });
 
-      allDices.sort((a, b) => (a - b));
-      messages.push({ playerNumber: this._nextPlayerNumber, text: `counts ${countDiceNumber} dices with "${this._currentDiceFigure}" (${allDices})` });
+      const playerNumber = this.getPlayerNumber({ players: gameData.players, userId });
+      const lastPlayerNumber = this.getPlayerNumber({ players: gameData.players, userId: gameData.lastPlayerId });
 
-      if (countDiceNumber < this._currentDiceNumber) {
-        this._players[this._lastPlayerNumber].dicesCount = this._players[this._lastPlayerNumber].dicesCount - 1;
-        messages.push({ playerNumber: this._lastPlayerNumber, text: `looses 1 dice` });
+      if (countDiceNumber < gameData.currentDiceNumber) {
+        gameData.players[lastPlayerNumber].dicesCount--;
 
-        if (this._players[this._lastPlayerNumber].dicesCount === 0) {
-          this._players[this._lastPlayerNumber].place = this._activePlayersCount() + 1;
-          messages.push({ playerNumber: this._lastPlayerNumber, text: `finishes on ${this._players[this._lastPlayerNumber].place} place` });
+        if (gameData.players[lastPlayerNumber].dicesCount) {
+          nextPlayerId = gameData.players[lastPlayerNumber].id;
         } else {
-          this._nextPlayerNumber = this._lastPlayerNumber;
+          gameData.players[lastPlayerNumber].place = this.activePlayersCount(gameData.players) + 1;
+          nextPlayerId = gameData.players[playerNumber].id;
         }
-      } else {
-        this._players[this._nextPlayerNumber].dicesCount = this._players[this._nextPlayerNumber].dicesCount - 1;
-        messages.push({ playerNumber: this._nextPlayerNumber, text: `looses 1 dice` });
 
-        if (this._players[this._nextPlayerNumber].dicesCount === 0) {
-          this._players[this._nextPlayerNumber].place = this._activePlayersCount() + 1;
-          messages.push({ playerNumber: this._nextPlayerNumber, text: `finishes on ${this._players[this._nextPlayerNumber].place} place` });
+      } else {
+        gameData.players[playerNumber].dicesCount--;
+
+        if (gameData.players[playerNumber].dicesCount) {
+          nextPlayerId = gameData.players[playerNumber].id;
+        } else {
+          gameData.players[playerNumber].place = this.activePlayersCount(gameData.players) + 1;
+          nextPlayerId = this.nextPlayer({ players: gameData.players, userId });
         }
       }
 
-      this._nextRound();
+      gameData = this.nextRound(gameData);
 
-      return messages;
     } else {
-      move.number = +move.number;
-      move.figure = +move.figure;
-
       if (!move.number ||
         !move.figure ||
-        move.number < this._currentDiceNumber ||
-        (move.number === this._currentDiceNumber && move.figure <= this._currentDiceFigure)) {
-        return undefined;
+        move.number < gameData.currentDiceNumber ||
+        (move.number === gameData.currentDiceNumber && move.figure <= gameData.currentDiceFigure)) {
+        return undefined; // Error
       }
 
-      this._currentDiceNumber = move.number;
-      this._currentDiceFigure = move.figure;
+      gameData.currentDiceNumber = move.number;
+      gameData.currentDiceFigure = move.figure;
 
-      const messages = [];
-      messages.push({ playerNumber: this._nextPlayerNumber, text: `bets that on the table ${move.number} dices with "${move.figure}"` });
-
-      this._lastPlayerNumber = this._nextPlayerNumber;
-      this._nextPlayer();
-
-      return messages;
+      gameData.lastPlayerId = userId;
+      nextPlayerId = this.nextPlayer({ players: gameData.players, userId });
     }
+
+    const nextPlayersIds = [];
+    if (nextPlayerId) {
+      nextPlayersIds.push(nextPlayerId);
+    }
+
+    return { gameData: JSON.stringify(gameData), nextPlayersIds };
   }
 
-  getCommonGameInfo() {
-    return {
-      PLAYERS_MIN: this._PLAYERS_MIN,
-      PLAYERS_MAX: this._PLAYERS_MAX,
-      started: this._started,
-      finished: this._finished,
-      nextPlayers: [this._nextPlayerNumber],
-    };
+  getRules = (): string => {
+    const rules = '';
+    return rules;
   }
 
-  getGameInfo(userNumber) {
-    const gameInfo = {
-      PLAYERS_MIN: this._PLAYERS_MIN,
-      PLAYERS_MAX: this._PLAYERS_MAX,
-      started: this._started,
-      finished: this._finished,
-      nextPlayers: [this._nextPlayerNumber],
-      lastPlayerNumber: this._lastPlayerNumber,
-      currentRound: this._currentRound,
-      currentDiceFigure: this._currentDiceFigure,
-      currentDiceNumber: this._currentDiceNumber,
-      lastRoundResults: this._lastRoundResults,
-      players: [],
-    };
+  private nextRound = (gameData: PerudoData): PerudoData => {
+    gameData.currentRound++;
+    gameData.currentDiceFigure = 0;
+    gameData.currentDiceNumber = 0;
 
-    for (let i = 0; i < this._players.length; i++) {
-      if (this._finished) {
-        gameInfo.players[i] = this._players[i];
-      } else {
-        gameInfo.players[i] = {};
-        gameInfo.players[i].dicesCount = this._players[i].dicesCount;
+    gameData.players.forEach((player) => {
+      player.dices = [];
+
+      for (let j = 0; j < player.dicesCount; j++) {
+        player.dices.push(Math.floor(Math.random() * DICE_MAX_FIGURE) + 1);
       }
-    }
 
-    if ((userNumber || userNumber === 0) && (this._players[userNumber] || this._players[userNumber] === 0)) {
-      gameInfo.players[userNumber] = this._players[userNumber];
-    }
+      player.dices.sort((a, b) => a - b);
+    });
 
-    return gameInfo;
+    return { ...gameData };
   }
 
-  getGamedata() {
-    return {
-      started: this._started,
-      finished: this._finished,
-      nextPlayers: [this._nextPlayerNumber],
-      lastPlayerNumber: this._lastPlayerNumber,
-      currentRound: this._currentRound,
-      currentDiceFigure: this._currentDiceFigure,
-      currentDiceNumber: this._currentDiceNumber,
-      lastRoundResults: this._lastRoundResults,
-      players: this._players,
-    };
-  }
-
-  setGamedata(gameInfo) {
-    if (!gameInfo) {
+  private nextPlayer = ({ userId, players }: { userId: string, players: PerudoPlayer[] }): string => {
+    if (this.activePlayersCount(players) <= 1) {
       return undefined;
     }
 
-    this._started = gameInfo.started;
-    this._finished = gameInfo.finished;
-    this._nextPlayerNumber = gameInfo.nextPlayers[0];
-    this._lastPlayerNumber = gameInfo.lastPlayerNumber;
-    this._currentRound = gameInfo.currentRound;
-    this._currentDiceFigure = gameInfo.currentDiceFigure;
-    this._currentDiceNumber = gameInfo.currentDiceNumber;
-    this._lastRoundResults = gameInfo.lastRoundResults;
-    this._players = gameInfo.players;
+    let nextPlayerNumber = this.getPlayerNumber({ players, userId });
 
-    return true;
-  }
-
-  _nextRound() {
-    if (this._currentRound > 0) {
-      this._lastRoundResults = {};
-
-      for (let i = 0; i < this._players.length; i++) {
-        this._lastRoundResults[i] = JSON.parse(JSON.stringify(this._players[i].dices));
-      }
-    }
-
-    if (this._activePlayersCount() > 1) {
-      this._currentRound++;
-      this._currentDiceFigure = 0;
-      this._currentDiceNumber = 0;
-
-      this._players.forEach((player) => {
-        player.dices = [];
-
-        for (let j = 0; j < player.dicesCount; j++) {
-          player.dices.push(Math.floor(Math.random() * this._DICE_MAX_FIGURE) + 1);
-        }
-
-        player.dices.sort((a, b) => (a - b));
-      });
+    if (nextPlayerNumber >= players.length - 1) {
+      nextPlayerNumber = 0;
     } else {
-      if (this._players[this._nextPlayerNumber].place) {
-        this._players[this._lastPlayerNumber].place = 1;
-      } else {
-        this._players[this._nextPlayerNumber].place = 1;
-      }
-
-      this._finished = true;
+      nextPlayerNumber++;
     }
+
+    if (!players[nextPlayerNumber].dicesCount) {
+      this.nextPlayer({ userId: players[nextPlayerNumber].id, players });
+    }
+
+    return players[nextPlayerNumber].id;
   }
 
-  _nextPlayer() {
-    if (this._finished) {
-      return undefined;
-    }
-
-    if (this._nextPlayerNumber >= this._players.length - 1) {
-      this._nextPlayerNumber = 0;
-    } else {
-      this._nextPlayerNumber++;
-    }
-
-    if (!this._players[this._nextPlayerNumber].dicesCount) {
-      this._nextPlayer();
-    }
-  }
-
-  _activePlayersCount() {
+  private activePlayersCount = (players: PerudoPlayer[]): number => {
     let activePlayersCount = 0;
 
-    this._players.forEach((player) => {
-      if (player.dicesCount > 0) {
+    players.forEach((player) => {
+      if (player.dicesCount) {
         activePlayersCount++;
       }
     });
 
     return activePlayersCount;
+  }
+
+  private getPlayerNumber = ({ userId, players }: { userId: string, players: PerudoPlayer[] }): number => {
+    let playerNumber;
+
+    players.forEach((player, index) => {
+      if (player.id === userId) {
+        playerNumber = index;
+      }
+    });
+
+    return playerNumber;
   }
 }
