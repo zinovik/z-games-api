@@ -48,7 +48,7 @@ export class GameController {
     const game = await this.gameService.findOne(user.openedGame.number);
 
     const log = await this.logService.create({ type: 'connect', user, gameId: game.id });
-    game.logs.push(log);
+    game.logs = [log, ...game.logs];
 
     socket.join(game.id);
 
@@ -75,7 +75,7 @@ export class GameController {
     const game = await this.gameService.findOne(user.openedGame.number);
 
     const log = await this.logService.create({ type: 'disconnect', user, gameId: game.id });
-    game.logs.push(log);
+    game.logs = [log, ...game.logs];
 
     socket.leave(game.id);
 
@@ -156,7 +156,7 @@ export class GameController {
     }
 
     const log = await this.logService.create({ type: 'join', user, gameId: game.id });
-    game.logs.push(log);
+    game.logs = [log, ...game.logs];
 
     socket.join(game.id);
 
@@ -181,7 +181,7 @@ export class GameController {
     const game = await this.gameService.openGame({ user, gameNumber });
 
     const log = await this.logService.create({ type: 'open', user, gameId: game.id });
-    game.logs.push(log);
+    game.logs = [log, ...game.logs];
 
     socket.join(game.id);
 
@@ -206,7 +206,7 @@ export class GameController {
     const game = await this.gameService.watchGame({ user, gameNumber });
 
     const log = await this.logService.create({ type: 'watch', user, gameId: game.id });
-    game.logs.push(log);
+    game.logs = [log, ...game.logs];
 
     socket.join(game.id);
 
@@ -232,7 +232,7 @@ export class GameController {
     const game = await this.gameService.leaveGame({ user, gameNumber });
 
     const log = await this.logService.create({ type: 'leave', user, gameId: game.id });
-    game.logs.push(log);
+    game.logs = [log, ...game.logs];
 
     socket.leave(game.id);
 
@@ -260,8 +260,9 @@ export class GameController {
     const game = await this.gameService.closeGame({ user, gameNumber });
 
     const log = await this.logService.create({ type: 'close', user, gameId: game.id });
-    game.logs.push(log);
+    game.logs = [log, ...game.logs];
 
+    // TODO Check if player or watcher
     socket.leave(game.id);
 
     await this.sendGameToGameUsers({ game, io });
@@ -286,7 +287,7 @@ export class GameController {
     const game = await this.gameService.toggleReady({ user, gameNumber });
 
     const log = await this.logService.create({ type: 'ready', user, gameId: game.id });
-    game.logs.push(log);
+    game.logs = [log, ...game.logs];
 
     await this.sendGameToGameUsers({ game, io });
   }
@@ -307,7 +308,7 @@ export class GameController {
     const game = await this.gameService.startGame({ gameNumber });
 
     const log = await this.logService.create({ type: 'start', user, gameId: game.id });
-    game.logs.push(log);
+    game.logs = [log, ...game.logs];
 
     await this.sendGameToGameUsers({ game, io });
   }
@@ -325,11 +326,15 @@ export class GameController {
       throw new VerifyingTokenError();
     }
 
-    // TODO: Check current move user
     const game = await this.gameService.makeMove({ move, gameNumber: user.openedGame.number, userId: user.id });
 
-    const log = await this.logService.create({ type: 'move', user, gameId: game.id, text: move });
-    game.logs.push(log);
+    const moveLog = await this.logService.create({ type: 'move', user, gameId: game.id, text: move });
+    game.logs = [moveLog, ...game.logs];
+
+    if (game.state === 2) {
+      const finishLog = await this.logService.create({ type: 'finish', user, gameId: game.id });
+      game.logs = [finishLog, ...game.logs];
+    }
 
     await this.sendGameToGameUsers({ game, io });
   }

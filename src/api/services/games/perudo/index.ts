@@ -11,7 +11,7 @@ const JOKER_FIGURE = 1;
 
 export interface PerudoData extends BaseGameData {
   currentRound: number;
-  isMaputo: boolean;
+  isMaputoRound: boolean;
   currentDiceFigure: number;
   currentDiceNumber: number;
   players: PerudoPlayer[];
@@ -21,13 +21,13 @@ export interface PerudoData extends BaseGameData {
 export interface PerudoPlayer extends BaseGamePlayer {
   dices: number[];
   dicesCount: number;
-  isMaputoAble: boolean;
 }
 
 export interface PerudoMove extends BaseGameMove {
   number: number;
   figure: number;
   notBelieve: boolean;
+  isMaputo: boolean;
 }
 
 @Service()
@@ -40,7 +40,7 @@ export class Perudo extends BaseGame {
       currentDiceNumber: 0,
       players: [],
       lastPlayerId: '',
-      isMaputo: false,
+      isMaputoRound: false,
     };
 
     return {
@@ -59,7 +59,6 @@ export class Perudo extends BaseGame {
         dices: [],
         dicesCount: PLAYER_DICES_COUNT,
         place: 1,
-        isMaputoAble: false,
       };
     });
 
@@ -105,7 +104,7 @@ export class Perudo extends BaseGame {
 
       gameData.players.forEach(player => {
         player.dices.forEach(dice => {
-          if (dice === gameData.currentDiceFigure || dice === JOKER_FIGURE) {
+          if (dice === gameData.currentDiceFigure || (!gameData.isMaputoRound && dice === JOKER_FIGURE)) {
             countDiceNumber++;
           }
         });
@@ -138,12 +137,13 @@ export class Perudo extends BaseGame {
       gameData = this.nextRound(gameData);
 
     } else {
-      if (!move.number ||
-        !move.figure ||
-        move.number < gameData.currentDiceNumber ||
-        (move.number === gameData.currentDiceNumber && move.figure <= gameData.currentDiceFigure)) {
-        return undefined; // Error
-      }
+      // if (!move.number ||
+      //   !move.figure ||
+      //   move.number < gameData.currentDiceNumber ||
+      //   (move.number === gameData.currentDiceNumber && move.figure <= gameData.currentDiceFigure)) {
+      //   return undefined; // Error
+      // }
+      gameData.isMaputoRound = move.isMaputo;
 
       gameData.currentDiceNumber = move.number;
       gameData.currentDiceFigure = move.figure;

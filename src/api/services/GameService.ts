@@ -41,6 +41,7 @@ export class GameService {
       .leftJoin(...OPEN_GAME_JOIN_LOGS)
       .leftJoin(...OPEN_GAME_JOIN_LOGS_USERNAMES)
       .where({ number })
+      .orderBy({ 'logs.createdAt': 'DESC' })
       .getOne();
   }
 
@@ -137,7 +138,7 @@ export class GameService {
       throw new Error();
     }
 
-    if (!game.watchers.some(watcher => watcher.id === user.id)) {
+    if (game.watchers.some(watcher => watcher.id === user.id)) {
       this.log.warn('Can\'t watch game twice');
       throw new Error(); // TODO
     }
@@ -204,9 +205,13 @@ export class GameService {
     const { gameData, nextPlayersIds } = gamesServices[game.name].startGame(game.gameData);
     game.gameData = gameData;
     game.state = 1;
-    const nextUser = new User();
-    nextUser.id = nextPlayersIds[0]; // TODO: Many next players
-    game.nextPlayers = [nextUser];
+
+    game.nextPlayers = [];
+    nextPlayersIds.forEach(nextPlayerId => {
+      const nextUser = new User();
+      nextUser.id = nextPlayerId;
+      game.nextPlayers.push(nextUser);
+    });
 
     return this.gameRepository.save(game);
   }
@@ -214,13 +219,19 @@ export class GameService {
   public async makeMove({ move, gameNumber, userId }: { move: string, gameNumber: number, userId: string }): Promise<Game> {
     const game = await this.findOne(gameNumber);
 
+    // TODO: Check current move user
     const { gameData, nextPlayersIds } = gamesServices[game.name].makeMove({ gameData: game.gameData, move, userId });
     game.gameData = gameData;
 
     if (nextPlayersIds.length) {
-      const nextUser = new User();
-      nextUser.id = nextPlayersIds[0]; // TODO: Many next players
-      game.nextPlayers = [nextUser];
+
+      game.nextPlayers = [];
+      nextPlayersIds.forEach(nextPlayerId => {
+        const nextUser = new User();
+        nextUser.id = nextPlayerId;
+        game.nextPlayers.push(nextUser);
+      });
+
     } else {
       game.state = 2;
     }
