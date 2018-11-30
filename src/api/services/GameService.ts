@@ -2,22 +2,23 @@ import { Container, Service } from 'typedi';
 import { OrmRepository } from 'typeorm-typedi-extensions';
 import uuid from 'uuid';
 
+import * as types from '../../constants';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import { JoiningGameError } from '../errors';
 import { Game } from '../models/Game';
 import { User } from '../models/User';
 import { GameRepository } from '../repositories/GameRepository';
 import {
-  ALL_GAMES_FIELDS, ALL_GAMES_JOIN_PLAYERS, FIELDS_TO_REMOVE_IN_ALL_GAMES, OPEN_GAME_FIELDS,
-  OPEN_GAME_JOIN_LOGS, OPEN_GAME_JOIN_LOGS_USERNAMES, OPEN_GAME_JOIN_NEXT_PLAYERS,
+  ALL_GAMES_FIELDS, ALL_GAMES_JOIN_PLAYERS, FIELDS_TO_REMOVE_IN_ALL_GAMES, LOGS_FIELD_ORDER_BY,
+  OPEN_GAME_FIELDS, OPEN_GAME_JOIN_LOGS, OPEN_GAME_JOIN_LOGS_USERNAMES, OPEN_GAME_JOIN_NEXT_PLAYERS,
   OPEN_GAME_JOIN_PLAYERS_ONLINE, OPEN_GAME_JOIN_WATCHERS
 } from '../scopes';
 import { NoThanks, Perudo } from '../services/games';
 import { BaseGame } from './games/base-game';
 
 const gamesServices: { [key: string]: BaseGame } = {
-  'No, Thanks!': Container.get(NoThanks),
-  'Perudo': Container.get(Perudo),
+  [types.NO_THANKS]: Container.get(NoThanks),
+  [types.PERUDO]: Container.get(Perudo),
 };
 
 @Service()
@@ -41,7 +42,7 @@ export class GameService {
       .leftJoin(...OPEN_GAME_JOIN_LOGS)
       .leftJoin(...OPEN_GAME_JOIN_LOGS_USERNAMES)
       .where({ number })
-      .orderBy({ 'logs.createdAt': 'DESC' })
+      .orderBy({ [LOGS_FIELD_ORDER_BY]: 'DESC' })
       .getOne();
   }
 

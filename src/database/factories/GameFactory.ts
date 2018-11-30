@@ -3,9 +3,10 @@ import { define } from 'typeorm-seeding';
 import * as uuid from 'uuid';
 
 import { Game } from '../../../src/api/models/Game';
+import * as types from '../../constants';
 
 define(Game, (faker: typeof Faker) => {
-  const name = faker.random.number(1) ? 'No, Thanks!' : 'Perudo';
+  const name = faker.random.number(1) ? types.NO_THANKS : types.PERUDO;
 
   const game = new Game();
 
