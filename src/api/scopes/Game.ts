@@ -67,3 +67,5 @@ export const FIELDS_TO_REMOVE_IN_ALL_GAMES = [
   'nextPlayers',
   'logs',
 ];
+
+export const LOGS_FIELD_ORDER_BY = 'logs.createdAt';

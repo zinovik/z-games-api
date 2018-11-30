@@ -3,7 +3,7 @@ import * as path from 'path';
 
 import * as pkg from '../package.json';
 import {
-  getOsEnv, getOsEnvOptional, getOsPath, getOsPaths, normalizePort, toBool, toNumber
+  getOsEnv, getOsEnvOptional, getOsPath, getOsPaths, normalizePort, toBool
 } from './lib/env';
 
 /**
@@ -48,11 +48,7 @@ export const env = {
   },
   db: {
     type: getOsEnv('TYPEORM_CONNECTION'),
-    host: getOsEnvOptional('TYPEORM_HOST'),
-    port: toNumber(getOsEnvOptional('TYPEORM_PORT')),
-    username: getOsEnvOptional('TYPEORM_USERNAME'),
-    password: getOsEnvOptional('TYPEORM_PASSWORD'),
-    database: getOsEnv('TYPEORM_DATABASE'),
+    url: getOsEnv('DATABASE_URL'),
     synchronize: toBool(getOsEnvOptional('TYPEORM_SYNCHRONIZE')),
     logging: getOsEnv('TYPEORM_LOGGING'),
   },
