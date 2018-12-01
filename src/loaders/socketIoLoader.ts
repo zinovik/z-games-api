@@ -9,7 +9,7 @@ export const socketIoLoader: MicroframeworkLoader = (settings: MicroframeworkSet
   }
 
   const expressServer = settings.getData('express_server');
-  const io = socketIo.listen(expressServer, { origins: '*:*' });
+  const io = socketIo.listen(expressServer);
   useSocketServer(io);
 
 };

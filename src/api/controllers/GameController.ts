@@ -1,11 +1,12 @@
 import { JsonController } from 'routing-controllers';
 import {
-  ConnectedSocket, EmitOnFail, EmitOnSuccess, MessageBody, OnConnect, OnDisconnect, OnMessage,
-  SocketController, SocketIO, SocketQueryParam
+  ConnectedSocket, EmitOnSuccess, MessageBody, OnConnect, OnDisconnect, OnMessage, SocketController,
+  SocketIO, SocketQueryParam
 } from 'socket-controllers';
 import { Container } from 'typedi';
 
 import { AuthService } from '../../auth/AuthService';
+import * as types from '../../constants';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import { VerifyingTokenError } from '../errors';
 import { JoiningGameError } from '../errors/JoiningGameError';
@@ -84,7 +85,6 @@ export class GameController {
   }
 
   @OnMessage('new-game')
-  @EmitOnFail('error-message')
   public async newGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -135,7 +135,6 @@ export class GameController {
   }
 
   @OnMessage('join-game')
-  @EmitOnFail('error-message')
   public async joinGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -165,7 +164,6 @@ export class GameController {
   }
 
   @OnMessage('open-game')
-  @EmitOnFail('error-message')
   public async openGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -190,7 +188,6 @@ export class GameController {
   }
 
   @OnMessage('watch-game')
-  @EmitOnFail('error-message')
   public async watchGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -200,10 +197,17 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new VerifyingTokenError();
+      socket.emit('error-message', 'Error verifying token');
     }
 
-    const game = await this.gameService.watchGame({ user, gameNumber });
+    let game: Game;
+
+    try {
+      game = await this.gameService.watchGame({ user, gameNumber });
+    } catch (error) {
+      socket.emit('error-message', error.message);
+      return this.log.error(error.message);
+    }
 
     const log = await this.logService.create({ type: 'watch', user, gameId: game.id });
     game.logs = [log, ...game.logs];
@@ -216,7 +220,6 @@ export class GameController {
 
   @OnMessage('leave-game')
   @EmitOnSuccess('update-opened-game')
-  @EmitOnFail('error-message')
   public async leaveGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -244,7 +247,6 @@ export class GameController {
 
   @OnMessage('close-game')
   @EmitOnSuccess('update-opened-game')
-  @EmitOnFail('error-message')
   public async closeGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -272,7 +274,6 @@ export class GameController {
   }
 
   @OnMessage('toggle-ready')
-  @EmitOnFail('error-message')
   public async toggleReady(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -293,7 +294,6 @@ export class GameController {
   }
 
   @OnMessage('start-game')
-  @EmitOnFail('error-message')
   public async startGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -314,7 +314,6 @@ export class GameController {
   }
 
   @OnMessage('make-move')
-  @EmitOnFail('error-message')
   public async move(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
@@ -331,7 +330,7 @@ export class GameController {
     const moveLog = await this.logService.create({ type: 'move', user, gameId: game.id, text: move });
     game.logs = [moveLog, ...game.logs];
 
-    if (game.state === 2) {
+    if (game.state === types.GAME_FINISHED) {
       const finishLog = await this.logService.create({ type: 'finish', user, gameId: game.id });
       game.logs = [finishLog, ...game.logs];
     }

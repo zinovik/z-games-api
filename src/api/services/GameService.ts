@@ -4,7 +4,7 @@ import uuid from 'uuid';
 
 import * as types from '../../constants';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
-import { JoiningGameError } from '../errors';
+import { JoiningGameError, StartingGameError, WatchingGameError } from '../errors';
 import { Game } from '../models/Game';
 import { User } from '../models/User';
 import { GameRepository } from '../repositories/GameRepository';
@@ -130,18 +130,15 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (!game.state) {
-      this.log.warn('Can\'t watch not started game');
-      throw new Error();
+      throw new WatchingGameError('Can\'t watch not started game');
     }
 
     if (game.players.some(player => player.id === user.id)) {
-      this.log.warn('Can\'t watch joining game');
-      throw new Error();
+      throw new WatchingGameError('Can\'t watch joining game');
     }
 
     if (game.watchers.some(watcher => watcher.id === user.id)) {
-      this.log.warn('Can\'t watch game twice');
-      throw new Error(); // TODO
+      throw new WatchingGameError('Can\'t watch game twice');
     }
 
     game.watchers.push(user);
@@ -152,7 +149,7 @@ export class GameService {
   public async leaveGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
     const game = await this.findOne(gameNumber);
 
-    if (game.state === 1) {
+    if (game.state === types.GAME_STARTED) {
       this.log.warn('Can\'t leave started and not finished game');
       throw new Error();
     }
@@ -203,9 +200,21 @@ export class GameService {
   public async startGame({ gameNumber }: { gameNumber: number }): Promise<Game> {
     const game = await this.findOne(gameNumber);
 
+    if (game.players.length < game.playersMin) {
+      throw new StartingGameError('Not enough players');
+    }
+
+    if (game.players.length > game.playersMax) {
+      throw new StartingGameError('Too many players');
+    }
+
+    if (!gamesServices[game.name].checkReady(game.gameData)) {
+      throw new StartingGameError('Not all players are ready');
+    }
+
     const { gameData, nextPlayersIds } = gamesServices[game.name].startGame(game.gameData);
     game.gameData = gameData;
-    game.state = 1;
+    game.state = types.GAME_STARTED;
 
     game.nextPlayers = [];
     nextPlayersIds.forEach(nextPlayerId => {
@@ -234,7 +243,7 @@ export class GameService {
       });
 
     } else {
-      game.state = 2;
+      game.state = types.GAME_FINISHED;
     }
 
     return this.gameRepository.save(game);
