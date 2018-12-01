@@ -4,6 +4,7 @@ import {
   PrimaryColumn, Unique, UpdateDateColumn
 } from 'typeorm';
 
+import * as types from '../../constants';
 import { Log } from '../models/Log';
 import { User } from '../models/User';
 
@@ -74,7 +75,7 @@ export class Game {
 
   @BeforeInsert()
   public async setState(): Promise<void> {
-    this.state = 0;
+    this.state = types.GAME_NOT_STARTED;
   }
 
 }

@@ -1,7 +1,8 @@
 {
-  "name": "express-typescript-boilerplate",
-  "version": "3.2.0",
-  "description": "A delightful way to building a Node.js RESTful API Services with beautiful code written in TypeScript",
+  "name": "z-games-api",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Back-end part of tiny simple board games portal",
   "main": "src/app.ts",
   "scripts": {
     "start": "nps",
@@ -12,32 +13,20 @@
     "postinstall": "npm start build"
   },
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=10.0.0",
+    "npm": "6.4.1"
   },
-  "repository": "git+ssh://git@github.com/w3tec/express-typescript-boilerplate.git",
+  "repository": "git+ssh://git@github.com:zinovik/z-games-api.git",
   "keywords": [
     "NodeJS",
     "TypeScript",
+    "socket.io",
     "express",
-    "boilerplate",
-    "skeleton",
-    "starter-kit",
-    "w3tec.ch"
+    "games",
+    "board games"
   ],
-  "homepage": "https://github.com/w3tec/express-typescript-boilerplate#readme",
-  "author": "w3tec.ch <info@w3tec.ch>",
-  "contributors": [
-    {
-      "name": "David Weber",
-      "email": "david.weber@w3tec.ch",
-      "url": "https://github.com/dweber019"
-    },
-    {
-      "name": "Gery Hirschfeld",
-      "email": "gery.hirschfeld@w3tec.ch",
-      "url": "https://github.com/hirsch88"
-    }
-  ],
+  "homepage": "https://github.com/zinovik/z-games-api#readme",
+  "author": "Max Zinovik <zinovik@gmail.com>",
   "dependencies": {
     "bcrypt": "^3.0.2",
     "chalk": "^2.4.1",
@@ -100,7 +89,6 @@
     "testEnvironment": "node",
     "setupTestFrameworkScriptFile": "./test/unit/lib/setup.ts"
   },
-  "license": "MIT",
   "devDependencies": {
     "@types/bcrypt": "^3.0.0",
     "@types/bluebird": "^3.5.18",

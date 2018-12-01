@@ -12,6 +12,7 @@ const JOKER_FIGURE = 1;
 export interface PerudoData extends BaseGameData {
   currentRound: number;
   isMaputoRound: boolean;
+  lastRoundResults: PerudoPlayer[];
   currentDiceFigure: number;
   currentDiceNumber: number;
   players: PerudoPlayer[];
@@ -36,6 +37,7 @@ export class Perudo extends BaseGame {
   getNewGame = (): { playersMax: number, playersMin: number, gameData: string } => {
     const gameData: PerudoData = {
       currentRound: 0,
+      lastRoundResults: [],
       currentDiceFigure: 0,
       currentDiceNumber: 0,
       players: [],
@@ -134,6 +136,7 @@ export class Perudo extends BaseGame {
         }
       }
 
+      gameData.lastRoundResults = [...gameData.players];
       gameData = this.nextRound(gameData);
 
     } else {

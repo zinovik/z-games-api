@@ -18,14 +18,14 @@ export class BaseGame {
 
   startGame: (gameData: string) => { gameData: string, nextPlayersIds: string[] };
 
-  parseGameDataForUser: ({ gameData, userId }: { gameData: string, userId: string }) => string;
+  getRules: () => string;
 
-  makeMove: ({ gameData, move, userId }: { gameData: string, move: string, userId: string }) => {
+  parseGameDataForUser: (parameters: { gameData: string, userId: string }) => string;
+
+  makeMove: (parameters: { gameData: string, move: string, userId: string }) => {
     gameData: string,
     nextPlayersIds: string[],
   };
-
-  getRules: () => string;
 
   addPlayer({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
     const gameData: BaseGameData = JSON.parse(gameDataJSON);
@@ -51,6 +51,13 @@ export class BaseGame {
     });
 
     return JSON.stringify({ ...gameData, players });
+  }
+
+  checkReady = (gameDataJSON: string): boolean => {
+    const gameData: BaseGameData = JSON.parse(gameDataJSON);
+    const { players } = gameData;
+
+    return players.every(player => player.ready);
   }
 
   removePlayer = ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string => {
