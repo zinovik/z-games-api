@@ -14,20 +14,20 @@ export interface BaseGameMove {
 
 export class BaseGame {
 
-  getNewGame: () => { playersMax: number, playersMin: number, gameData: string };
+  public getNewGame: () => { playersMax: number, playersMin: number, gameData: string };
 
-  startGame: (gameData: string) => { gameData: string, nextPlayersIds: string[] };
+  public startGame: (gameData: string) => { gameData: string, nextPlayersIds: string[] };
 
-  getRules: () => string;
+  public getRules: () => string;
 
-  parseGameDataForUser: (parameters: { gameData: string, userId: string }) => string;
+  public parseGameDataForUser: (parameters: { gameData: string, userId: string }) => string;
 
-  makeMove: (parameters: { gameData: string, move: string, userId: string }) => {
+  public makeMove: (parameters: { gameData: string, move: string, userId: string }) => {
     gameData: string,
     nextPlayersIds: string[],
   };
 
-  addPlayer({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
+  public addPlayer({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string {
     const gameData: BaseGameData = JSON.parse(gameDataJSON);
     const { players } = gameData;
 
@@ -39,7 +39,7 @@ export class BaseGame {
     return JSON.stringify({ ...gameData, players });
   }
 
-  toggleReady = ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string => {
+  public toggleReady = ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string => {
     const gameData: BaseGameData = JSON.parse(gameDataJSON);
     let { players } = gameData;
 
@@ -53,14 +53,14 @@ export class BaseGame {
     return JSON.stringify({ ...gameData, players });
   }
 
-  checkReady = (gameDataJSON: string): boolean => {
+  public checkReady = (gameDataJSON: string): boolean => {
     const gameData: BaseGameData = JSON.parse(gameDataJSON);
     const { players } = gameData;
 
     return players.every(player => player.ready);
   }
 
-  removePlayer = ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string => {
+  public removePlayer = ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string => {
     const gameData: BaseGameData = JSON.parse(gameDataJSON);
     let { players } = gameData;
 

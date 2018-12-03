@@ -1,3 +1,4 @@
+import { Socket } from 'socket.io';
 import { Service } from 'typedi';
 import { OrmRepository } from 'typeorm-typedi-extensions';
 import uuid from 'uuid';
@@ -81,6 +82,11 @@ export class UserService {
     const token = this.jwtService.generateToken({ username }, '7 days');
 
     return { user, token };
+  }
+
+  public sendError({ socket, message }: { socket: Socket, message: string }): void {
+    socket.emit('error-message', message);
+    return this.log.error(message);
   }
 
 }
