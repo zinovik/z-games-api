@@ -7,12 +7,10 @@ import { Container } from 'typedi';
 
 import { AuthService } from '../../auth/AuthService';
 import * as types from '../../constants';
-import { Logger, LoggerInterface } from '../../decorators/Logger';
-import { VerifyingTokenError } from '../errors';
-import { JoiningGameError } from '../errors/JoiningGameError';
 import { Game } from '../models/Game';
 import { GameService } from '../services/GameService';
 import { LogService } from '../services/LogService';
+import { UserService } from '../services/UserService';
 
 @JsonController('/games')
 @SocketController()
@@ -21,21 +19,22 @@ export class GameController {
   private gameService: GameService;
   private authService: AuthService;
   private logService: LogService;
+  private userService: UserService;
 
   constructor(
-    @Logger(__filename) private log: LoggerInterface
   ) {
     this.gameService = Container.get(GameService);
     this.authService = Container.get(AuthService);
     this.logService = Container.get(LogService);
+    this.userService = Container.get(UserService);
   }
 
   @OnConnect()
-  public async connection(
+  public async connect(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
     @ConnectedSocket() socket: any
-  ) {
+  ): Promise<void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
@@ -53,8 +52,8 @@ export class GameController {
 
     socket.join(game.id);
 
-    await this.sendGameToGameUsers({ game, io });
-    await this.sendGameUpdateToAllUsers({ game, io });
+    await this.gameService.sendGameToGameUsers({ game, io });
+    await this.gameService.sendGameUpdateToAllUsers({ game, io });
   }
 
   @OnDisconnect()
@@ -80,8 +79,8 @@ export class GameController {
 
     socket.leave(game.id);
 
-    await this.sendGameToGameUsers({ game, io });
-    await this.sendGameUpdateToAllUsers({ game, io });
+    await this.gameService.sendGameToGameUsers({ game, io });
+    await this.gameService.sendGameUpdateToAllUsers({ game, io });
   }
 
   @OnMessage('new-game')
@@ -94,16 +93,14 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      socket.emit('error-message', 'Error verifying token!');
-      this.log.warn('Error verifying token!');
-      throw new VerifyingTokenError();
+      return this.userService.sendError({ socket, message: 'Error verifying token!' });
     }
 
     const game = await this.gameService.newGame(name);
 
     await this.logService.create({ type: 'create', user, gameId: game.id });
 
-    io.emit('new-game', this.gameService.parseGameForAllUsers(game));
+    this.gameService.sendNewGameToAllUsers({ game, io });
   }
 
   @OnMessage('get-all-games')
@@ -117,11 +114,11 @@ export class GameController {
   public async getOpenedGame(
     @SocketQueryParam('token') token: string,
     @ConnectedSocket() socket: any
-  ): Promise<Game> {
+  ): Promise<Game | void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new VerifyingTokenError();
+      return undefined;
     }
 
     if (!user.openedGame) {
@@ -144,14 +141,14 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new VerifyingTokenError();
+      return this.userService.sendError({ socket, message: 'Error verifying token!' });
     }
 
     let game: Game;
     try {
       game = await this.gameService.joinGame({ user, gameNumber });
     } catch (error) {
-      throw new JoiningGameError(error.message);
+      return this.userService.sendError({ socket, message: error.message });
     }
 
     const log = await this.logService.create({ type: 'join', user, gameId: game.id });
@@ -159,8 +156,8 @@ export class GameController {
 
     socket.join(game.id);
 
-    await this.sendGameToGameUsers({ game, io });
-    await this.sendGameUpdateToAllUsers({ game, io });
+    await this.gameService.sendGameToGameUsers({ game, io });
+    await this.gameService.sendGameUpdateToAllUsers({ game, io });
   }
 
   @OnMessage('open-game')
@@ -173,7 +170,7 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new VerifyingTokenError();
+      return this.userService.sendError({ socket, message: 'Error verifying token!' });
     }
 
     const game = await this.gameService.openGame({ user, gameNumber });
@@ -183,8 +180,8 @@ export class GameController {
 
     socket.join(game.id);
 
-    await this.sendGameToGameUsers({ game, io });
-    await this.sendGameUpdateToAllUsers({ game, io });
+    await this.gameService.sendGameToGameUsers({ game, io });
+    await this.gameService.sendGameUpdateToAllUsers({ game, io });
   }
 
   @OnMessage('watch-game')
@@ -197,7 +194,7 @@ export class GameController {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      socket.emit('error-message', 'Error verifying token');
+      return this.userService.sendError({ socket, message: 'Error verifying token!' });
     }
 
     let game: Game;
@@ -205,8 +202,7 @@ export class GameController {
     try {
       game = await this.gameService.watchGame({ user, gameNumber });
     } catch (error) {
-      socket.emit('error-message', error.message);
-      return this.log.error(error.message);
+      return this.userService.sendError({ socket, message: error.message });
     }
 
     const log = await this.logService.create({ type: 'watch', user, gameId: game.id });
@@ -214,8 +210,8 @@ export class GameController {
 
     socket.join(game.id);
 
-    await this.sendGameToGameUsers({ game, io });
-    await this.sendGameUpdateToAllUsers({ game, io });
+    await this.gameService.sendGameToGameUsers({ game, io });
+    await this.gameService.sendGameUpdateToAllUsers({ game, io });
   }
 
   @OnMessage('leave-game')
@@ -225,11 +221,12 @@ export class GameController {
     @SocketIO() io: any,
     @ConnectedSocket() socket: any,
     @MessageBody() gameNumber: number
-  ): Promise<undefined> {
+  ): Promise<Game> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new VerifyingTokenError();
+      this.userService.sendError({ socket, message: 'Error verifying token!' });
+      return undefined;
     }
 
     const game = await this.gameService.leaveGame({ user, gameNumber });
@@ -239,8 +236,8 @@ export class GameController {
 
     socket.leave(game.id);
 
-    await this.sendGameToGameUsers({ game, io });
-    await this.sendGameUpdateToAllUsers({ game, io });
+    await this.gameService.sendGameToGameUsers({ game, io });
+    await this.gameService.sendGameUpdateToAllUsers({ game, io });
 
     return undefined;
   }
@@ -252,11 +249,12 @@ export class GameController {
     @SocketIO() io: any,
     @ConnectedSocket() socket: any,
     @MessageBody() gameNumber: number
-  ): Promise<void> {
+  ): Promise<Game> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new VerifyingTokenError();
+      this.userService.sendError({ socket, message: 'Error verifying token!' });
+      return undefined;
     }
 
     const game = await this.gameService.closeGame({ user, gameNumber });
@@ -267,8 +265,8 @@ export class GameController {
     // TODO Check if player or watcher
     socket.leave(game.id);
 
-    await this.sendGameToGameUsers({ game, io });
-    await this.sendGameUpdateToAllUsers({ game, io });
+    await this.gameService.sendGameToGameUsers({ game, io });
+    await this.gameService.sendGameUpdateToAllUsers({ game, io });
 
     return undefined;
   }
@@ -277,12 +275,13 @@ export class GameController {
   public async toggleReady(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
+    @ConnectedSocket() socket: any,
     @MessageBody() gameNumber: number
   ): Promise<void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new VerifyingTokenError();
+      return this.userService.sendError({ socket, message: 'Error verifying token!' });
     }
 
     const game = await this.gameService.toggleReady({ user, gameNumber });
@@ -290,19 +289,20 @@ export class GameController {
     const log = await this.logService.create({ type: 'ready', user, gameId: game.id });
     game.logs = [log, ...game.logs];
 
-    await this.sendGameToGameUsers({ game, io });
+    await this.gameService.sendGameToGameUsers({ game, io });
   }
 
   @OnMessage('start-game')
   public async startGame(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
+    @ConnectedSocket() socket: any,
     @MessageBody() gameNumber: number
   ): Promise<void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new VerifyingTokenError();
+      return this.userService.sendError({ socket, message: 'Error verifying token!' });
     }
 
     const game = await this.gameService.startGame({ gameNumber });
@@ -310,19 +310,20 @@ export class GameController {
     const log = await this.logService.create({ type: 'start', user, gameId: game.id });
     game.logs = [log, ...game.logs];
 
-    await this.sendGameToGameUsers({ game, io });
+    await this.gameService.sendGameToGameUsers({ game, io });
   }
 
   @OnMessage('make-move')
   public async move(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
+    @ConnectedSocket() socket: any,
     @MessageBody() move: string
   ): Promise<void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
     if (!user) {
-      throw new VerifyingTokenError();
+      return this.userService.sendError({ socket, message: 'Error verifying token!' });
     }
 
     const game = await this.gameService.makeMove({ move, gameNumber: user.openedGame.number, userId: user.id });
@@ -335,23 +336,7 @@ export class GameController {
       game.logs = [finishLog, ...game.logs];
     }
 
-    await this.sendGameToGameUsers({ game, io });
-  }
-
-  private async sendGameToGameUsers({ game, io }: { game: Game, io: any }): Promise<void> {
-    if (!io.sockets.adapter.rooms[game.id]) {
-      return;
-    }
-
-    Object.keys(io.sockets.adapter.rooms[game.id].sockets).forEach(async socketId => {
-      const socketInGame = io.sockets.connected[socketId];
-      const userInGame = await this.authService.verifyAndDecodeJwt(socketInGame.handshake.query.token);
-      socketInGame.emit('update-opened-game', this.gameService.parseGameForUser({ game, user: userInGame }));
-    });
-  }
-
-  private async sendGameUpdateToAllUsers({ game, io }: { game: Game, io: any }): Promise<void> {
-    io.emit('update-game', this.gameService.parseGameForAllUsers(game));
+    await this.gameService.sendGameToGameUsers({ game, io });
   }
 
 }

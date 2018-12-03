@@ -2,6 +2,7 @@ import { Container, Service } from 'typedi';
 import { OrmRepository } from 'typeorm-typedi-extensions';
 import uuid from 'uuid';
 
+import { AuthService } from '../../auth/AuthService';
 import * as types from '../../constants';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import { JoiningGameError, StartingGameError, WatchingGameError } from '../errors';
@@ -24,10 +25,13 @@ const gamesServices: { [key: string]: BaseGame } = {
 @Service()
 export class GameService {
 
+  private authService: AuthService;
+
   constructor(
     @OrmRepository() private gameRepository: GameRepository,
     @Logger(__filename) private log: LoggerInterface
   ) {
+    this.authService = Container.get(AuthService);
   }
 
   public findOne(number: number): Promise<Game | undefined> {
@@ -249,13 +253,33 @@ export class GameService {
     return this.gameRepository.save(game);
   }
 
+  public async sendGameToGameUsers({ game, io }: { game: Game, io: any }): Promise<void> {
+    if (!io.sockets.adapter.rooms[game.id]) {
+      return;
+    }
+
+    Object.keys(io.sockets.adapter.rooms[game.id].sockets).forEach(async socketId => {
+      const socketInGame = io.sockets.connected[socketId];
+      const userInGame = await this.authService.verifyAndDecodeJwt(socketInGame.handshake.query.token);
+      socketInGame.emit('update-opened-game', this.parseGameForUser({ game, user: userInGame }));
+    });
+  }
+
+  public async sendNewGameToAllUsers({ game, io }: { game: Game, io: any }): Promise<void> {
+    io.emit('new-game', this.parseGameForAllUsers(game));
+  }
+
+  public async sendGameUpdateToAllUsers({ game, io }: { game: Game, io: any }): Promise<void> {
+    io.emit('update-game', this.parseGameForAllUsers(game));
+  }
+
   public parseGameForUser({ game, user }: { game: Game, user: User }): Game {
     const gameData = gamesServices[game.name].parseGameDataForUser({ gameData: game.gameData, userId: user.id });
 
     return { ...game, gameData } as Game;
   }
 
-  public parseGameForAllUsers(game: Game): Game {
+  private parseGameForAllUsers(game: Game): Game {
     const newGame = { ...game } as Game;
 
     FIELDS_TO_REMOVE_IN_ALL_GAMES.forEach(field => {

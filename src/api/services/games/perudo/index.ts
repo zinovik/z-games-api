@@ -34,7 +34,7 @@ export interface PerudoMove extends BaseGameMove {
 @Service()
 export class Perudo extends BaseGame {
 
-  getNewGame = (): { playersMax: number, playersMin: number, gameData: string } => {
+  public getNewGame = (): { playersMax: number, playersMin: number, gameData: string } => {
     const gameData: PerudoData = {
       currentRound: 0,
       lastRoundResults: [],
@@ -52,7 +52,7 @@ export class Perudo extends BaseGame {
     };
   }
 
-  startGame = (gameDataJSON: string): { gameData: string, nextPlayersIds: string[] } => {
+  public startGame = (gameDataJSON: string): { gameData: string, nextPlayersIds: string[] } => {
     let gameData: PerudoData = JSON.parse(gameDataJSON);
 
     gameData.players = gameData.players.map(player => {
@@ -73,7 +73,7 @@ export class Perudo extends BaseGame {
     };
   }
 
-  parseGameDataForUser = ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string => {
+  public parseGameDataForUser = ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string => {
     const gameData: PerudoData = JSON.parse(gameDataJSON);
 
     gameData.players.forEach((player, index) => {
@@ -88,7 +88,7 @@ export class Perudo extends BaseGame {
     return JSON.stringify(gameData);
   }
 
-  makeMove = ({ gameData: gameDataJSON, move: moveJSON, userId }: { gameData: string, move: string, userId: string }): {
+  public makeMove = ({ gameData: gameDataJSON, move: moveJSON, userId }: { gameData: string, move: string, userId: string }): {
     gameData: string,
     nextPlayersIds: string[],
   } => {
@@ -163,7 +163,7 @@ export class Perudo extends BaseGame {
     return { gameData: JSON.stringify(gameData), nextPlayersIds };
   }
 
-  getRules = (): string => {
+  public getRules = (): string => {
     const rules = '';
     return rules;
   }

@@ -31,7 +31,7 @@ export interface NoThanksMove extends BaseGameMove {
 @Service()
 export class NoThanks extends BaseGame {
 
-  getNewGame = (): { playersMax: number, playersMin: number, gameData: string } => {
+  public getNewGame = (): { playersMax: number, playersMin: number, gameData: string } => {
     const gameData: NoThanksData = {
       cards: [],
       cardsLeft: 0,
@@ -47,7 +47,7 @@ export class NoThanks extends BaseGame {
     };
   }
 
-  startGame = (gameDataJSON: string): { gameData: string, nextPlayersIds: string[] } => {
+  public startGame = (gameDataJSON: string): { gameData: string, nextPlayersIds: string[] } => {
     const gameData: NoThanksData = JSON.parse(gameDataJSON);
     const { cards } = gameData;
     let { players } = gameData;
@@ -88,7 +88,7 @@ export class NoThanks extends BaseGame {
     };
   }
 
-  parseGameDataForUser = ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string => {
+  public parseGameDataForUser = ({ gameData: gameDataJSON, userId }: { gameData: string, userId: string }): string => {
     const gameData: NoThanksData = JSON.parse(gameDataJSON);
 
     gameData.players.forEach((player, index) => {
@@ -104,7 +104,7 @@ export class NoThanks extends BaseGame {
     return JSON.stringify({ ...gameData, cards: [] });
   }
 
-  makeMove = ({ gameData: gameDataJSON, move: moveJSON, userId }: { gameData: string, move: string, userId: string }): {
+  public makeMove = ({ gameData: gameDataJSON, move: moveJSON, userId }: { gameData: string, move: string, userId: string }): {
     gameData: string,
     nextPlayersIds: string[],
   } => {
@@ -160,7 +160,7 @@ export class NoThanks extends BaseGame {
     };
   }
 
-  getRules = (): string => {
+  public getRules = (): string => {
     const rules = `No Thanks! is a card game for three to five players designed by Thorsten Gimmler.
 Originally called Geschenkt! (presented (as a gift) in German) and published by Amigo Spiele in 2004, it was translated into English by Z-Man Games.
 
