@@ -5,7 +5,9 @@ import uuid from 'uuid';
 import { AuthService } from '../../auth/AuthService';
 import * as types from '../../constants';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
-import { JoiningGameError, StartingGameError, WatchingGameError } from '../errors';
+import {
+  JoiningGameError, OpeningGameError, StartingGameError, WatchingGameError
+} from '../errors';
 import { Game } from '../models/Game';
 import { User } from '../models/User';
 import { GameRepository } from '../repositories/GameRepository';
@@ -116,13 +118,11 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (!game.players.some(player => player.id === user.id)) {
-      this.log.warn('Can\'t open game without joining');
-      throw new Error();
+      throw new OpeningGameError('Can\'t open game without joining');
     }
 
     if (game.playersOnline.some(playerOnline => playerOnline.id === user.id)) {
-      this.log.warn('Can\'t open game twice');
-      throw new Error();
+      throw new OpeningGameError('Can\'t open game twice');
     }
 
     game.playersOnline.push(user);
@@ -261,6 +261,7 @@ export class GameService {
     Object.keys(io.sockets.adapter.rooms[game.id].sockets).forEach(async socketId => {
       const socketInGame = io.sockets.connected[socketId];
       const userInGame = await this.authService.verifyAndDecodeJwt(socketInGame.handshake.query.token);
+
       socketInGame.emit('update-opened-game', this.parseGameForUser({ game, user: userInGame }));
     });
   }
@@ -274,6 +275,10 @@ export class GameService {
   }
 
   public parseGameForUser({ game, user }: { game: Game, user: User }): Game {
+    if (game.state === types.GAME_FINISHED) {
+      return { ...game, gameData: JSON.parse(JSON.stringify(game.gameData)) } as Game;
+    }
+
     const gameData = gamesServices[game.name].parseGameDataForUser({ gameData: game.gameData, userId: user.id });
 
     return { ...game, gameData } as Game;
