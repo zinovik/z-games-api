@@ -57,7 +57,7 @@ export class NoThanks extends BaseGame {
         ...player,
         cards: [],
         chips: START_CHIPS_COUNT,
-        point: -START_CHIPS_COUNT,
+        points: -START_CHIPS_COUNT,
         place: 0,
       };
     });
