@@ -136,7 +136,7 @@ export class Perudo extends BaseGame {
         }
       }
 
-      gameData.lastRoundResults = [...gameData.players];
+      gameData.lastRoundResults = gameData.players.map(player => ({ ...player }));
       gameData = this.nextRound(gameData);
 
     } else {

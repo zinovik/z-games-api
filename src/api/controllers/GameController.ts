@@ -173,7 +173,12 @@ export class GameController {
       return this.userService.sendError({ socket, message: 'Error verifying token!' });
     }
 
-    const game = await this.gameService.openGame({ user, gameNumber });
+    let game: Game;
+    try {
+      game = await this.gameService.openGame({ user, gameNumber });
+    } catch (error) {
+      return this.userService.sendError({ socket, message: error.message });
+    }
 
     const log = await this.logService.create({ type: 'open', user, gameId: game.id });
     game.logs = [log, ...game.logs];
