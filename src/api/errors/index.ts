@@ -6,3 +6,4 @@ export * from './WrongPasswordError';
 export * from './JoiningGameError';
 export * from './StartingGameError';
 export * from './WatchingGameError';
+export * from './OpeningGameError';
