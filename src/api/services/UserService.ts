@@ -60,10 +60,10 @@ export class UserService {
       const newUser = await this.userRepository.save(user);
       this.eventDispatcher.dispatch(events.user.created, newUser);
     } catch (error) {
-      return error.message; // TODO Error
+      return 'error'; // TODO Error
     }
 
-    return 'Check email';
+    return 'You\'ve successfully registered, you can sign in'; // TODO: Add email verification
   }
 
   public async authorize({ username, password }: { username: string, password: string }): Promise<{ user: User, token: string }> {

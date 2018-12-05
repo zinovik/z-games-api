@@ -6,7 +6,7 @@ import { AuthService } from '../../auth/AuthService';
 import * as types from '../../constants';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import {
-  JoiningGameError, OpeningGameError, StartingGameError, WatchingGameError
+  JoiningGameError, MakingMoveError, OpeningGameError, StartingGameError, WatchingGameError
 } from '../errors';
 import { Game } from '../models/Game';
 import { User } from '../models/User';
@@ -59,7 +59,13 @@ export class GameService {
     return newGame;
   }
 
-  public async getAllGames(): Promise<Game[]> {
+  public async getAllGames({ ignoreNotStarted, ignoreStarted, ignoreFinished }: {
+    ignoreNotStarted: boolean,
+    ignoreStarted: boolean,
+    ignoreFinished: boolean,
+  }): Promise<Game[]> {
+    console.log(ignoreNotStarted, ignoreStarted, ignoreFinished);
+
     return this.gameRepository.createQueryBuilder('game')
       .select(ALL_GAMES_FIELDS)
       .leftJoin(...ALL_GAMES_JOIN_PLAYERS)
@@ -233,7 +239,10 @@ export class GameService {
   public async makeMove({ move, gameNumber, userId }: { move: string, gameNumber: number, userId: string }): Promise<Game> {
     const game = await this.findOne(gameNumber);
 
-    // TODO: Check current move user
+    if (!game.nextPlayers.some(nextPlayer => nextPlayer.id === userId)) {
+      throw new MakingMoveError('It\'s not your turn to move');
+    }
+
     const { gameData, nextPlayersIds } = gamesServices[game.name].makeMove({ gameData: game.gameData, move, userId });
     game.gameData = gameData;
 
