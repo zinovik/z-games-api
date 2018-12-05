@@ -7,3 +7,4 @@ export * from './JoiningGameError';
 export * from './StartingGameError';
 export * from './WatchingGameError';
 export * from './OpeningGameError';
+export * from './MakingMoveError';
