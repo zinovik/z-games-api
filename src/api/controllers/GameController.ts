@@ -105,8 +105,10 @@ export class GameController {
 
   @OnMessage('get-all-games')
   @EmitOnSuccess('all-games')
-  public async getAllGames(): Promise<Game[]> {
-    return await this.gameService.getAllGames();
+  public async getAllGames(
+    @MessageBody() conditions: { ignoreNotStarted: boolean, ignoreStarted: boolean, ignoreFinished: boolean }
+  ): Promise<Game[]> {
+    return await this.gameService.getAllGames(conditions);
   }
 
   @OnMessage('get-opened-game')
@@ -331,7 +333,13 @@ export class GameController {
       return this.userService.sendError({ socket, message: 'Error verifying token!' });
     }
 
-    const game = await this.gameService.makeMove({ move, gameNumber: user.openedGame.number, userId: user.id });
+    let game: Game;
+
+    try {
+      game = await this.gameService.makeMove({ move, gameNumber: user.openedGame.number, userId: user.id });
+    } catch (error) {
+      return this.userService.sendError({ socket, message: error.message });
+    }
 
     const moveLog = await this.logService.create({ type: 'move', user, gameId: game.id, text: move });
     game.logs = [moveLog, ...game.logs];

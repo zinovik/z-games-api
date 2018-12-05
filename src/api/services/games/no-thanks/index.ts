@@ -1,5 +1,6 @@
 import { Service } from 'typedi';
 
+import { MakingMoveError } from '../../../errors';
 import { BaseGame, BaseGameData, BaseGameMove, BaseGamePlayer } from '../base-game';
 
 const PLAYERS_MIN = 1; // TODO: 3
@@ -126,7 +127,7 @@ export class NoThanks extends BaseGame {
       currentCardCost = 0;
     } else {
       if (!players[playerNumber].chips) {
-        throw new Error();
+        throw new MakingMoveError('You have no chips to pay');
       }
 
       players[playerNumber].chips--;

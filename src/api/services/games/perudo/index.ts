@@ -1,5 +1,6 @@
 import { Service } from 'typedi';
 
+import { MakingMoveError } from '../../../errors';
 import { BaseGame, BaseGameData, BaseGameMove, BaseGamePlayer } from '../base-game';
 
 const PLAYERS_MIN = 2;
@@ -13,6 +14,8 @@ export interface PerudoData extends BaseGameData {
   currentRound: number;
   isMaputoRound: boolean;
   lastRoundResults: PerudoPlayer[];
+  lastRoundFigure: number;
+  isLastRoundMaputo: boolean;
   currentDiceFigure: number;
   currentDiceNumber: number;
   players: PerudoPlayer[];
@@ -38,6 +41,8 @@ export class Perudo extends BaseGame {
     const gameData: PerudoData = {
       currentRound: 0,
       lastRoundResults: [],
+      lastRoundFigure: 0,
+      isLastRoundMaputo: false,
       currentDiceFigure: 0,
       currentDiceNumber: 0,
       players: [],
@@ -99,7 +104,7 @@ export class Perudo extends BaseGame {
 
     if (move.notBelieve) {
       if (!gameData.currentDiceNumber || !gameData.currentDiceFigure) {
-        return undefined; // TODO: Error
+        throw new MakingMoveError('First move should be bet move');
       }
 
       let countDiceNumber = 0;
@@ -137,6 +142,8 @@ export class Perudo extends BaseGame {
       }
 
       gameData.lastRoundResults = gameData.players.map(player => ({ ...player }));
+      gameData.lastRoundFigure = gameData.currentDiceFigure;
+      gameData.isLastRoundMaputo = gameData.isMaputoRound;
       gameData = this.nextRound(gameData);
 
     } else {
