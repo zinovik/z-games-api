@@ -325,7 +325,7 @@ export class GameController {
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
     @ConnectedSocket() socket: any,
-    @MessageBody() move: string
+    @MessageBody() { gameNumber, move }: { gameNumber: number, move: string }
   ): Promise<void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
@@ -333,10 +333,12 @@ export class GameController {
       return this.userService.sendError({ socket, message: 'Error verifying token!' });
     }
 
+    // TODO: Check gameNumber
+
     let game: Game;
 
     try {
-      game = await this.gameService.makeMove({ move, gameNumber: user.openedGame.number, userId: user.id });
+      game = await this.gameService.makeMove({ move, gameNumber, userId: user.id });
     } catch (error) {
       return this.userService.sendError({ socket, message: error.message });
     }
@@ -360,3 +362,4 @@ export class GameController {
 // TODO: tests
 // TODO: bots
 // TODO: game modules
+// TODO: notifications
