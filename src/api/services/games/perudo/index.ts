@@ -144,16 +144,31 @@ export class Perudo extends BaseGame {
       gameData.lastRoundResults = gameData.players.map(player => ({ ...player }));
       gameData.lastRoundFigure = gameData.currentDiceFigure;
       gameData.isLastRoundMaputo = gameData.isMaputoRound;
-      gameData = this.nextRound(gameData);
+      gameData.isMaputoRound = false;
+
+      if (this.activePlayersCount(gameData.players) > 1) {
+        gameData = this.nextRound(gameData);
+      }
 
     } else {
-      // if (!move.number ||
-      //   !move.figure ||
-      //   move.number < gameData.currentDiceNumber ||
-      //   (move.number === gameData.currentDiceNumber && move.figure <= gameData.currentDiceFigure)) {
-      //   return undefined; // Error
-      // }
-      gameData.isMaputoRound = move.isMaputo;
+      if (!this.checkBetCorrect({
+        number: move.number,
+        figure: move.number,
+        currentDiceNumber: gameData.currentDiceNumber,
+        currentDiceFigure: gameData.currentDiceFigure,
+      })) {
+        throw new MakingMoveError('Impossible bet');
+      }
+
+      const playerNumber = this.getPlayerNumber({ players: gameData.players, userId });
+
+      if (gameData.players[playerNumber].dicesCount === 1
+        && !gameData.currentDiceNumber
+        && !gameData.currentDiceFigure
+        && this.activePlayersCount(gameData.players) > 2
+        && this.countDices(gameData.players) > 3) {
+        gameData.isMaputoRound = move.isMaputo;
+      }
 
       gameData.currentDiceNumber = move.number;
       gameData.currentDiceFigure = move.figure;
@@ -163,7 +178,7 @@ export class Perudo extends BaseGame {
     }
 
     const nextPlayersIds = [];
-    if (nextPlayerId) {
+    if (nextPlayerId && this.activePlayersCount(gameData.players) > 1) {
       nextPlayersIds.push(nextPlayerId);
     }
 
@@ -207,7 +222,7 @@ export class Perudo extends BaseGame {
     }
 
     if (!players[nextPlayerNumber].dicesCount) {
-      this.nextPlayer({ userId: players[nextPlayerNumber].id, players });
+      return this.nextPlayer({ userId: players[nextPlayerNumber].id, players });
     }
 
     return players[nextPlayerNumber].id;
@@ -235,5 +250,28 @@ export class Perudo extends BaseGame {
     });
 
     return playerNumber;
+  }
+
+  private countDices = (players: PerudoPlayer[]): number => {
+    return players.reduce((diceCount: number, player: PerudoPlayer) => {
+      return diceCount + (player.dicesCount || 0);
+    }, 0);
+  }
+
+  // TODO
+  private checkBetCorrect = ({ number, figure, currentDiceNumber, currentDiceFigure }: {
+    number: number,
+    figure: number,
+    currentDiceNumber: number,
+    currentDiceFigure: number,
+  }): boolean => {
+    // if (!number ||
+    //   !figure ||
+    //   number < currentDiceNumber ||
+    //   (number === currentDiceNumber && figure <= currentDiceFigure)) {
+    //   return false;
+    // }
+
+    return true;
   }
 }
