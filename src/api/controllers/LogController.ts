@@ -24,7 +24,7 @@ export class LogController {
   public async message(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
-    @MessageBody() text: string
+    @MessageBody() { gameId, message }: { gameId: string, message: string }
   ): Promise<void> {
     const user = await this.authService.verifyAndDecodeJwt(token);
 
@@ -32,7 +32,9 @@ export class LogController {
       return;
     }
 
-    const log = await this.logService.create({ type: 'message', user, gameId: user.openedGame.id, text });
+    // TODO Check gameId
+
+    const log = await this.logService.create({ type: 'message', user, gameId, text: message });
 
     io.to(user.openedGame.id).emit('new-log', log);
   }
