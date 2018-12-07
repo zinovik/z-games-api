@@ -6,7 +6,8 @@ import { AuthService } from '../../auth/AuthService';
 import * as types from '../../constants';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import {
-  JoiningGameError, MakingMoveError, OpeningGameError, StartingGameError, WatchingGameError
+  ClosingGameError, JoiningGameError, LeavingGameError, MakingMoveError, OpeningGameError,
+  StartingGameError, WatchingGameError
 } from '../errors';
 import { Game } from '../models/Game';
 import { User } from '../models/User';
@@ -160,13 +161,11 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (game.state === types.GAME_STARTED) {
-      this.log.warn('Can\'t leave started and not finished game');
-      throw new Error();
+      throw new LeavingGameError('Can\'t leave started and not finished game');
     }
 
     if (!game.players.some(player => player.id === user.id)) {
-      this.log.warn('Can\'t leave game without joining');
-      throw new Error();
+      throw new LeavingGameError('Can\'t leave game without joining');
     }
 
     game.players = game.players.filter(player => player.id !== user.id);
@@ -184,8 +183,7 @@ export class GameService {
     const isUserInWatchers = game.watchers.some(player => player.id === user.id);
 
     if (!isUserInPlayers && !isUserInWatchers) {
-      this.log.warn('Can\'t close game without joining or watching');
-      throw new Error();
+      throw new ClosingGameError('Can\'t close game without joining or watching');
     }
 
     if (isUserInWatchers) {
