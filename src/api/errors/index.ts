@@ -8,3 +8,5 @@ export * from './StartingGameError';
 export * from './WatchingGameError';
 export * from './OpeningGameError';
 export * from './MakingMoveError';
+export * from './ClosingGameError';
+export * from './LeavingGameError';
