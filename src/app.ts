@@ -4,6 +4,7 @@ import { bootstrapMicroframework } from 'microframework-w3tec';
 
 import { banner } from './lib/banner';
 import { Logger } from './lib/logger';
+import { databaseLoader } from './loaders/databaseLoader';
 import { eventDispatchLoader } from './loaders/eventDispatchLoader';
 import { expressLoader } from './loaders/expressLoader';
 import { graphqlLoader } from './loaders/graphqlLoader';
@@ -43,6 +44,7 @@ bootstrapMicroframework({
     publicLoader,
     graphqlLoader,
     socketIoLoader,
+    databaseLoader,
   ],
 })
   .then(() => banner(log))
