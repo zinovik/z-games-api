@@ -21,6 +21,8 @@ export class GameController {
   private logService: LogService;
   private userService: UserService;
 
+  private disconnectTimers = {};
+
   constructor(
   ) {
     this.gameService = Container.get(GameService);
@@ -45,12 +47,18 @@ export class GameController {
       return;
     }
 
+    socket.join(user.openedGame.id);
+
+    if (this.disconnectTimers[user.id]) {
+      clearTimeout(this.disconnectTimers[user.id]);
+      delete this.disconnectTimers[user.id];
+      return;
+    }
+
     const game = await this.gameService.findOne(user.openedGame.number);
 
     const log = await this.logService.create({ type: 'connect', user, gameId: game.id });
     game.logs = [log, ...game.logs];
-
-    socket.join(game.id);
 
     await this.gameService.sendGameToGameUsers({ game, io });
     await this.gameService.sendGameUpdateToAllUsers({ game, io });
@@ -72,15 +80,19 @@ export class GameController {
       return;
     }
 
-    const game = await this.gameService.findOne(user.openedGame.number);
+    this.disconnectTimers[user.id] = setTimeout(async () => {
+      const game = await this.gameService.findOne(user.openedGame.number);
 
-    const log = await this.logService.create({ type: 'disconnect', user, gameId: game.id });
-    game.logs = [log, ...game.logs];
+      const log = await this.logService.create({ type: 'disconnect', user, gameId: game.id });
+      game.logs = [log, ...game.logs];
 
-    socket.leave(game.id);
+      socket.leave(game.id);
 
-    await this.gameService.sendGameToGameUsers({ game, io });
-    await this.gameService.sendGameUpdateToAllUsers({ game, io });
+      await this.gameService.sendGameToGameUsers({ game, io });
+      await this.gameService.sendGameUpdateToAllUsers({ game, io });
+
+      delete this.disconnectTimers[user.id];
+    }, 5000);
   }
 
   @OnMessage('new-game')
@@ -236,7 +248,14 @@ export class GameController {
       return undefined;
     }
 
-    const game = await this.gameService.leaveGame({ user, gameNumber });
+    let game: Game;
+
+    try {
+      game = await this.gameService.leaveGame({ user, gameNumber });
+    } catch (error) {
+      this.userService.sendError({ socket, message: error.message });
+      return undefined;
+    }
 
     const log = await this.logService.create({ type: 'leave', user, gameId: game.id });
     game.logs = [log, ...game.logs];
@@ -264,12 +283,18 @@ export class GameController {
       return undefined;
     }
 
-    const game = await this.gameService.closeGame({ user, gameNumber });
+    let game: Game;
+
+    try {
+      game = await this.gameService.closeGame({ user, gameNumber });
+    } catch (error) {
+      this.userService.sendError({ socket, message: error.message });
+      return undefined;
+    }
 
     const log = await this.logService.create({ type: 'close', user, gameId: game.id });
     game.logs = [log, ...game.logs];
 
-    // TODO Check if player or watcher
     socket.leave(game.id);
 
     await this.gameService.sendGameToGameUsers({ game, io });

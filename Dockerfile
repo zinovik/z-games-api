@@ -1,4 +1,4 @@
-FROM node:alpine
+FROM nikolaik/python-nodejs
 
 # Create work directory
 WORKDIR /usr/src/app

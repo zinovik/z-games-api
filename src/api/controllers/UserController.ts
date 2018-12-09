@@ -9,8 +9,6 @@ import { Container } from 'typedi';
 import { AuthService } from '../../auth/AuthService';
 import { UserNotFoundError } from '../errors/UserNotFoundError';
 import { User } from '../models/User';
-import { GameService } from '../services/GameService';
-import { LogService } from '../services/LogService';
 import { UserService } from '../services/UserService';
 
 @JsonController('/users')
@@ -19,14 +17,10 @@ export class UserController {
 
   private userService: UserService;
   private authService: AuthService;
-  private gameService: GameService;
-  private logService: LogService;
 
   constructor() {
     this.userService = Container.get(UserService);
     this.authService = Container.get(AuthService);
-    this.gameService = Container.get(GameService);
-    this.logService = Container.get(LogService);
   }
 
   @Get()
@@ -94,20 +88,6 @@ export class UserController {
     if (!user) {
       return undefined;
     }
-
-    if (!user.openedGame) {
-      return user;
-    }
-
-    const game = await this.gameService.findOne(user.openedGame.number);
-
-    const log = await this.logService.create({ type: 'disconnect', user, gameId: game.id });
-    game.logs = [log, ...game.logs];
-
-    socket.leave(game.id);
-
-    await this.gameService.sendGameToGameUsers({ game, io });
-    await this.gameService.sendGameUpdateToAllUsers({ game, io });
 
     return user;
   }
