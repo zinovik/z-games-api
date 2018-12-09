@@ -4,7 +4,7 @@ import { MakingMoveError } from '../../../errors';
 import { BaseGame, BaseGameData, BaseGameMove, BaseGamePlayer } from '../base-game';
 
 const PLAYERS_MIN = 2;
-const PLAYERS_MAX = 10;
+const PLAYERS_MAX = 6;
 
 const PLAYER_DICES_COUNT = 5;
 const DICE_MAX_FIGURE = 6;
