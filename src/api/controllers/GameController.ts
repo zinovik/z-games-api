@@ -135,13 +135,14 @@ export class GameController {
       return undefined;
     }
 
-    if (!user.openedGame) {
+    if (!user.openedGame && !user.currentWatch) {
       return undefined;
     }
 
-    const game = await this.gameService.findOne(user.openedGame.number);
+    const gameNumber = user.openedGame ? user.openedGame.number : user.currentWatch.number;
+    const game = await this.gameService.findOne(gameNumber);
 
-    socket.join(user.openedGame.id);
+    socket.join(game.id);
     return this.gameService.parseGameForUser({ game, user });
   }
 
@@ -343,6 +344,7 @@ export class GameController {
     game.logs = [log, ...game.logs];
 
     await this.gameService.sendGameToGameUsers({ game, io });
+    await this.gameService.sendGameUpdateToAllUsers({ game, io });
   }
 
   @OnMessage('make-move')
@@ -377,6 +379,10 @@ export class GameController {
     }
 
     await this.gameService.sendGameToGameUsers({ game, io });
+
+    if (game.state === types.GAME_FINISHED) {
+      await this.gameService.sendGameUpdateToAllUsers({ game, io });
+    }
   }
 
 }
