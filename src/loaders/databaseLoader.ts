@@ -3,7 +3,7 @@ import { Container } from 'typedi';
 import { getConnection } from 'typeorm';
 
 import { GameService } from '../api/services/GameService';
-import { Initialize1543328940093 } from '../database/migrations/1543328940093-Initialize';
+import { Initialize1544423618325 } from '../database/migrations/1544423618325-Initialize';
 
 export const databaseLoader: MicroframeworkLoader = async (settings: MicroframeworkSettings | undefined) => {
 
@@ -18,13 +18,8 @@ export const databaseLoader: MicroframeworkLoader = async (settings: Microframew
   } catch (error) {
     const connection = getConnection();
     const queryRunner = connection.createQueryRunner();
-    const migration = new Initialize1543328940093();
+    const migration = new Initialize1544423618325();
 
-    try {
-      await migration.down(queryRunner);
-    } catch (error) {
-      console.log('Error deleting old tables.');
-    }
     await migration.up(queryRunner);
 
     console.log('New database tables created!');
