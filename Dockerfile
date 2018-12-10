@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs
+FROM node:lts
 
 # Create work directory
 WORKDIR /usr/src/app
@@ -13,4 +13,4 @@ COPY . /usr/src/app
 RUN yarn install
 
 # Build and run the app
-CMD npm start serve
+CMD yarn start serve
