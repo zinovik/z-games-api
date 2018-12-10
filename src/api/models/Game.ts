@@ -43,6 +43,9 @@ export class Game {
   @Column({ name: 'is_private' })
   public isPrivate: boolean;
 
+  @Column({ name: 'private_password', nullable: true })
+  public privatePassword: string;
+
   @OneToMany(type => User, user => user.openedGame)
   public playersOnline: User[];
 
@@ -50,8 +53,7 @@ export class Game {
   @JoinTable({ name: 'user_current_game_to_game_players' })
   public players: User[];
 
-  @ManyToMany(type => User, user => user.currentWatch)
-  @JoinTable({ name: 'user_current_watch_to_game_watchers' })
+  @OneToMany(type => User, user => user.currentWatch)
   public watchers: User[];
 
   @ManyToMany(type => User, user => user.currentMove)
