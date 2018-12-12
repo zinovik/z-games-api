@@ -78,7 +78,7 @@ export class UserController {
 
   @OnMessage('get-current-user')
   @EmitOnSuccess('update-current-user')
-  public async leaveGame(
+  public async getCurrentUser(
     @SocketQueryParam('token') token: string,
     @SocketIO() io: any,
     @ConnectedSocket() socket: any

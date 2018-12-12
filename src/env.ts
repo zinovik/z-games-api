@@ -70,4 +70,8 @@ export const env = {
     username: getOsEnv('MONITOR_USERNAME'),
     password: getOsEnv('MONITOR_PASSWORD'),
   },
+  google: {
+    key: getOsEnv('GOOGLE_CONSUMER_KEY'),
+    secret: getOsEnv('GOOGLE_CONSUMER_SECRET'),
+  },
 };
