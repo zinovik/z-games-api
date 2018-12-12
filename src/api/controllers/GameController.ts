@@ -389,8 +389,3 @@ export class GameController {
 
 // TODO: move token check into separate decorator
 // TODO: Add and check error conditions, add errors
-// TODO: social login
-// TODO: tests
-// TODO: bots
-// TODO: game modules
-// TODO: notifications
