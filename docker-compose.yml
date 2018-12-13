@@ -5,7 +5,7 @@ services:
     image: postgres:latest
     restart: always
     ports:
-      - 5433:5432
+      - 9432:5432
     environment:
       - POSTGRES_DB=z-games
       - POSTGRES_USER=postgres
@@ -15,6 +15,7 @@ services:
     build: .
     volumes:
       - .:/usr/src/app
+      - /usr/src/app/node_modules/
     ports:
       - 4000:4000
     depends_on:
