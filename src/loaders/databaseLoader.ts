@@ -3,7 +3,7 @@ import { Container } from 'typedi';
 import { getConnection } from 'typeorm';
 
 import { GameService } from '../api/services/GameService';
-import { Initialize1544423618325 } from '../database/migrations/1544423618325-Initialize';
+import { Initialize1544900578366 } from '../database/migrations/1544900578366-Initialize';
 
 export const databaseLoader: MicroframeworkLoader = async (settings: MicroframeworkSettings | undefined) => {
 
@@ -18,7 +18,7 @@ export const databaseLoader: MicroframeworkLoader = async (settings: Microframew
   } catch (error) {
     const connection = getConnection();
     const queryRunner = connection.createQueryRunner();
-    const migration = new Initialize1544423618325();
+    const migration = new Initialize1544900578366();
 
     await migration.up(queryRunner);
 
