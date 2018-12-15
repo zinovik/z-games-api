@@ -10,7 +10,8 @@
     "build": "npm start build",
     "presetup": "yarn install",
     "setup": "npm start config && npm start setup.script",
-    "postinstall": "npm start build"
+    "postinstall": "npm start build",
+    "new-mig": "npx ts-node ./node_modules/.bin/typeorm migration:generate -n Initialize"
   },
   "engines": {
     "node": ">=10.0.0",

@@ -31,14 +31,14 @@ export class UserService {
       .getMany();
   }
 
-  public findOne(username: string): Promise<User | undefined> {
+  public findOne(email: string): Promise<User | undefined> {
     this.log.info('Find one user');
 
     return this.userRepository.createQueryBuilder('user')
       .select(USER_FIELDS)
       .leftJoin(...USER_JOIN_OPENED_GAME)
       .leftJoin(...USER_JOIN_CURRENT_WATCH)
-      .where({ username })
+      .where({ email })
       .getOne();
   }
 
@@ -49,22 +49,50 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  public async register({ username, password }: { username: string, password: string }): Promise<string> {
+  public async register({
+    username,
+    email,
+    provider,
+    password,
+    firstName,
+    lastName,
+    avatar,
+  }: {
+    username: string,
+    email: string,
+    provider?: string,
+    password?: string,
+    firstName?: string,
+    lastName?: string,
+    avatar?: string,
+  }): Promise<User> {
     this.log.info('Create a new user => ', username);
 
     const user = new User();
-    user.username = username;
-    user.password = password;
     user.id = uuid.v1();
+    user.username = username;
+    user.email = email;
+
+    if (provider) {
+      user.provider = provider;
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.avatar = avatar;
+    } else {
+      // TODO: Add email verification
+      user.password = password;
+    }
 
     try {
       const newUser = await this.userRepository.save(user);
       this.eventDispatcher.dispatch(events.user.created, newUser);
-    } catch (error) {
-      return 'error'; // TODO Error
-    }
 
-    return 'You\'ve successfully registered, you can sign in'; // TODO: Add email verification
+      console.log(newUser);
+
+      return newUser;
+    } catch (error) {
+      throw new Error('error'); // TODO Error
+    }
   }
 
   public async authorize({ username, password }: { username: string, password: string }): Promise<{ user: User, token: string }> {
