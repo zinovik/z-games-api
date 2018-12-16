@@ -28,6 +28,7 @@ export const env = {
     routePrefix: getOsEnv('APP_ROUTE_PREFIX'),
     port: normalizePort(process.env.PORT || getOsEnv('APP_PORT')),
     banner: toBool(getOsEnv('APP_BANNER')),
+    frontEndUrl: getOsEnv('APP_FRONT_END_URL'),
     jwtSecret: getOsEnv('JWT_SECRET'),
     dirs: {
       migrations: getOsPaths('TYPEORM_MIGRATIONS'),

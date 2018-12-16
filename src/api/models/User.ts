@@ -45,8 +45,7 @@ export class User {
   @Column({ nullable: true })
   public email: string;
 
-  @IsNotEmpty()
-  @Column()
+  @Column({ nullable: true })
   @Exclude({ toPlainOnly: true })
   public password: string;
 
@@ -101,7 +100,10 @@ export class User {
 
   @BeforeInsert()
   public async hashPassword(): Promise<void> {
-    this.password = await User.hashPassword(this.password);
+    if (this.password) {
+      this.password = await User.hashPassword(this.password);
+    }
+
     this.gamesPlayed = 0;
     this.gamesWon = 0;
   }

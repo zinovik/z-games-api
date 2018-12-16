@@ -1,5 +1,5 @@
 import {
-  Authorized, Body, Get, JsonController, OnUndefined, Param, Post, Put, Req, Res
+  Authorized, Body, Get, JsonController, OnUndefined, Param, Post, Put, Req, Res, UseBefore
 } from 'routing-controllers';
 import {
   ConnectedSocket, EmitOnSuccess, OnMessage, SocketController, SocketIO, SocketQueryParam
@@ -7,8 +7,11 @@ import {
 import { Container } from 'typedi';
 
 import { AuthService } from '../../auth/AuthService';
+import { env } from '../../env';
 import { UserNotFoundError } from '../errors/UserNotFoundError';
+import { GoogleMiddleware } from '../middlewares/GoogleMiddleware';
 import { User } from '../models/User';
+import { JwtService } from '../services/jwt';
 import { UserService } from '../services/UserService';
 
 @JsonController('/users')
@@ -17,10 +20,12 @@ export class UserController {
 
   private userService: UserService;
   private authService: AuthService;
+  private jwtService: JwtService;
 
   constructor() {
     this.userService = Container.get(UserService);
     this.authService = Container.get(AuthService);
+    this.jwtService = Container.get(JwtService);
   }
 
   @Get()
@@ -38,7 +43,7 @@ export class UserController {
   @Get('/:email')
   @Authorized()
   @OnUndefined(UserNotFoundError)
-  public one(@Param('email') email: string): Promise<User | undefined> {
+  public one(@Param('username') email: string): Promise<User | undefined> {
     return this.userService.findOne(email);
   }
 
@@ -49,8 +54,8 @@ export class UserController {
   }
 
   @Post('/register')
-  public async register(@Body() { username, password }: { username: string, password: string }): Promise<string> {
-    return this.userService.register({ username, password });
+  public async register(@Body() { username, email, password }: { username: string, email: string, password: string }): Promise<User> {
+    return this.userService.register({ username, email, password });
   }
 
   @Post('/authorize')
@@ -60,6 +65,39 @@ export class UserController {
     res.set('Authorization', token);
 
     return user;
+  }
+
+  @Get('/authorize/google')
+  @UseBefore(GoogleMiddleware)
+  public async authorizeGoogle(): Promise<void> {
+    // redirecting to google...
+  }
+
+  @Get('/authorize/google/callback')
+  @UseBefore(GoogleMiddleware)
+  public async authorizeGoogleCallback(@Req() req: any, @Res() res: any): Promise<void> {
+    const user = await this.userService.findOne(req.user.emails[0].value);
+
+    const username = req.user.displayName || req.user.emails[0].value;
+
+    if (!user) {
+      const newUser = this.userService.register({
+        username,
+        email: req.user.emails[0].value,
+        provider: 'google',
+        firstName: req.user.name.givenName,
+        lastName: req.user.name.familyName,
+        avatar: req.user.photos[0].value,
+      });
+
+      if (!newUser) {
+        throw new Error(); // TODO: Error
+      }
+    }
+
+    const token = this.jwtService.generateToken({ username }, '7 days');
+
+    res.redirect(`${env.app.frontEndUrl}/${token}`);
   }
 
   @OnMessage('logout')
