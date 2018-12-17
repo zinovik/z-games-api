@@ -22,6 +22,8 @@ export const OPEN_GAME_FIELDS = [
   'players.username',
   'players.id',
   'players.avatar',
+  'players.gamesPlayed',
+  'players.gamesWon',
   'watchers.username',
   'watchers.id',
   'playersOnline.username',
