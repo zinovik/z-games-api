@@ -12,6 +12,7 @@ import {
 import { Game } from '../models/Game';
 import { User } from '../models/User';
 import { GameRepository } from '../repositories/GameRepository';
+import { UserRepository } from '../repositories/UserRepository';
 import {
   ALL_GAMES_FIELDS, ALL_GAMES_JOIN_PLAYERS, FIELDS_TO_REMOVE_IN_ALL_GAMES, LOGS_FIELD_ORDER_BY,
   OPEN_GAME_FIELDS, OPEN_GAME_JOIN_LOGS, OPEN_GAME_JOIN_LOGS_USERNAMES, OPEN_GAME_JOIN_NEXT_PLAYERS,
@@ -32,6 +33,7 @@ export class GameService {
 
   constructor(
     @OrmRepository() private gameRepository: GameRepository,
+    @OrmRepository() private userRepository: UserRepository,
     @Logger(__filename) private log: LoggerInterface
   ) {
     this.authService = Container.get(AuthService);
@@ -255,6 +257,21 @@ export class GameService {
 
     } else {
       game.state = types.GAME_FINISHED;
+
+      const gameDataParsed = JSON.parse(game.gameData);
+
+      game.players.forEach(player => {
+        const user = new User();
+
+        user.id = player.id;
+        user.gamesPlayed = player.gamesPlayed + 1;
+
+        if (gameDataParsed.players.find(playerInGame => playerInGame.id === player.id)!.place === 1) {
+          user.gamesWon = player.gamesWon + 1;
+        }
+
+        this.userRepository.save(user);
+      });
     }
 
     return this.gameRepository.save(game);
