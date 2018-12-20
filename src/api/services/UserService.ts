@@ -9,7 +9,9 @@ import { UserNotFoundError } from '../errors/UserNotFoundError';
 import { WrongPasswordError } from '../errors/WrongPasswordError';
 import { User } from '../models/User';
 import { UserRepository } from '../repositories/UserRepository';
-import { USER_FIELDS, USER_JOIN_CURRENT_WATCH, USER_JOIN_OPENED_GAME } from '../scopes';
+import {
+  USER_FIELDS, USER_JOIN_CURRENT_GAMES, USER_JOIN_CURRENT_WATCH, USER_JOIN_OPENED_GAME
+} from '../scopes';
 import { events } from '../subscribers/events';
 import { JwtService } from './jwt';
 
@@ -37,6 +39,7 @@ export class UserService {
     return this.userRepository.createQueryBuilder('user')
       .select(USER_FIELDS)
       .leftJoin(...USER_JOIN_OPENED_GAME)
+      .leftJoin(...USER_JOIN_CURRENT_GAMES)
       .leftJoin(...USER_JOIN_CURRENT_WATCH)
       .where({ email })
       .getOne();
