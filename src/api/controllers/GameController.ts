@@ -360,7 +360,9 @@ export class GameController {
       return this.userService.sendError({ socket, message: 'Error verifying token!' });
     }
 
-    // TODO: Check gameNumber
+    if (!user.currentGames || !user.currentGames.some(currentGame => currentGame.number === gameNumber)) {
+      return this.userService.sendError({ socket, message: 'You can\'t make move if you are not this game player' });
+    }
 
     let game: Game;
 

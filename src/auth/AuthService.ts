@@ -4,7 +4,9 @@ import { OrmRepository } from 'typeorm-typedi-extensions';
 
 import { User } from '../api/models/User';
 import { UserRepository } from '../api/repositories/UserRepository';
-import { USER_FIELDS, USER_JOIN_CURRENT_WATCH, USER_JOIN_OPENED_GAME } from '../api/scopes';
+import {
+  USER_FIELDS, USER_JOIN_CURRENT_GAMES, USER_JOIN_CURRENT_WATCH, USER_JOIN_OPENED_GAME
+} from '../api/scopes';
 import { JwtService } from '../api/services/jwt';
 import { Logger, LoggerInterface } from '../decorators/Logger';
 
@@ -42,6 +44,7 @@ export class AuthService {
     const user = await this.userRepository.createQueryBuilder('user')
       .select(USER_FIELDS)
       .leftJoin(...USER_JOIN_OPENED_GAME)
+      .leftJoin(...USER_JOIN_CURRENT_GAMES)
       .leftJoin(...USER_JOIN_CURRENT_WATCH)
       .where({ username })
       .getOne();
