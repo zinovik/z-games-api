@@ -1,5 +1,6 @@
 import {
-  Authorized, Body, Get, JsonController, OnUndefined, Param, Post, Put, Req, Res, UseBefore
+  Authorized, Body, Get, JsonController, OnUndefined, Param, Post, Put, Redirect, Req, Res,
+  UseBefore
 } from 'routing-controllers';
 import {
   ConnectedSocket, EmitOnSuccess, OnMessage, SocketController, SocketIO, SocketQueryParam
@@ -74,8 +75,9 @@ export class UserController {
   }
 
   @Get('/authorize/google/callback')
+  @Redirect(`${env.app.frontEndUrl}/:token`)
   @UseBefore(GoogleMiddleware)
-  public async authorizeGoogleCallback(@Req() req: any, @Res() res: any): Promise<void> {
+  public async authorizeGoogleCallback(@Req() req: any, @Res() res: any): Promise<{ token: string }> {
     const user = await this.userService.findOne(req.user.emails[0].value);
 
     const username = req.user.displayName || req.user.emails[0].value;
@@ -97,7 +99,9 @@ export class UserController {
 
     const token = this.jwtService.generateToken({ username }, '7 days');
 
-    res.redirect(`${env.app.frontEndUrl}/${token}`);
+    return {
+      token,
+    };
   }
 
   @OnMessage('logout')
