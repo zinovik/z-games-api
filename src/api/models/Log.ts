@@ -1,11 +1,13 @@
 import { IsNotEmpty } from 'class-validator';
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import {
+  Column, CreateDateColumn, DefaultNamingStrategy, Entity, JoinColumn, ManyToOne, PrimaryColumn
+} from 'typeorm';
 
 import { Game } from '../models/Game';
 import { User } from '../models/User';
 
 @Entity()
-export class Log {
+export class Log extends DefaultNamingStrategy {
 
   @PrimaryColumn('uuid')
   public id: string;
