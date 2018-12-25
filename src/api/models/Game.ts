@@ -1,7 +1,7 @@
 import { IsNotEmpty } from 'class-validator';
 import {
-  BeforeInsert, Column, CreateDateColumn, Entity, Generated, JoinTable, ManyToMany, OneToMany,
-  PrimaryColumn, Unique, UpdateDateColumn
+  BeforeInsert, Column, CreateDateColumn, DefaultNamingStrategy, Entity, Generated, JoinTable,
+  ManyToMany, OneToMany, PrimaryColumn, Unique, UpdateDateColumn
 } from 'typeorm';
 
 import * as types from '../../constants';
@@ -10,7 +10,7 @@ import { User } from '../models/User';
 
 @Entity()
 @Unique(['number'])
-export class Game {
+export class Game extends DefaultNamingStrategy {
 
   @PrimaryColumn('uuid')
   public id: string;
