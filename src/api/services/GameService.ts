@@ -1,6 +1,9 @@
 import { Container, Service } from 'typedi';
 import { OrmRepository } from 'typeorm-typedi-extensions';
 import uuid from 'uuid';
+import { BaseGame } from 'z-games-base-game';
+import { NoThanks } from 'z-games-no-thanks';
+import { Perudo } from 'z-games-perudo';
 
 import { AuthService } from '../../auth/AuthService';
 import * as types from '../../constants';
@@ -18,8 +21,6 @@ import {
   OPEN_GAME_FIELDS, OPEN_GAME_JOIN_LOGS, OPEN_GAME_JOIN_LOGS_USERNAMES, OPEN_GAME_JOIN_NEXT_PLAYERS,
   OPEN_GAME_JOIN_PLAYERS_ONLINE, OPEN_GAME_JOIN_WATCHERS
 } from '../scopes';
-import { NoThanks, Perudo } from '../services/games';
-import { BaseGame } from './games/base-game';
 
 const gamesServices: { [key: string]: BaseGame } = {
   [types.NO_THANKS]: Container.get(NoThanks),

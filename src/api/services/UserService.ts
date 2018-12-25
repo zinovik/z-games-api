@@ -82,7 +82,7 @@ export class UserService {
       user.lastName = lastName;
       user.avatar = avatar;
     } else {
-      // TODO: Add email verification
+      // TODO: Add email regexp verification
       user.password = password;
     }
 

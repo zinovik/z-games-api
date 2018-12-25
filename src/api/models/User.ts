@@ -2,8 +2,8 @@ import * as bcrypt from 'bcrypt';
 import { Exclude } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import {
-  BeforeInsert, Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany,
-  PrimaryColumn, Unique, UpdateDateColumn
+  BeforeInsert, Column, CreateDateColumn, DefaultNamingStrategy, Entity, JoinColumn, ManyToMany,
+  ManyToOne, OneToMany, PrimaryColumn, Unique, UpdateDateColumn
 } from 'typeorm';
 
 import { Game } from '../models/Game';
@@ -12,7 +12,7 @@ import { Log } from '../models/Log';
 @Entity()
 @Unique(['email'])
 @Unique(['username'])
-export class User {
+export class User extends DefaultNamingStrategy {
 
   public static hashPassword(password: string): Promise<string> {
     return new Promise((resolve, reject) => {
