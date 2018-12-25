@@ -23,8 +23,8 @@ import {
 } from '../scopes';
 
 const gamesServices: { [key: string]: BaseGame } = {
-  [types.NO_THANKS]: Container.get(NoThanks),
-  [types.PERUDO]: Container.get(Perudo),
+  [types.NO_THANKS]: NoThanks.Instance,
+  [types.PERUDO]: Perudo.Instance,
 };
 
 @Service()

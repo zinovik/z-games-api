@@ -80,11 +80,11 @@
     "typescript": "^3.2.2",
     "uuid": "^3.3.2",
     "winston": "^3.1.0",
-    "z-games-base-game": "^0.0.3",
-    "z-games-lost-cities": "^0.0.2",
-    "z-games-no-thanks": "^0.0.2",
-    "z-games-perudo": "^0.0.2",
-    "z-games-six-nimmt": "^0.0.2"
+    "z-games-base-game": "0.0.4",
+    "z-games-lost-cities": "0.0.3",
+    "z-games-no-thanks": "0.0.4",
+    "z-games-perudo": "0.0.3",
+    "z-games-six-nimmt": "0.0.3"
   },
   "jest": {
     "transform": {
