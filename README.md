@@ -29,6 +29,8 @@
 
 ![divider](./w3tec-divider.png)
 
+![img](https://github.com/richardbmx/z-games-api/blob/master/logo95H.png?raw=true)
+
 ## ❯ Why
 
 Our main goal with this project is a feature complete server application.
