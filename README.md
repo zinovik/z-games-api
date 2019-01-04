@@ -4,11 +4,14 @@
 
 Z-Games is a tiny board games portal.
 
-It contains these [game](https://github.com/zinovik/z-games-base-game)s at the moment:
-- [No, Thanks](https://github.com/zinovik/z-games-no-thanks) [[wiki](https://en.wikipedia.org/wiki/No_Thanks!_(game))]
-- [Perudo](https://github.com/zinovik/z-games-perudo) [[wiki](https://en.wikipedia.org/wiki/Dudo)]
-- [6 nimmt!](https://github.com/zinovik/z-games-six-nimmt) (in development) [[wiki](https://en.wikipedia.org/wiki/6_Nimmt!)]
-- [Lost cities](https://github.com/zinovik/z-games-lost-cities) (in development) [[wiki](https://en.wikipedia.org/wiki/Lost_Cities)]
+The project consists of two main parts and several games modules:
+1. [Back-end](https://github.com/zinovik/z-games-api)
+2. [Fron-end](https://github.com/zinovik/z-games)
+- [Game template](https://github.com/zinovik/z-games-base-game)
+- [No, Thanks game](https://github.com/zinovik/z-games-no-thanks) [[wiki](https://en.wikipedia.org/wiki/No_Thanks!_(game))]
+- [Perudo game](https://github.com/zinovik/z-games-perudo) [[wiki](https://en.wikipedia.org/wiki/Dudo)]
+- [6 nimmt! game](https://github.com/zinovik/z-games-six-nimmt) (in development) [[wiki](https://en.wikipedia.org/wiki/6_Nimmt!)]
+- [Lost cities game](https://github.com/zinovik/z-games-lost-cities) (in development) [[wiki](https://en.wikipedia.org/wiki/Lost_Cities)]
 
 ## Where ##
 
@@ -18,35 +21,21 @@ There are two environments where you can check current versions:
 
 ## How ###
 
-Also, you can run development environment on your local machine.
-The project consists from two main parts and several games modules:
-1. [Back-end](https://github.com/zinovik/z-games-api)
-2. [Fron-end](https://github.com/zinovik/z-games)
-- [Game template](https://github.com/zinovik/z-games-base-game)
-- [No, Thanks game](https://github.com/zinovik/z-games-no-thanks)
-- [Perudo game](https://github.com/zinovik/z-games-perudo)
-- [6 nimmt! game](https://github.com/zinovik/z-games-six-nimmt)
-- [Lost cities game](https://github.com/zinovik/z-games-lost-cities)
+Also, you can run a development environment on your local machine.
 
-Before you start answer two questions?
+Before you start answer two questions:
 1. Do you want to work with this part (Back-end **or** Front-end) or the whole project (Back-end **and** Front-end)?
-2. Do you want to use (Docker)[https://docker.com] (the easiest way)?
-
-We have 4 variants:
-1. This part with Docker
-2. This part without Docker
-3. The whole project with Docker
-4. The whole project without Docker
+2. Do you want to use [Docker](https://docker.com) (the easiest way)?
 
 Let's start!
 
-- If you want to use Docker please install it from (here)[https://docker.com], if you don't want to use it install Node.js with npm from (here)[https://nodejs.org] and install yarn with this command:
+- If you want to use [Docker](https://docker.com) please install it, else install [Node.js with npm](https://nodejs.org) and install yarn with this command:
 
 ```js
 npm install -global yarn
 ```
 
-- If you want to run only this part - clone only this repository, else clone both
+- If you want to run only this part - clone only this repository, else clone both:
 
 ```js
 git clone https://github.com/zinovik/z-games-api
@@ -55,7 +44,7 @@ git clone https://github.com/zinovik/z-games
 
 - create .env file in each cloned repository (if you use Docker you can use Docker database: DATABASE_URL='postgres://postgres:dbpass123@database:5432/z-games').
 
-- If you use docker and want to run the whole project go to cloned front-ed part repository folder, build containers and run its, that's all, check [https://localhost:9000](https://localhost:9000)!
+- If you use docker and want to run the whole project go to cloned front-end part repository folder, build containers and run it, that's all, check [https://localhost:9000](https://localhost:9000)!
 
 ```js
 cd z-games
@@ -79,7 +68,7 @@ cd z-games-api
 docker-compose run --build
 ```
 
-or frone-end part
+or front-end part
 
 ```js
 cd z-games
@@ -102,7 +91,7 @@ cd ..
 // for front-end part (end)
 ```
 
-- Then go to run part you want to run or both parts, that's all, check ([https://localhost:4000](https://localhost:4000) or [https://localhost:3000](https://localhost:3000))!
+- Then go to the folder and run part you want to run or both parts, that's all, check ([https://localhost:4000](https://localhost:4000) or [https://localhost:3000](https://localhost:3000))!
 
 ```js
 // for back-end part (start)
