@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from './config/config.module';
@@ -7,7 +6,7 @@ import { DbModule } from './db/db.module';
 import { GameModule } from './game/game.module';
 import { LogModule } from './log/log.module';
 import { UserModule } from './user/user.module';
-import { AppGateway } from './app.gateway';
+import { LoggerModule } from './logger/logger.module';
 
 @Module({
   imports: [
@@ -16,8 +15,9 @@ import { AppGateway } from './app.gateway';
     GameModule,
     LogModule,
     UserModule,
+    LoggerModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AppGateway],
+  providers: [AppService],
 })
 export class AppModule { }
