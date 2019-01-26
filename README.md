@@ -29,7 +29,7 @@ Before you start answer two questions:
 
 Let's start!
 
-- If you want to use [Docker](https://docker.com) please install it, else install [Node.js with npm](https://nodejs.org) and install yarn with this command:
+- If you want to use [Docker](https://docker.com) please install it and docker-compose (if you are going to work with the whole project), else install [Node.js with npm](https://nodejs.org) and install yarn with this command:
 
 ```js
 npm install -global yarn
@@ -48,7 +48,7 @@ git clone https://github.com/zinovik/z-games
 
 ```js
 cd z-games
-docker-compose run --build
+docker-compose up --build
 ```
 
 - Now, if you use docker and want to run only one part go to cloned repository folder, build container and run it, that's all, check ([https://localhost:4000](https://localhost:4000) or [https://localhost:9000](https://localhost:9000))!
