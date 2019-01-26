@@ -33,7 +33,7 @@ export class GameGateway {
     ignoreNotStarted: boolean,
     ignoreStarted: boolean,
     ignoreFinished: boolean,
-  }): Promise<any> {
+  }): Promise<Game[]> {
     return await this.gameService.getAllGames(conditions);
   }
 

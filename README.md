@@ -1,75 +1,126 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+![img](./logo.png)
 
-[travis-image]: https://api.travis-ci.org/nestjs/nest.svg?branch=master
-[travis-url]: https://travis-ci.org/nestjs/nest
-[linux-image]: https://img.shields.io/travis/nestjs/nest/master.svg?label=linux
-[linux-url]: https://travis-ci.org/nestjs/nest
-  
-  <p align="center">A progressive <a href="http://nodejs.org" target="blank">Node.js</a> framework for building efficient and scalable server-side applications, heavily inspired by <a href="https://angular.io" target="blank">Angular</a>.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/dm/@nestjs/core.svg" alt="NPM Downloads" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://api.travis-ci.org/nestjs/nest.svg?branch=master" alt="Travis" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://img.shields.io/travis/nestjs/nest/master.svg?label=linux" alt="Linux" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#5" alt="Coverage" /></a>
-<a href="https://gitter.im/nestjs/nestjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge"><img src="https://badges.gitter.im/nestjs/nestjs.svg" alt="Gitter" /></a>
-<a href="https://opencollective.com/nest#backer"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec"><img src="https://img.shields.io/badge/Donate-PayPal-dc3d53.svg"/></a>
-  <a href="https://twitter.com/nestframework"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## What ##
 
-## Description
+Z-Games is a tiny board games portal.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+The project consists of two main parts and several games modules:
+1. [Back-end](https://github.com/zinovik/z-games-api)
+2. [Fron-end](https://github.com/zinovik/z-games)
+- [Game template](https://github.com/zinovik/z-games-base-game)
+- [No, Thanks game](https://github.com/zinovik/z-games-no-thanks) [[wiki](https://en.wikipedia.org/wiki/No_Thanks!_(game))]
+- [Perudo game](https://github.com/zinovik/z-games-perudo) [[wiki](https://en.wikipedia.org/wiki/Dudo)]
+- [6 nimmt! game](https://github.com/zinovik/z-games-six-nimmt) (in development) [[wiki](https://en.wikipedia.org/wiki/6_Nimmt!)]
+- [Lost cities game](https://github.com/zinovik/z-games-lost-cities) (in development) [[wiki](https://en.wikipedia.org/wiki/Lost_Cities)]
 
-## Installation
+## Where ##
 
-```bash
-$ npm install
+There are two environments where you can check current versions:
+1. Development (dev branch) (https://z-games-dev.herokuapp.com)
+2. Production (master branch) (https://z-games.herokuapp.com)
+
+## How ###
+
+Also, you can run a development environment on your local machine.
+
+Before you start answer two questions:
+1. Do you want to work with this part (Back-end **or** Front-end) or the whole project (Back-end **and** Front-end)?
+2. Do you want to use [Docker](https://docker.com) (the easiest way)?
+
+Let's start!
+
+- If you want to use [Docker](https://docker.com) please install it and docker-compose (if you are going to work with the whole project), else install [Node.js with npm](https://nodejs.org) and install yarn with this command:
+
+```js
+npm install -global yarn
 ```
 
-## Running the app
+- If you want to run only this part - clone only this repository, else clone both:
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-npm run start:prod
+```js
+git clone https://github.com/zinovik/z-games-api
+git clone https://github.com/zinovik/z-games
 ```
 
-## Test
+- create .env file in each cloned repository (if you use Docker you can use Docker database: DATABASE_URL='postgres://postgres:dbpass123@database:5432/z-games').
 
-```bash
-# unit tests
-$ npm run test
+- If you use docker and want to run the whole project go to cloned front-end part repository folder, build containers and run it, that's all, check [https://localhost:9000](https://localhost:9000)!
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```js
+cd z-games
+docker-compose up --build
 ```
 
-## Support
+- Now, if you use docker and want to run only one part go to cloned repository folder, build container and run it, that's all, check ([https://localhost:4000](https://localhost:4000) or [https://localhost:9000](https://localhost:9000))!
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+back-end part:
 
-## Stay in touch
+```js
+cd z-games-api
+docker build -t z-games-api .
+docker run z-games-api
+```
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+or (if you use Docker database)
 
-## License
+```js
+cd z-games-api
+docker-compose run --build
+```
 
-  Nest is [MIT licensed](LICENSE).
+or front-end part
+
+```js
+cd z-games
+docker build -t z-games .
+docker run z-games
+```
+
+- If you don't use Docker install all dependencies by running these commands for cloned repositories
+
+```js
+// for back-end part (start)
+cd z-games-api
+yarn
+cd ..
+// for back-end part (end)
+// for front-end part (start)
+cd z-games
+yarn
+cd ..
+// for front-end part (end)
+```
+
+- Then go to the folder and run part you want to run or both parts, that's all, check ([https://localhost:4000](https://localhost:4000) or [https://localhost:3000](https://localhost:3000))!
+
+```js
+// for back-end part (start)
+cd z-games-api
+yarn start serve
+// for back-end part (end)
+// for front-end part (start)
+cd z-games
+yarn run dev
+// for front-end part (end)
+```
+
+If you want to change the separate game - clone it's repository!
+
+## Help ##
+
+If you want to help check current [issues](https://github.com/zinovik/z-games-api/issues) (you can use [ZenHub](https://zenhub.com)) or create the new one!
+
+Thank you, [Richard Caseres](https://github.com/richardbmx) for the amazing Logo!
+
+## Technologies ##
+
+1. Typescript
+2. NodeJS
+3. Socket.io
+4. Express
+5. React
+6. Redux
+
+## License ##
+
+[Apache License 2.0](/LICENSE)
