@@ -15,10 +15,9 @@ export class GameService {
     ignoreFinished: boolean,
   }): Promise<Game[]> {
     this.logger.info('get all games');
-    this.logger.info(`${ignoreNotStarted}, ${ignoreStarted}, ${ignoreFinished}`);
 
     return this.connection.getRepository(Game)
-      .createQueryBuilder('log')
+      .createQueryBuilder('game')
       .select()
       .getMany();
   }

@@ -1,12 +1,49 @@
-import { SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
+import { SubscribeMessage, WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 
 import { GameService } from './game.service';
 import { Game } from '../db/entities/game.entity';
 
 @WebSocketGateway()
-export class GameGateway {
+export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
+
+  @WebSocketServer()
+  wss;
 
   constructor(private gameService: GameService) { }
+
+  handleConnection(client) {
+    console.log(1);
+
+    // const user = await this.authService.verifyAndDecodeJwt(token);
+
+    // if (!user) {
+    //   return;
+    // }
+
+    // if (!user.openedGame) {
+    //   return;
+    // }
+
+    // socket.join(user.openedGame.id);
+
+    // if (this.disconnectTimers[user.id]) {
+    //   clearTimeout(this.disconnectTimers[user.id]);
+    //   delete this.disconnectTimers[user.id];
+    //   return;
+    // }
+
+    // const game = await this.gameService.findOne(user.openedGame.number);
+
+    // const log = await this.logService.create({ type: 'connect', user, gameId: game.id });
+    // game.logs = [log, ...game.logs];
+
+    // await this.gameService.sendGameToGameUsers({ game, io });
+    // await this.gameService.sendGameUpdateToAllUsers({ game, io });
+  }
+
+  handleDisconnect(client) {
+    console.log(9);
+  }
 
   // @SubscribeMessage('new-game')
   // public async newGame(
