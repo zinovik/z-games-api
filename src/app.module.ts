@@ -7,6 +7,7 @@ import { GameModule } from './game/game.module';
 import { LogModule } from './log/log.module';
 import { UserModule } from './user/user.module';
 import { LoggerModule } from './logger/logger.module';
+import { ServicesModule } from './services/services.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { LoggerModule } from './logger/logger.module';
     LogModule,
     UserModule,
     LoggerModule,
+    ServicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
