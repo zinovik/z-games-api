@@ -1,13 +1,16 @@
 import { Module } from '@nestjs/common';
 
+import { ConfigModule } from '../config/config.module';
 import { ServicesModule } from './../services/services.module';
-import { UserGateway } from './user.gateway';
+import { LoggerModule } from '../logger/logger.module';
 import { UserController } from './user.controller';
+import { UserGateway } from './user.gateway';
 import { UserService } from './user.service';
+import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
-  imports: [ServicesModule],
+  imports: [ConfigModule, ServicesModule, LoggerModule],
   controllers: [UserController],
-  providers: [UserGateway, UserService],
+  providers: [UserGateway, UserService, GoogleStrategy],
 })
 export class UserModule { }
