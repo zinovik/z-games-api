@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import * as uuid from 'uuid';
 import { Exclude } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import {
@@ -100,6 +101,8 @@ export class User extends DefaultNamingStrategy {
 
   @BeforeInsert()
   public async hashPassword(): Promise<void> {
+    this.id = uuid.v1();
+
     if (this.password) {
       this.password = await User.hashPassword(this.password);
     }
