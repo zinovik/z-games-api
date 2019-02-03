@@ -12,5 +12,6 @@ import { GoogleStrategy } from './strategies/google.strategy';
   imports: [ConfigModule, ServicesModule, LoggerModule],
   controllers: [UserController],
   providers: [UserGateway, UserService, GoogleStrategy],
+  exports: [UserService],
 })
 export class UserModule { }

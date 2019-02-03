@@ -1,7 +1,18 @@
+import * as uuid from 'uuid';
 import { IsNotEmpty } from 'class-validator';
 import {
-  BeforeInsert, Column, CreateDateColumn, DefaultNamingStrategy, Entity, Generated, JoinTable,
-  ManyToMany, OneToMany, PrimaryColumn, Unique, UpdateDateColumn,
+  BeforeInsert,
+  Column,
+  CreateDateColumn,
+  DefaultNamingStrategy,
+  Entity,
+  Generated,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  PrimaryColumn,
+  Unique,
+  UpdateDateColumn,
 } from 'typeorm';
 
 import { Log } from '../../db/entities/log.entity';
@@ -76,7 +87,8 @@ export class Game extends DefaultNamingStrategy {
 
   @BeforeInsert()
   public async setState(): Promise<void> {
+    this.id = uuid.v1();
+
     this.state = 0; // TODO
   }
-
 }

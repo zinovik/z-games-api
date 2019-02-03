@@ -3,8 +3,18 @@ import * as uuid from 'uuid';
 import { Exclude } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import {
-  BeforeInsert, Column, CreateDateColumn, DefaultNamingStrategy, Entity, JoinColumn, ManyToMany,
-  ManyToOne, OneToMany, PrimaryColumn, Unique, UpdateDateColumn,
+  BeforeInsert,
+  Column,
+  CreateDateColumn,
+  DefaultNamingStrategy,
+  Entity,
+  JoinColumn,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  PrimaryColumn,
+  Unique,
+  UpdateDateColumn,
 } from 'typeorm';
 
 import { Game } from '../../db/entities/game.entity';

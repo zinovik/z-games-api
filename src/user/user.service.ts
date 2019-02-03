@@ -28,6 +28,19 @@ export class UserService {
       .getOne();
   }
 
+  public findOneByUsername(username: string): Promise<User | undefined> {
+    this.logger.info('find one user');
+
+    return this.connection.getRepository(User)
+      .createQueryBuilder('user')
+      .select(USER_FIELDS)
+      .leftJoin(...USER_JOIN_OPENED_GAME)
+      .leftJoin(...USER_JOIN_CURRENT_GAMES)
+      .leftJoin(...USER_JOIN_CURRENT_WATCH)
+      .where({ username })
+      .getOne();
+  }
+
   public async register({
     username,
     email,
