@@ -13,6 +13,7 @@ import { UserService } from '../user/user.service';
 import { LogService } from '../log/log.service';
 import { JwtGuard } from './../user/guards/jwt.guard';
 import { Game } from '../db/entities/game.entity';
+import * as types from '../constants/Games';
 
 @WebSocketGateway()
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -82,6 +83,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('join-game')
   public async joinGame(client: any, gameNumber: number): Promise<void> {
     let game: Game;
+
     try {
       game = await this.gameService.joinGame({ user: client.user, gameNumber });
     } catch (error) {
@@ -93,8 +95,163 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     client.join(game.id);
 
-    // await this.gameService.sendGameToGameUsers({ game, io });
-    // await this.gameService.sendGameUpdateToAllUsers({ game, io });
+    this.sendGameToGameUsers({ game });
+    this.wss.emit('update-game', this.gameService.parseGameForAllUsers(game));
+  }
+
+  @UseGuards(JwtGuard)
+  @SubscribeMessage('open-game')
+  public async openGame(client: any, gameNumber: number): Promise<void> {
+    let game: Game;
+
+    try {
+      game = await this.gameService.openGame({ user: client.user, gameNumber });
+    } catch (error) {
+      // return this.userService.sendError({ socket, message: error.message });
+    }
+
+    const log = await this.logService.create({ type: 'open', user: client.user, gameId: game.id });
+    game.logs = [log, ...game.logs];
+
+    this.wss.join(game.id);
+
+    this.sendGameToGameUsers({ game });
+    this.wss.emit('update-game', this.gameService.parseGameForAllUsers(game));
+  }
+
+  @UseGuards(JwtGuard)
+  @SubscribeMessage('watch-game')
+  public async watchGame(client: any, gameNumber: number): Promise<void> {
+    let game: Game;
+
+    try {
+      game = await this.gameService.watchGame({ user: client.user, gameNumber });
+    } catch (error) {
+      // return this.userService.sendError({ socket, message: error.message });
+    }
+
+    const log = await this.logService.create({ type: 'watch', user: client.user, gameId: game.id });
+    game.logs = [log, ...game.logs];
+
+    this.wss.join(game.id);
+
+    this.sendGameToGameUsers({ game });
+    this.wss.emit('update-game', this.gameService.parseGameForAllUsers(game));
+  }
+
+  @UseGuards(JwtGuard)
+  @SubscribeMessage('leave-game')
+  public async leaveGame(client: any, gameNumber: number): Promise<WsResponse<Game>> {
+    let game: Game;
+
+    try {
+      game = await this.gameService.leaveGame({ user: client.user, gameNumber });
+    } catch (error) {
+      // this.userService.sendError({ socket, message: error.message });
+      return undefined;
+    }
+
+    const log = await this.logService.create({ type: 'leave', user: client.user, gameId: game.id });
+    game.logs = [log, ...game.logs];
+
+    client.leave(game.id);
+
+    this.sendGameToGameUsers({ game });
+    this.wss.emit('update-game', this.gameService.parseGameForAllUsers(game));
+
+    return { event: 'update-opened-game', data: undefined };
+  }
+
+  @UseGuards(JwtGuard)
+  @SubscribeMessage('close-game')
+  public async closeGame(client: any, gameNumber: number): Promise<WsResponse<Game>> {
+    let game: Game;
+
+    try {
+      game = await this.gameService.closeGame({ user: client.user, gameNumber });
+    } catch (error) {
+      // this.userService.sendError({ socket, message: error.message });
+      return undefined;
+    }
+
+    const log = await this.logService.create({ type: 'close', user: client.user, gameId: game.id });
+    game.logs = [log, ...game.logs];
+
+    client.leave(game.id);
+
+    this.sendGameToGameUsers({ game });
+    this.wss.emit('update-game', this.gameService.parseGameForAllUsers(game));
+
+    return { event: 'update-opened-game', data: undefined };
+  }
+
+  @UseGuards(JwtGuard)
+  @SubscribeMessage('toggle-ready')
+  public async toggleReady(client: any, gameNumber: number): Promise<void> {
+    const game = await this.gameService.toggleReady({ user: client.user, gameNumber });
+
+    const log = await this.logService.create({ type: 'ready', user: client.user, gameId: game.id });
+    game.logs = [log, ...game.logs];
+
+    this.sendGameToGameUsers({ game });
+  }
+
+  @UseGuards(JwtGuard)
+  @SubscribeMessage('start-game')
+  public async startGame(client: any, gameNumber: number): Promise<void> {
+    const game = await this.gameService.startGame({ gameNumber });
+
+    const log = await this.logService.create({ type: 'start', user: client.user, gameId: game.id });
+    game.logs = [log, ...game.logs];
+
+    this.sendGameToGameUsers({ game });
+    this.wss.emit('update-game', this.gameService.parseGameForAllUsers(game));
+  }
+
+  @UseGuards(JwtGuard)
+  @SubscribeMessage('make-move')
+  public async move(client: any, { gameNumber, move }: { gameNumber: number, move: string }): Promise<void> {
+    if (!client.user.currentGames || !client.user.currentGames.some(currentGame => currentGame.number === gameNumber)) {
+      // return this.userService.sendError({ socket, message: 'You can\'t make move if you are not this game player' });
+    }
+
+    let game: Game;
+
+    try {
+      game = await this.gameService.makeMove({ move, gameNumber, userId: client.user.id });
+    } catch (error) {
+      // return this.userService.sendError({ socket, message: error.message });
+    }
+
+    const moveLog = await this.logService.create({ type: 'move', user: client.user, gameId: game.id, text: move });
+    game.logs = [moveLog, ...game.logs];
+
+    if (game.state === types.GAME_FINISHED) {
+      const finishLog = await this.logService.create({ type: 'finish', user: client.user, gameId: game.id });
+      game.logs = [finishLog, ...game.logs];
+    }
+
+    this.sendGameToGameUsers({ game });
+
+    if (game.state === types.GAME_FINISHED) {
+      this.wss.emit('update-game', this.gameService.parseGameForAllUsers(game));
+    }
+  }
+
+  public sendGameToGameUsers({ game }: { game: Game }): Promise<void> {
+    if (!this.wss.sockets.adapter.rooms[game.id]) {
+      return;
+    }
+
+    Object.keys(this.wss.sockets.adapter.rooms[game.id].sockets).forEach(socketId => {
+      const socketInGame = this.wss.sockets.connected[socketId];
+      const userInGame = socketInGame.user;
+
+      socketInGame.emit('update-opened-game', this.gameService.parseGameForUser({ game, user: userInGame }));
+    });
   }
 
 }
+
+// TODO: move token check into separate decorator
+// TODO: Add and check error conditions, add errors
