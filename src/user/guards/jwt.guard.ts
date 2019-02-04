@@ -28,7 +28,7 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
       return false;
     }
 
-    const username = this.jwtService.verifyAndDecodeToken(token);
+    const username = this.jwtService.getUserNameByToken(token);
 
     if (!username) {
       this.loggerService.info('No username in token');

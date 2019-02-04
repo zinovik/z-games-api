@@ -18,7 +18,7 @@ export class JwtService {
     });
   }
 
-  public verifyAndDecodeToken = (token: string): string => {
+  public getUserNameByToken = (token: string): string => {
 
     let jwtDecoded = {};
 
