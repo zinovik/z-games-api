@@ -16,7 +16,7 @@ export class UserService {
   constructor(private connection: Connection, private logger: LoggerService) { }
 
   public findOne(email: string): Promise<User | undefined> {
-    this.logger.info('find one user');
+    this.logger.info(`Find one user by email: ${email}`);
 
     return this.connection.getRepository(User)
       .createQueryBuilder('user')
@@ -29,7 +29,7 @@ export class UserService {
   }
 
   public findOneByUsername(username: string): Promise<User | undefined> {
-    this.logger.info('find one user');
+    this.logger.info(`Find one user by email: ${username}`);
 
     return this.connection.getRepository(User)
       .createQueryBuilder('user')
@@ -58,7 +58,7 @@ export class UserService {
     lastName?: string,
     avatar?: string,
   }): Promise<User> {
-    this.logger.info(`Create a new user => ${username}`);
+    this.logger.info(`Create a new user: ${username}`);
 
     const user = new User();
     user.username = username;

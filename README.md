@@ -96,7 +96,7 @@ cd ..
 ```js
 // for back-end part (start)
 cd z-games-api
-yarn start serve
+yarn start start:dev
 // for back-end part (end)
 // for front-end part (start)
 cd z-games
@@ -105,6 +105,13 @@ yarn run dev
 ```
 
 If you want to change the separate game - clone it's repository!
+
+P. S. If you want to use docker for database separately (don't know why) run this:
+```js
+cd z-games-api
+cd database
+docker-comopose up
+```
 
 ## Help ##
 
@@ -117,7 +124,7 @@ Thank you, [Richard Caseres](https://github.com/richardbmx) for the amazing Logo
 1. Typescript
 2. NodeJS
 3. Socket.io
-4. Express
+4. NestJS
 5. React
 6. Redux
 
