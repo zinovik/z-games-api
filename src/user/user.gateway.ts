@@ -13,7 +13,6 @@ export class UserGateway {
     return { event: 'update-current-user', data: client.user };
   }
 
-  @UseGuards(JwtGuard)
   @SubscribeMessage('logout')
   public logout(client: any, payload: any): WsResponse<undefined> {
     return { event: 'update-current-user', data: undefined };

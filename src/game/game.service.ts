@@ -40,7 +40,7 @@ export class GameService {
   constructor(private connection: Connection, private logger: LoggerService) { }
 
   public findOne(gameNumber: number): Promise<Game | undefined> {
-    this.logger.info('Find one game');
+    this.logger.info(`Find one game number ${gameNumber}`);
 
     return this.connection.getRepository(Game)
       .createQueryBuilder('game')
@@ -61,7 +61,7 @@ export class GameService {
     ignoreStarted: boolean,
     ignoreFinished: boolean,
   }): Promise<Game[]> {
-    this.logger.info('get all games');
+    this.logger.info('Get all games');
 
     return this.connection.getRepository(Game)
       .createQueryBuilder('game')
