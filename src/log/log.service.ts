@@ -11,7 +11,7 @@ export class LogService {
   constructor(private connection: Connection, private logger: LoggerService) { }
 
   public findAll(): Promise<Log[]> {
-    this.logger.info('get all logs');
+    this.logger.info('Get all logs');
 
     return this.connection.getRepository(Log)
       .createQueryBuilder('log')
@@ -20,7 +20,7 @@ export class LogService {
   }
 
   public findByUser(user: User): Promise<Log[]> {
-    this.logger.info('find logs by user');
+    this.logger.info(`Find logs by user: ${user.username}`);
 
     return this.connection.getRepository(Log)
       .createQueryBuilder('log')
@@ -35,7 +35,7 @@ export class LogService {
     gameId: string,
     text?: string,
   }): Promise<Log> {
-    this.logger.info('create log');
+    this.logger.info(`Create log type ${type} by ${user.username}`);
 
     const log = new Log();
 
