@@ -11,6 +11,15 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=dbpass123
 
+  database_mongo:
+    image: mongo:latest
+    restart: always
+    ports:
+      - 29017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=dbpass123
+
   api:
     build: .
     volumes:
@@ -20,3 +29,4 @@ services:
       - 4000:4000
     depends_on:
       - database
+      - database_mongo
