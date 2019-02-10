@@ -1,11 +1,17 @@
 import * as url from 'url';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 
 import { ConfigModule } from '../config/config.module';
 import { ConfigService } from '../config/config.service';
 
 const dbUrl = url.parse(ConfigService.get().DATABASE_URL);
+
+const additionalModules = [];
+if (ConfigService.get().USE_MONGO === 'true') {
+  additionalModules.push(MongooseModule.forRoot(ConfigService.get().MONGODB_URI));
+}
 
 @Module({
   imports: [
@@ -20,6 +26,7 @@ const dbUrl = url.parse(ConfigService.get().DATABASE_URL);
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
+    ...additionalModules,
   ],
 })
 export class DbModule { }
