@@ -6,7 +6,7 @@ Z-Games is a tiny board games portal.
 
 The project consists of two main parts and several games modules:
 1. [Back-end](https://github.com/zinovik/z-games-api)
-2. [Fron-end](https://github.com/zinovik/z-games)
+2. [Front-end](https://github.com/zinovik/z-games)
 - [Game template](https://github.com/zinovik/z-games-base-game)
 - [No, Thanks game](https://github.com/zinovik/z-games-no-thanks) [[wiki](https://en.wikipedia.org/wiki/No_Thanks!_(game))]
 - [Perudo game](https://github.com/zinovik/z-games-perudo) [[wiki](https://en.wikipedia.org/wiki/Dudo)]
