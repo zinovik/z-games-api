@@ -9,7 +9,7 @@ import {
   USER_JOIN_CURRENT_GAMES,
   USER_JOIN_CURRENT_WATCH,
 } from '../db/scopes/User';
-// import { UserMongo } from '../db/models/user.model';
+import { UserMongo } from '../db/models/user.model';
 
 @Injectable()
 export class UserService {
@@ -75,19 +75,22 @@ export class UserService {
       user.password = password;
     }
 
-    // const userMongo = new UserMongo({
-    //   username: user.username,
-    //   provider: user.provider,
-    //   firstName: user.firstName,
-    //   lastName: user.lastName,
-    //   avatar: user.avatar,
-    //   password: user.password,
-    // });
+    const userMongo = new UserMongo({
+      username: user.username,
+      provider: user.provider,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+      password: user.password,
+    });
 
-    // userMongo.save()
-    //   .then((newUserMongo) => {
-    //     //
-    //   });
+    userMongo.save()
+      .then(newUserMongo => {
+        console.log(1, newUserMongo);
+      })
+      .catch(err => {
+        console.log(2, err);
+      });
 
     try {
       const newUser = await this.connection.getRepository(User).save(user);
