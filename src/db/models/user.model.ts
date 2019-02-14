@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
 import * as uniqueValidator from 'mongoose-unique-validator';
 
-export const UserSchema = new Schema({
+export const userSchema = new Schema({
   id: { type: String, required: true },
   firstName: String,
   lastName: String,
@@ -22,6 +22,6 @@ export const UserSchema = new Schema({
   logs: [{ type: Schema.Types.ObjectId, ref: 'Log' }],
 });
 
-UserSchema.plugin(uniqueValidator);
+userSchema.plugin(uniqueValidator);
 
-export const UserMongo = model('User', UserSchema);
+export const UserMongo = model('User', userSchema);
