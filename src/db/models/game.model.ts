@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
 import * as uniqueValidator from 'mongoose-unique-validator';
 
-export const GameSchema = new Schema({
+export const gameSchema = new Schema({
   id: { type: String, required: true },
   number: { type: Number, required: true, unique: true },
   name: { type: String, required: true },
@@ -20,6 +20,6 @@ export const GameSchema = new Schema({
   logs: [{ type: Schema.Types.ObjectId, ref: 'Log' }],
 });
 
-GameSchema.plugin(uniqueValidator);
+gameSchema.plugin(uniqueValidator);
 
-export const GameMongo = model('Game', GameSchema);
+export const GameMongo = model('Game', gameSchema);
