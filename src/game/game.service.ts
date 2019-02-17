@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { BaseGame } from 'z-games-base-game';
 import { NoThanks } from 'z-games-no-thanks';
 import { Perudo } from 'z-games-perudo';
@@ -7,6 +9,7 @@ import { Perudo } from 'z-games-perudo';
 import { Game } from '../db/entities/game.entity';
 import { User } from '../db/entities/user.entity';
 import { LoggerService } from '../logger/logger.service';
+import { ConfigService } from '../config/config.service';
 import { JoiningGameError } from '../errors/joining-game';
 import { OpeningGameError } from '../errors/opening-game';
 import { WatchingGameError } from '../errors/watching-game';
@@ -26,8 +29,9 @@ import {
   FIELDS_TO_REMOVE_IN_ALL_GAMES,
   ALL_GAMES_FIELDS,
 } from '../db/scopes/Game';
-
 import * as types from '../constants';
+
+const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
 const gamesServices: { [key: string]: BaseGame } = {
   [types.NO_THANKS]: NoThanks.Instance,
@@ -37,10 +41,18 @@ const gamesServices: { [key: string]: BaseGame } = {
 @Injectable()
 export class GameService {
 
-  constructor(private connection: Connection, private logger: LoggerService) { }
+  constructor(
+    private connection: Connection,
+    private logger: LoggerService,
+    @InjectModel('Game') private readonly gameModel: Model<any>,
+  ) { }
 
   public findOne(gameNumber: number): Promise<Game | undefined> {
     this.logger.info(`Find one game number ${gameNumber}`);
+
+    if (IS_MONGO_USED) {
+      return this.gameModel.findOne({ gameNumber }).exec();
+    }
 
     return this.connection.getRepository(Game)
       .createQueryBuilder('game')
@@ -63,6 +75,10 @@ export class GameService {
   }): Promise<Game[]> {
     this.logger.info('Get all games');
 
+    if (IS_MONGO_USED) {
+      return this.gameModel.find().sort({ number: -1 }).exec();
+    }
+
     return this.connection.getRepository(Game)
       .createQueryBuilder('game')
       .select(ALL_GAMES_FIELDS)
@@ -84,8 +100,36 @@ export class GameService {
     game.players = [];
     game.gameData = gameData;
 
-    const newGame = await this.connection.getRepository(Game).save(game);
-    return newGame;
+    if (IS_MONGO_USED) {
+      const allGames = (await this.getAllGames({
+        ignoreNotStarted: false,
+        ignoreStarted: false,
+        ignoreFinished: false,
+      })).sort((game1, game2) => game2.number - game1.number);
+
+      if (allGames.length) {
+        game.number = allGames[0].number + 1;
+      }
+
+      const gameMongo = new this.gameModel(game);
+
+      try {
+        const newGameMongo = await gameMongo.save();
+        newGameMongo.id = newGameMongo._id;
+
+        return newGameMongo;
+      } catch (error) {
+        // TODO
+      }
+    }
+
+    try {
+      const newGame = await this.connection.getRepository(Game).save(game);
+
+      return newGame;
+    } catch (error) {
+      // TODO
+    }
   }
 
   public async joinGame({ user, gameNumber }: { user: User, gameNumber: number }): Promise<Game> {
