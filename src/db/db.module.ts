@@ -8,11 +8,6 @@ import { ConfigService } from '../config/config.service';
 
 const dbUrl = url.parse(ConfigService.get().DATABASE_URL);
 
-const additionalModules = [];
-if (ConfigService.get().USE_MONGO === 'true') {
-  additionalModules.push(MongooseModule.forRoot(ConfigService.get().MONGODB_URI));
-}
-
 @Module({
   imports: [
     ConfigModule,
@@ -26,7 +21,7 @@ if (ConfigService.get().USE_MONGO === 'true') {
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
-    ...additionalModules,
+    MongooseModule.forRoot(ConfigService.get().MONGODB_URI),
   ],
 })
 export class DbModule { }
