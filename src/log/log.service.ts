@@ -1,14 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 import { Log } from '../db/entities/log.entity';
 import { User } from '../db/entities/user.entity';
 import { LoggerService } from '../logger/logger.service';
+import { ConfigService } from '../config/config.service';
+
+const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
 @Injectable()
 export class LogService {
 
-  constructor(private connection: Connection, private logger: LoggerService) { }
+  constructor(
+    private connection: Connection,
+    private logger: LoggerService,
+    @InjectModel('Log') private readonly logModel: Model<any>,
+  ) { }
 
   public findAll(): Promise<Log[]> {
     this.logger.info('Get all logs');
@@ -48,9 +57,27 @@ export class LogService {
     log.gameId = gameId;
     log.text = text;
 
-    const newLog = await this.connection.getRepository(Log).save(log);
+    if (IS_MONGO_USED) {
+      log.user = (user as any)._id;
+      log.game = gameId as any;
+      const logMongo = new this.logModel(log);
 
-    return newLog;
+      try {
+        const newLogMongo = await logMongo.save();
+
+        return newLogMongo;
+      } catch (error) {
+        // TODO
+      }
+    }
+
+    try {
+      const newLog = await this.connection.getRepository(Log).save(log);
+
+      return newLog;
+    } catch (error) {
+      // TODO
+    }
   }
 
 }

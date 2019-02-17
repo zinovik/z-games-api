@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 import { LoggerService } from '../logger/logger.service';
 import { User } from '../db/entities/user.entity';
@@ -9,15 +11,25 @@ import {
   USER_JOIN_CURRENT_GAMES,
   USER_JOIN_CURRENT_WATCH,
 } from '../db/scopes/User';
-import { UserMongo } from '../db/models/user.model';
+import { ConfigService } from '../config/config.service';
+
+const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
 @Injectable()
 export class UserService {
 
-  constructor(private connection: Connection, private logger: LoggerService) { }
+  constructor(
+    private connection: Connection,
+    private logger: LoggerService,
+    @InjectModel('User') private readonly userModel: Model<any>,
+  ) { }
 
   public findOne(email: string): Promise<User | undefined> {
     this.logger.info(`Find one user by email: ${email}`);
+
+    if (IS_MONGO_USED) {
+      return this.userModel.findOne({ email }).exec();
+    }
 
     return this.connection.getRepository(User)
       .createQueryBuilder('user')
@@ -31,6 +43,10 @@ export class UserService {
 
   public findOneByUsername(username: string): Promise<User | undefined> {
     this.logger.info(`Find one user by email: ${username}`);
+
+    if (IS_MONGO_USED) {
+      return this.userModel.findOne({ username }).exec();
+    }
 
     return this.connection.getRepository(User)
       .createQueryBuilder('user')
@@ -75,22 +91,20 @@ export class UserService {
       user.password = password;
     }
 
-    const userMongo = new UserMongo({
-      username: user.username,
-      provider: user.provider,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      avatar: user.avatar,
-      password: user.password,
-    });
+    if (IS_MONGO_USED) {
+      const userMongo = new this.userModel(user);
 
-    userMongo.save()
-      .then(newUserMongo => {
-        console.log(1, newUserMongo);
-      })
-      .catch(err => {
-        console.log(2, err);
-      });
+      try {
+        const newUserMongo = await userMongo.save();
+
+        this.logger.info(JSON.stringify(newUserMongo));
+
+        return newUserMongo;
+      } catch (error) {
+        this.logger.error(error.message, error.trace);
+        throw new Error('error'); // TODO Error
+      }
+    }
 
     try {
       const newUser = await this.connection.getRepository(User).save(user);
