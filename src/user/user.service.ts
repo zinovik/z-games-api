@@ -24,11 +24,17 @@ export class UserService {
     @InjectModel('User') private readonly userModel: Model<any>,
   ) { }
 
-  public findOne(email: string): Promise<User | undefined> {
+  public async findOne(email: string): Promise<User | undefined> {
     this.logger.info(`Find one user by email: ${email}`);
 
     if (IS_MONGO_USED) {
-      return this.userModel.findOne({ email }).exec();
+      const user = await this.userModel.findOne({ email }).exec();
+
+      if (user) {
+        (user as any).id = (user as any)._id;
+      }
+
+      return user;
     }
 
     return this.connection.getRepository(User)
@@ -41,11 +47,17 @@ export class UserService {
       .getOne();
   }
 
-  public findOneByUsername(username: string): Promise<User | undefined> {
+  public async findOneByUsername(username: string): Promise<User | undefined> {
     this.logger.info(`Find one user by email: ${username}`);
 
     if (IS_MONGO_USED) {
-      return this.userModel.findOne({ username }).exec();
+      const user = await this.userModel.findOne({ username }).exec();
+
+      if (user) {
+        (user as any).id = (user as any)._id;
+      }
+
+      return user;
     }
 
     return this.connection.getRepository(User)
@@ -96,6 +108,8 @@ export class UserService {
 
       try {
         const newUserMongo = await userMongo.save();
+
+        newUserMongo.id = newUserMongo._id;
 
         this.logger.info(JSON.stringify(newUserMongo));
 
