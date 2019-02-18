@@ -47,11 +47,20 @@ export class GameService {
     @InjectModel('Game') private readonly gameModel: Model<any>,
   ) { }
 
-  public findOne(gameNumber: number): Promise<Game | undefined> {
+  public async findOne(gameNumber: number): Promise<Game | undefined> {
     this.logger.info(`Find one game number ${gameNumber}`);
 
     if (IS_MONGO_USED) {
-      return this.gameModel.findOne({ gameNumber }).exec();
+      const game = await this.gameModel.findOne({ number: gameNumber })
+        .populate('players')
+        .populate('playersOnline')
+        .populate('logs')
+        .exec();
+
+      game.players = game.players.map(player => ({ ...player, id: player._id }));
+      game.playersOnline = game.playersOnline.map(player => ({ ...player, id: player._id }));
+
+      return game;
     }
 
     return this.connection.getRepository(Game)
@@ -152,13 +161,26 @@ export class GameService {
     }
 
     const newUser = new User();
-    newUser.id = user.id;
+
+    if (IS_MONGO_USED) {
+      (newUser as any)._id = (user as any)._id;
+    } else {
+      newUser.id = user.id;
+    }
+
     newUser.username = user.username;
 
     game.players.push(newUser);
     game.playersOnline.push(newUser);
 
-    game.gameData = gamesServices[game.name].addPlayer({ gameData: game.gameData, userId: user.id });
+    game.gameData = gamesServices[game.name]
+      .addPlayer({ gameData: game.gameData, userId: user.id || (user as any)._id });
+
+    if (IS_MONGO_USED) {
+      const updatedGame = await (game as any).save();
+      const findedGame = await this.findOne(gameNumber);
+      return (findedGame as any)._doc;
+    }
 
     return this.connection.getRepository(Game).save(game);
   }

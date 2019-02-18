@@ -21,7 +21,10 @@ const dbUrl = url.parse(ConfigService.get().DATABASE_URL);
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
-    MongooseModule.forRoot(ConfigService.get().MONGODB_URI),
+    MongooseModule.forRoot(ConfigService.get().MONGODB_URI, {
+      useCreateIndex: true,
+      useNewUrlParser: true,
+    }),
   ],
 })
 export class DbModule { }
