@@ -6,7 +6,7 @@ Z-Games is a tiny board games portal.
 
 The project consists of two main parts and several games modules:
 1. [Back-end](https://github.com/zinovik/z-games-api)
-2. [Fron-end](https://github.com/zinovik/z-games)
+2. [Front-end](https://github.com/zinovik/z-games)
 - [Game template](https://github.com/zinovik/z-games-base-game)
 - [No, Thanks game](https://github.com/zinovik/z-games-no-thanks) [[wiki](https://en.wikipedia.org/wiki/No_Thanks!_(game))]
 - [Perudo game](https://github.com/zinovik/z-games-perudo) [[wiki](https://en.wikipedia.org/wiki/Dudo)]
@@ -44,14 +44,14 @@ git clone https://github.com/zinovik/z-games
 
 - create .env file in each cloned repository (if you use Docker you can use Docker database: DATABASE_URL='postgres://postgres:dbpass123@database:5432/z-games').
 
-- If you use docker and want to run the whole project go to cloned front-end part repository folder, build containers and run it, that's all, check [https://localhost:9000](https://localhost:9000)!
+- If you use docker and want to run the whole project go to cloned front-end part repository folder, build containers and run it, that's all, check [https://localhost:3000](https://localhost:3000)!
 
 ```js
 cd z-games
 docker-compose up --build
 ```
 
-- Now, if you use docker and want to run only one part go to cloned repository folder, build container and run it, that's all, check ([https://localhost:4000](https://localhost:4000) or [https://localhost:9000](https://localhost:9000))!
+- Now, if you use docker and want to run only one part go to cloned repository folder, build container and run it, that's all, check ([https://localhost:4000](https://localhost:4000) or [https://localhost:3000](https://localhost:3000))!
 
 back-end part:
 

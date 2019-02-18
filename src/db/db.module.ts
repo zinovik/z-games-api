@@ -1,6 +1,7 @@
 import * as url from 'url';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 
 import { ConfigModule } from '../config/config.module';
 import { ConfigService } from '../config/config.service';
@@ -19,6 +20,10 @@ const dbUrl = url.parse(ConfigService.get().DATABASE_URL);
       database: dbUrl.path.split('/')[1],
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
+    }),
+    MongooseModule.forRoot(ConfigService.get().MONGODB_URI, {
+      useCreateIndex: true,
+      useNewUrlParser: true,
     }),
   ],
 })
