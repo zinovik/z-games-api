@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 
 import { ConfigModule } from '../config/config.module';
 import { ServicesModule } from './../services/services.module';
@@ -7,9 +8,15 @@ import { UserController } from './user.controller';
 import { UserGateway } from './user.gateway';
 import { UserService } from './user.service';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { userSchema } from 'src/db/models/user.model';
 
 @Module({
-  imports: [ConfigModule, ServicesModule, LoggerModule],
+  imports: [
+    ConfigModule,
+    ServicesModule,
+    LoggerModule,
+    MongooseModule.forFeature([{ name: 'User', schema: userSchema }]),
+  ],
   controllers: [UserController],
   providers: [UserGateway, UserService, GoogleStrategy],
   exports: [UserService],

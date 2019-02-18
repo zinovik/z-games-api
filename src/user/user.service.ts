@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 import { LoggerService } from '../logger/logger.service';
 import { User } from '../db/entities/user.entity';
@@ -9,14 +11,31 @@ import {
   USER_JOIN_CURRENT_GAMES,
   USER_JOIN_CURRENT_WATCH,
 } from '../db/scopes/User';
+import { ConfigService } from '../config/config.service';
+
+const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
 @Injectable()
 export class UserService {
 
-  constructor(private connection: Connection, private logger: LoggerService) { }
+  constructor(
+    private connection: Connection,
+    private logger: LoggerService,
+    @InjectModel('User') private readonly userModel: Model<any>,
+  ) { }
 
-  public findOne(email: string): Promise<User | undefined> {
+  public async findOne(email: string): Promise<User | undefined> {
     this.logger.info(`Find one user by email: ${email}`);
+
+    if (IS_MONGO_USED) {
+      const user = await this.userModel.findOne({ email }).exec();
+
+      if (user) {
+        (user as any).id = (user as any)._id;
+      }
+
+      return user;
+    }
 
     return this.connection.getRepository(User)
       .createQueryBuilder('user')
@@ -28,8 +47,18 @@ export class UserService {
       .getOne();
   }
 
-  public findOneByUsername(username: string): Promise<User | undefined> {
+  public async findOneByUsername(username: string): Promise<User | undefined> {
     this.logger.info(`Find one user by email: ${username}`);
+
+    if (IS_MONGO_USED) {
+      const user = await this.userModel.findOne({ username }).exec();
+
+      if (user) {
+        (user as any).id = (user as any)._id;
+      }
+
+      return user;
+    }
 
     return this.connection.getRepository(User)
       .createQueryBuilder('user')
@@ -72,6 +101,23 @@ export class UserService {
     } else {
       // TODO: Add email regexp verification
       user.password = password;
+    }
+
+    if (IS_MONGO_USED) {
+      const userMongo = new this.userModel(user);
+
+      try {
+        const newUserMongo = await userMongo.save();
+
+        newUserMongo.id = newUserMongo._id;
+
+        this.logger.info(JSON.stringify(newUserMongo));
+
+        return newUserMongo;
+      } catch (error) {
+        this.logger.error(error.message, error.trace);
+        throw new Error('error'); // TODO Error
+      }
     }
 
     try {
