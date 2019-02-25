@@ -57,8 +57,15 @@ export class GameService {
         .populate('logs')
         .exec();
 
-      game.players = game.players.map(player => ({ ...player, id: player._id }));
-      game.playersOnline = game.playersOnline.map(player => ({ ...player, id: player._id }));
+      if (game) {
+        game.id = (game as any)._id;
+        game.players = game.players.map(player => ({ ...player, id: player._id }));
+        game.playersOnline = game.playersOnline.map(player => ({ ...player, id: player._id }));
+
+        // if (!game.logs[0]) {
+        //   game.logs = [];
+        // }
+      }
 
       return game;
     }
