@@ -1,8 +1,13 @@
 import { Schema, model } from 'mongoose';
 import * as uniqueValidator from 'mongoose-unique-validator';
 
+const transform = (doc, ret, options) => {
+  ret.id = ret._id;
+  delete ret._id;
+  delete ret.__v;
+};
+
 export const userSchema = new Schema({
-  id: String, // unique, required
   firstName: String,
   lastName: String,
   email: { type: String, unique: true },
@@ -20,7 +25,10 @@ export const userSchema = new Schema({
   createdAt: { type: Date, required: true, default: new Date() },
   updatedAt: { type: Date, required: true, default: new Date() },
   logs: [{ type: Schema.Types.ObjectId, ref: 'Log' }],
-});
+}, {
+    toJSON: { transform },
+    toObject: { transform },
+  });
 
 userSchema.plugin(uniqueValidator);
 
