@@ -30,10 +30,6 @@ export class UserService {
     if (IS_MONGO_USED) {
       const user = await this.userModel.findOne({ email }).exec();
 
-      if (user) {
-        (user as any).id = (user as any)._id;
-      }
-
       return user;
     }
 
@@ -51,13 +47,10 @@ export class UserService {
     this.logger.info(`Find one user by email: ${username}`);
 
     if (IS_MONGO_USED) {
-      const user = await this.userModel.findOne({ username }).exec();
-
-      if (user) {
-        (user as any).id = (user as any)._id;
-      }
-
-      return user;
+      return this.userModel.findOne({ username })
+        .populate('currentGames')
+        .populate('currentMove')
+        .exec();
     }
 
     return this.connection.getRepository(User)
@@ -108,8 +101,6 @@ export class UserService {
 
       try {
         const newUserMongo = await userMongo.save();
-
-        newUserMongo.id = newUserMongo._id;
 
         this.logger.info(JSON.stringify(newUserMongo));
 

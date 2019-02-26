@@ -51,26 +51,17 @@ export class GameService {
     this.logger.info(`Find one game number ${gameNumber}`);
 
     if (IS_MONGO_USED) {
-      const game = await this.gameModel.findOne({ number: gameNumber })
+      return await this.gameModel.findOne({ number: gameNumber })
         .populate('players')
         .populate('playersOnline')
-        .populate('logs')
+        .populate({
+          path: 'logs',
+          populate: { path: 'user' },
+        })
         .exec();
-
-      if (game) {
-        game.id = (game as any)._id;
-        game.players = game.players.map(player => ({ ...player, id: player._id }));
-        game.playersOnline = game.playersOnline.map(player => ({ ...player, id: player._id }));
-
-        // if (!game.logs[0]) {
-        //   game.logs = [];
-        // }
-      }
-
-      return game;
     }
 
-    return this.connection.getRepository(Game)
+    return await this.connection.getRepository(Game)
       .createQueryBuilder('game')
       .select(OPEN_GAME_FIELDS)
       .leftJoin(...ALL_GAMES_JOIN_PLAYERS)
@@ -117,23 +108,14 @@ export class GameService {
     game.gameData = gameData;
 
     if (IS_MONGO_USED) {
-      const allGames = (await this.getAllGames({
-        ignoreNotStarted: false,
-        ignoreStarted: false,
-        ignoreFinished: false,
-      })).sort((game1, game2) => game2.number - game1.number);
-
-      if (allGames.length) {
-        game.number = allGames[0].number + 1;
-      }
+      game.number = await this.getNewGameNumber();
 
       const gameMongo = new this.gameModel(game);
 
       try {
         const newGameMongo = await gameMongo.save();
-        newGameMongo.id = newGameMongo._id;
 
-        return newGameMongo;
+        return JSON.parse(JSON.stringify(newGameMongo));
       } catch (error) {
         // TODO
       }
@@ -170,7 +152,7 @@ export class GameService {
     const newUser = new User();
 
     if (IS_MONGO_USED) {
-      (newUser as any)._id = (user as any)._id;
+      (newUser as any)._id = user.id;
     } else {
       newUser.id = user.id;
     }
@@ -180,13 +162,17 @@ export class GameService {
     game.players.push(newUser);
     game.playersOnline.push(newUser);
 
-    game.gameData = gamesServices[game.name]
-      .addPlayer({ gameData: game.gameData, userId: user.id || (user as any)._id });
+    game.gameData = gamesServices[game.name].addPlayer({ gameData: game.gameData, userId: user.id });
 
     if (IS_MONGO_USED) {
-      const updatedGame = await (game as any).save();
-      const findedGame = await this.findOne(gameNumber);
-      return (findedGame as any)._doc;
+      try {
+        await (game as any).save();
+      } catch (error) {
+        console.log(error.message);
+        // TODO
+      }
+
+      return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
     }
 
     return this.connection.getRepository(Game).save(game);
@@ -203,7 +189,17 @@ export class GameService {
       throw new OpeningGameError('Can\'t open game twice');
     }
 
-    game.playersOnline.push(user);
+    const newUser = new User();
+
+    if (IS_MONGO_USED) {
+      (newUser as any).id = user.id;
+    } else {
+      newUser.id = user.id;
+    }
+
+    newUser.username = user.username;
+
+    game.playersOnline.push(newUser);
 
     return this.connection.getRepository(Game).save(game);
   }
@@ -223,7 +219,17 @@ export class GameService {
       throw new WatchingGameError('Can\'t watch game twice');
     }
 
-    game.watchers.push(user);
+    const newUser = new User();
+
+    if (IS_MONGO_USED) {
+      (newUser as any).id = user.id;
+    } else {
+      newUser.id = user.id;
+    }
+
+    newUser.username = user.username;
+
+    game.watchers.push(newUser);
 
     return this.connection.getRepository(Game).save(game);
   }
@@ -243,6 +249,10 @@ export class GameService {
     game.playersOnline = game.players.filter(player => player.id !== user.id);
 
     game.gameData = gamesServices[game.name].removePlayer({ gameData: game.gameData, userId: user.id });
+
+    if (IS_MONGO_USED) {
+      //
+    }
 
     return this.connection.getRepository(Game).save(game);
   }
@@ -366,6 +376,20 @@ export class GameService {
     const gameData = gamesServices[game.name].parseGameDataForUser({ gameData: game.gameData, userId: user.id });
 
     return { ...game, gameData } as Game;
+  }
+
+  private async getNewGameNumber(): Promise<number> {
+    const allGames = (await this.getAllGames({
+      ignoreNotStarted: false,
+      ignoreStarted: false,
+      ignoreFinished: false,
+    })).sort((game1, game2) => game2.number - game1.number);
+
+    if (allGames.length) {
+      return allGames[0].number + 1;
+    }
+
+    return 0;
   }
 
 }
