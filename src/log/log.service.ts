@@ -58,15 +58,18 @@ export class LogService {
     log.text = text;
 
     if (IS_MONGO_USED) {
-      log.user = (user as any)._id;
+      log.user = user.id as any;
       log.game = gameId as any;
       const logMongo = new this.logModel(log);
 
       try {
         const newLogMongo = await logMongo.save();
 
+        newLogMongo.user = user;
+
         return newLogMongo;
       } catch (error) {
+        console.log(error.message);
         // TODO
       }
     }
@@ -76,6 +79,7 @@ export class LogService {
 
       return newLog;
     } catch (error) {
+      console.log(error.message);
       // TODO
     }
   }

@@ -129,9 +129,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     await this.logService.create({ type: 'create', user: client.user, gameId: game.id });
 
-    await this.server.emit('new-game', this.gameService.parseGameForAllUsers(
-      (game as any)._doc ? (game as any)._doc : game,
-    ));
+    await this.server.emit('new-game', this.gameService.parseGameForAllUsers(game));
   }
 
   @UseGuards(JwtGuard)
