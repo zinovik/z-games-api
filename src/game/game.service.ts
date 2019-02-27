@@ -569,7 +569,7 @@ export class GameService {
       return allGames[0].number + 1;
     }
 
-    return 0;
+    return 1;
   }
 
 }

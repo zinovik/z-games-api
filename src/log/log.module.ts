@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { UserModule } from './../user/user.module';
-import { ServicesModule } from './../services/services.module';
+import { UserModule } from '../user/user.module';
+import { ServicesModule } from '../services/services.module';
 import { LogGateway } from './log.gateway';
 import { LogController } from './log.controller';
 import { LogService } from './log.service';
