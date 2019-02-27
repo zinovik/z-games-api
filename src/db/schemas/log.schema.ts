@@ -1,4 +1,6 @@
-import { Schema, model } from 'mongoose';
+import { Schema, set } from 'mongoose';
+
+set('useFindAndModify', false);
 
 const transform = (doc, ret, options) => {
   ret.id = ret._id;
@@ -9,12 +11,10 @@ const transform = (doc, ret, options) => {
 export const logSchema = new Schema({
   type: { type: String, required: true },
   text: String,
-  createdAt: { type: Date, required: true, default: new Date() },
   game: { type: Schema.Types.ObjectId, ref: 'Game', required: true },
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 }, {
     toJSON: { transform },
     toObject: { transform },
+    timestamps: true,
   });
-
-export const LogMongo = model('Log', logSchema);

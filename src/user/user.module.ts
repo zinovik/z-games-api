@@ -8,7 +8,7 @@ import { UserController } from './user.controller';
 import { UserGateway } from './user.gateway';
 import { UserService } from './user.service';
 import { GoogleStrategy } from './strategies/google.strategy';
-import { userSchema } from 'src/db/models/user.model';
+import { userSchema } from 'src/db/schemas/user.schema';
 
 @Module({
   imports: [

@@ -1,5 +1,7 @@
-import { Schema, model } from 'mongoose';
+import { Schema, set } from 'mongoose';
 import * as uniqueValidator from 'mongoose-unique-validator';
+
+set('useFindAndModify', false);
 
 const transform = (doc, ret, options) => {
   ret.id = ret._id;
@@ -22,23 +24,11 @@ export const userSchema = new Schema({
   currentMove: [{ type: Schema.Types.ObjectId, ref: 'Game' }],
   gamesPlayed: { type: Number, required: true, default: 0 },
   gamesWon: { type: Number, required: true, default: 0 },
-  createdAt: { type: Date, required: true, default: new Date() },
-  updatedAt: { type: Date, required: true, default: new Date() },
   logs: [{ type: Schema.Types.ObjectId, ref: 'Log' }],
 }, {
     toJSON: { transform },
     toObject: { transform },
+    timestamps: true,
   });
 
 userSchema.plugin(uniqueValidator);
-
-userSchema.pre('update', next => {
-  this.update({}, {
-    $set: {
-      updatedAt: new Date(),
-    },
-  });
-  next();
-});
-
-export const UserMongo = model('User', userSchema);
