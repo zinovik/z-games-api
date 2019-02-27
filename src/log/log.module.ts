@@ -7,7 +7,9 @@ import { LogGateway } from './log.gateway';
 import { LogController } from './log.controller';
 import { LogService } from './log.service';
 import { LoggerModule } from '../logger/logger.module';
-import { logSchema } from 'src/db/models/log.model';
+import { logSchema } from 'src/db/schemas/log.schema';
+import { userSchema } from 'src/db/schemas/user.schema';
+import { gameSchema } from 'src/db/schemas/game.schema';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { logSchema } from 'src/db/models/log.model';
     LoggerModule,
     UserModule,
     MongooseModule.forFeature([{ name: 'Log', schema: logSchema }]),
+    MongooseModule.forFeature([{ name: 'User', schema: userSchema }]),
+    MongooseModule.forFeature([{ name: 'Game', schema: gameSchema }]),
   ],
   controllers: [LogController],
   providers: [LogGateway, LogService],
