@@ -1,6 +1,6 @@
 ![img](./logo.png)
 
-## What ##
+# What #
 
 Z-Games is a tiny board games portal.
 
@@ -10,116 +10,217 @@ The project consists of two main parts and several games modules:
 - [Game template](https://github.com/zinovik/z-games-base-game)
 - [No, Thanks game](https://github.com/zinovik/z-games-no-thanks) [[wiki](https://en.wikipedia.org/wiki/No_Thanks!_(game))]
 - [Perudo game](https://github.com/zinovik/z-games-perudo) [[wiki](https://en.wikipedia.org/wiki/Dudo)]
-- [6 nimmt! game](https://github.com/zinovik/z-games-six-nimmt) (in development) [[wiki](https://en.wikipedia.org/wiki/6_Nimmt!)]
-- [Lost cities game](https://github.com/zinovik/z-games-lost-cities) (in development) [[wiki](https://en.wikipedia.org/wiki/Lost_Cities)]
+- [Lost cities game](https://github.com/zinovik/z-games-lost-cities) [[wiki](https://en.wikipedia.org/wiki/Lost_Cities)] (in development)
+- [6 nimmt! game](https://github.com/zinovik/z-games-six-nimmt) [[wiki](https://en.wikipedia.org/wiki/6_Nimmt!)] (in development)
 
-## Where ##
+# Where #
 
 There are two environments where you can check current versions:
 1. Development (dev branch) (https://z-games-dev.herokuapp.com)
 2. Production (master branch) (https://z-games.herokuapp.com)
 
-## How ###
+# How #
 
 Also, you can run a development environment on your local machine.
 
-Before you start answer two questions:
-1. Do you want to work with this part (Back-end **or** Front-end) or the whole project (Back-end **and** Front-end)?
-2. Do you want to use [Docker](https://docker.com) (the easiest way)?
+Please, select the option that suits you best:
+1. Run the whole project with [docker and docker-compose](https://docker.com) (the easiest way).
+2. Run only back-end part with databases with [docker and docker-compose](https://docker.com).
+3. Run only databases with [docker and docker-compose](https://docker.com).
+4. Run only back-end part with [docker](https://docker.com).
+5. Run only front-end part with [docker](https://docker.com).
+6. Working without [docker](https://docker.com).
+
+NB: If you want to use [docker (and docker-compose)](https://docker.com) please install it, else install [node.js with npm](https://nodejs.org) then install [yarn](https://yarnpkg.com) with this command:
+
+```bash
+npm install yarn --global
+```
 
 Let's start!
 
-- If you want to use [Docker](https://docker.com) please install it and docker-compose (if you are going to work with the whole project), else install [Node.js with npm](https://nodejs.org) and install yarn with this command:
 
-```js
-npm install -global yarn
-```
 
-- If you want to run only this part - clone only this repository, else clone both:
+## 1. Run the whole project with docker and docker-compose (the easiest way) ##
 
-```js
+1.1. Clone repositories:
+
+```bash
 git clone https://github.com/zinovik/z-games-api
 git clone https://github.com/zinovik/z-games
 ```
 
-- create .env file in each cloned repository (if you use Docker you can use Docker database: DATABASE_URL='postgres://postgres:dbpass123@database:5432/z-games').
+1.2. Create .env file in each cloned repository (use .env.example for help).
 
-- If you use docker and want to run the whole project go to cloned front-end part repository folder, build containers and run it, that's all, check [https://localhost:3000](https://localhost:3000)!
+1.3. Build containers and run it:
 
-```js
+```bash
 cd z-games
 docker-compose up --build
 ```
 
-- Now, if you use docker and want to run only one part go to cloned repository folder, build container and run it, that's all, check ([https://localhost:4000](https://localhost:4000) or [https://localhost:3000](https://localhost:3000))!
+That's it!
+Check front-end here: [http://localhost:3000](http://localhost:3000)!
+Check back-end here: [http://localhost:4000](http://localhost:4000)!
 
-back-end part:
 
-```js
+
+## 2. Run only back-end part with databases with docker and docker-compose ##
+
+2.1. Clone repository:
+
+```bash
+git clone https://github.com/zinovik/z-games-api
+```
+
+2.2. Create .env file in the repository folder (use .env.example for help).
+
+2.3. Build containers and run it:
+
+```bash
+cd z-games-api
+docker-compose up --build
+```
+
+That's it!
+Check back-end here: [http://localhost:4000](http://localhost:4000)!
+
+
+
+## 3. Run only databases with docker and docker-compose ##
+
+3.1. Clone repository:
+
+```bash
+git clone https://github.com/zinovik/z-games-api
+```
+
+3.2. Enter in special folder and run docker database separately:
+
+```bash
+cd z-games-api
+cd database
+docker-compose up --build
+```
+
+or
+
+```bash
+cd z-games-api
+cd database_mongo
+docker-compose up --build
+```
+
+That's it!
+
+
+
+## 4. Run only back-end part with docker ##
+
+4.1. Clone repository:
+
+```bash
+git clone https://github.com/zinovik/z-games-api
+```
+
+4.2. Create .env file in the repository folder (use .env.example for help).
+
+4.3. Build container and run it:
+
+```bash
 cd z-games-api
 docker build -t z-games-api .
 docker run z-games-api
 ```
 
-or (if you use Docker database)
+That's it!
+Check front-end here: [http://localhost:3000](http://localhost:3000)!
 
-```js
-cd z-games-api
-docker-compose run --build
+
+
+## 5. Run only front-end part with docker ##
+
+5.1. Clone repository:
+
+```bash
+git clone https://github.com/zinovik/z-games
 ```
 
-or front-end part
+5.2. Create .env file in the repository folder (use .env.example for help).
 
-```js
+5.3. Build container and run it:
+
+```bash
 cd z-games
 docker build -t z-games .
 docker run z-games
 ```
 
-- If you don't use Docker install all dependencies by running these commands for cloned repositories
+That's it!
+Check front-end here: [http://localhost:3000](http://localhost:3000)!
 
-```js
-// for back-end part (start)
+
+
+## 6. Working without docker ##
+
+6.1. Clone repositories you want to run:
+
+```bash
+git clone https://github.com/zinovik/z-games-api
+```
+
+or/and
+
+```bash
+git clone https://github.com/zinovik/z-games
+```
+
+6.2. Create .env file in each cloned repository (use .env.example for help).
+
+6.3. Install all dependencies by running these commands for cloned repositories:
+
+```bash
 cd z-games-api
 yarn
 cd ..
-// for back-end part (end)
-// for front-end part (start)
+```
+
+or/and
+
+```bash
 cd z-games
 yarn
 cd ..
-// for front-end part (end)
 ```
 
-- Then go to the folder and run part you want to run or both parts, that's all, check ([https://localhost:4000](https://localhost:4000) or [https://localhost:3000](https://localhost:3000))!
+6.4. Then go to the folder and run part you want to run or both parts:
 
-```js
-// for back-end part (start)
+```bash
 cd z-games-api
 yarn start start:dev
-// for back-end part (end)
-// for front-end part (start)
+```
+
+or/and
+
+```bash
 cd z-games
 yarn run dev
-// for front-end part (end)
 ```
+That's it!
+Check front-end here: [http://localhost:3000](http://localhost:3000)!
+Check back-end here: [http://localhost:4000](http://localhost:4000)!
 
-If you want to change the separate game - clone it's repository!
 
-P. S. If you want to use docker for database separately (don't know why) run this:
-```js
-cd z-games-api
-cd database
-docker-comopose up
-```
 
-## Help ##
+P.S. If you want to change the separate game - clone it's repository! You can work with it using [npm link](https://docs.npmjs.com/cli/link.html) command.
 
-If you want to help check current [issues](https://github.com/zinovik/z-games-api/issues) (you can use [ZenHub](https://zenhub.com)) or create the new one!
+# Help #
 
-Thank you, [Richard Caseres](https://github.com/richardbmx) for the amazing Logo!
+If you want to help check current [issues](https://github.com/zinovik/z-games-api/issues) (you can use [ZenHub](https://zenhub.com)) or create the new one! Also, you can write any comment.
 
-## Technologies ##
+Thank you, [Richard Caseres](https://github.com/richardbmx), for the amazing Logo!
+
+# Technologies #
 
 1. Typescript
 2. NodeJS
@@ -128,6 +229,6 @@ Thank you, [Richard Caseres](https://github.com/richardbmx) for the amazing Logo
 5. React
 6. Redux
 
-## License ##
+# License #
 
 [Apache License 2.0](/LICENSE)
