@@ -19,8 +19,8 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 export class UserService {
 
   constructor(
-    private connection: Connection,
-    private logger: LoggerService,
+    private readonly connection: Connection,
+    private readonly logger: LoggerService,
     @InjectModel('User') private readonly userModel: Model<any>,
   ) { }
 
@@ -28,9 +28,11 @@ export class UserService {
     this.logger.info(`Find one user by email: ${email}`);
 
     if (IS_MONGO_USED) {
-      const user = await this.userModel.findOne({ email }).exec();
-
-      return user;
+      return this.userModel.findOne({ email })
+        .populate('openedGame')
+        .populate('currentGames')
+        .populate('currentWatch')
+        .exec();
     }
 
     return this.connection.getRepository(User)
@@ -48,8 +50,9 @@ export class UserService {
 
     if (IS_MONGO_USED) {
       return this.userModel.findOne({ username })
+        .populate('openedGame')
         .populate('currentGames')
-        .populate('currentMove')
+        .populate('currentWatch')
         .exec();
     }
 

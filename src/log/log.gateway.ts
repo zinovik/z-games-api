@@ -12,7 +12,7 @@ export class LogGateway {
   server;
 
   constructor(
-    private logService: LogService,
+    private readonly logService: LogService,
   ) { }
 
   @UseGuards(JwtGuard)
