@@ -3,7 +3,7 @@ import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/web
 import { Socket } from 'socket.io';
 
 import { LogService } from '../log/log.service';
-import { JwtGuard } from './../user/guards/jwt.guard';
+import { JwtGuard } from '../user/guards/jwt.guard';
 
 @WebSocketGateway()
 export class LogGateway {
@@ -12,14 +12,14 @@ export class LogGateway {
   server;
 
   constructor(
-    private logService: LogService,
+    private readonly logService: LogService,
   ) { }
 
   @UseGuards(JwtGuard)
   @SubscribeMessage('message')
   public async message(client: Socket, { gameId, message }: { gameId: string, message: string }): Promise<void> {
     if (!client.user.currentGames || !client.user.currentGames.some(currentGame => currentGame.id === gameId)) {
-      return this.sendError({ client, message: 'You can\'t make move if you are not this game player' });
+      return this.sendError({ client, message: 'You can\'t make a move if you are not this game player' });
     }
 
     const log = await this.logService.create({ type: 'message', user: client.user, gameId, text: message });

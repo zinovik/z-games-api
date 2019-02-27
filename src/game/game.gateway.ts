@@ -12,8 +12,8 @@ import { Socket } from 'socket.io';
 import { GameService } from './game.service';
 import { UserService } from '../user/user.service';
 import { LogService } from '../log/log.service';
-import { JwtGuard } from './../user/guards/jwt.guard';
-import { JwtService } from './../services/jwt.service';
+import { JwtGuard } from '../user/guards/jwt.guard';
+import { JwtService } from '../services/jwt.service';
 import { Game } from '../db/entities/game.entity';
 import * as types from '../constants/Games';
 
@@ -24,16 +24,25 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server;
 
   private disconnectTimers = {};
+  private connectTimers = {};
 
   constructor(
-    private gameService: GameService,
-    private userService: UserService,
-    private logService: LogService,
-    private jwtService: JwtService,
+    private readonly gameService: GameService,
+    private readonly userService: UserService,
+    private readonly logService: LogService,
+    private readonly jwtService: JwtService,
   ) { }
 
   async handleConnection(client: Socket) {
     const token = client.handshake.query.token;
+
+    if (this.connectTimers[token]) {
+      return;
+    }
+
+    this.connectTimers[token] = setTimeout(async () => {
+      delete this.connectTimers[token];
+    }, 3000);
 
     const username = this.jwtService.getUserNameByToken(token);
 
@@ -55,13 +64,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const game = await this.gameService.findOne(user.openedGame.number);
+    const game = JSON.parse(JSON.stringify(await this.gameService.findOne(user.openedGame.number)));
 
     const log = await this.logService.create({ type: 'connect', user, gameId: game.id });
     game.logs = [log, ...game.logs];
 
-    await this.sendGameToGameUsers({ game });
-    await this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
+    this.sendGameToGameUsers({ game });
+    this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
   }
 
   async handleDisconnect(client: Socket) {
@@ -80,15 +89,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     this.disconnectTimers[user.id] = setTimeout(async () => {
-      const game = await this.gameService.findOne(user.openedGame.number);
+      const game = JSON.parse(JSON.stringify(await this.gameService.findOne(user.openedGame.number)));
 
       const log = await this.logService.create({ type: 'disconnect', user, gameId: game.id });
       game.logs = [log, ...game.logs];
 
       client.leave(game.id);
 
-      await this.sendGameToGameUsers({ game });
-      await await this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
+      this.sendGameToGameUsers({ game });
+      this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
 
       delete this.disconnectTimers[user.id];
     }, 5000);
@@ -115,7 +124,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     const gameNumber = client.user.openedGame ? client.user.openedGame.number : client.user.currentWatch.number;
-    const game = await this.gameService.findOne(gameNumber);
+    const game = JSON.parse(JSON.stringify(await this.gameService.findOne(gameNumber)));
 
     client.join(game.id);
 
@@ -127,11 +136,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   public async newGame(client: Socket, name: string): Promise<void> {
     const game = await this.gameService.newGame(name);
 
-    await this.logService.create({ type: 'create', user: client.user, gameId: game.id || (game as any)._id });
+    await this.logService.create({ type: 'create', user: client.user, gameId: game.id });
 
-    await this.server.emit('new-game', this.gameService.parseGameForAllUsers(
-      (game as any)._doc ? (game as any)._doc : game,
-    ));
+    this.server.emit('new-game', this.gameService.parseGameForAllUsers(game));
   }
 
   @UseGuards(JwtGuard)
@@ -152,7 +159,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.join(game.id);
 
     this.sendGameToGameUsers({ game });
-    await this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
+    this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
   }
 
   @UseGuards(JwtGuard)
@@ -172,7 +179,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.join(game.id);
 
     this.sendGameToGameUsers({ game });
-    await this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
+    this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
   }
 
   @UseGuards(JwtGuard)
@@ -192,7 +199,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.join(game.id);
 
     this.sendGameToGameUsers({ game });
-    await this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
+    this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
   }
 
   @UseGuards(JwtGuard)
@@ -213,7 +220,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.leave(game.id);
 
     this.sendGameToGameUsers({ game });
-    await this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
+    this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
 
     return { event: 'update-opened-game', data: undefined };
   }
@@ -236,7 +243,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.leave(game.id);
 
     this.sendGameToGameUsers({ game });
-    await this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
+    this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
 
     return { event: 'update-opened-game', data: undefined };
   }
@@ -261,7 +268,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     game.logs = [log, ...game.logs];
 
     this.sendGameToGameUsers({ game });
-    await this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
+    this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
   }
 
   @UseGuards(JwtGuard)
@@ -290,7 +297,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.sendGameToGameUsers({ game });
 
     if (game.state === types.GAME_FINISHED) {
-      await this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
+      this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
     }
   }
 
@@ -315,6 +322,3 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
 }
-
-// TODO: move token check into separate decorator
-// TODO: Add and check error conditions, add errors
