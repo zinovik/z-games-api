@@ -3,8 +3,7 @@ FROM node:latest
 # Create work directory
 WORKDIR /usr/src/app
 
-# Install runtime dependencies
-RUN npm install yarn -g
+RUN npm install yarn --global
 
 # Copy app source to work directory
 RUN mkdir /usr/src/app/src
