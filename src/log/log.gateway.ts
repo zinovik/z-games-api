@@ -3,7 +3,7 @@ import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/web
 import { Socket } from 'socket.io';
 
 import { LogService } from '../log/log.service';
-import { JwtGuard } from './../user/guards/jwt.guard';
+import { JwtGuard } from '../user/guards/jwt.guard';
 
 @WebSocketGateway()
 export class LogGateway {

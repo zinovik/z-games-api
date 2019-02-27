@@ -10,7 +10,7 @@ const transform = (doc, ret, options) => {
 };
 
 export const gameSchema = new Schema({
-  number: { type: Number, required: true, unique: true, default: 0 },
+  number: { type: Number, required: true, unique: true, default: 1 },
   name: { type: String, required: true },
   state: { type: Number, required: true, default: 0 },
   playersMax: { type: Number, required: true },

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { ConfigModule } from '../config/config.module';
-import { ServicesModule } from './../services/services.module';
+import { ServicesModule } from '../services/services.module';
 import { LoggerModule } from '../logger/logger.module';
 import { UserController } from './user.controller';
 import { UserGateway } from './user.gateway';

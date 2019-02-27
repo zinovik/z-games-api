@@ -12,8 +12,8 @@ import { Socket } from 'socket.io';
 import { GameService } from './game.service';
 import { UserService } from '../user/user.service';
 import { LogService } from '../log/log.service';
-import { JwtGuard } from './../user/guards/jwt.guard';
-import { JwtService } from './../services/jwt.service';
+import { JwtGuard } from '../user/guards/jwt.guard';
+import { JwtService } from '../services/jwt.service';
 import { Game } from '../db/entities/game.entity';
 import * as types from '../constants/Games';
 
@@ -24,6 +24,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server;
 
   private disconnectTimers = {};
+  private connectTimers = {};
 
   constructor(
     private readonly gameService: GameService,
@@ -34,6 +35,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     const token = client.handshake.query.token;
+
+    if (this.connectTimers[token]) {
+      return;
+    }
+
+    this.connectTimers[token] = setTimeout(async () => {
+      delete this.connectTimers[token];
+    }, 3000);
 
     const username = this.jwtService.getUserNameByToken(token);
 
@@ -313,6 +322,3 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
 }
-
-// TODO: move token check into separate decorator
-// TODO: Add and check error conditions, add errors
