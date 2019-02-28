@@ -1,8 +1,6 @@
-import { Schema, set } from 'mongoose';
+import { Schema } from 'mongoose';
 
-set('useFindAndModify', false);
-
-const transform = (doc, ret, options) => {
+const transform = (doc: object, ret: { id: string, _id: string, __v: string }, options: object) => {
   ret.id = ret._id;
   delete ret._id;
   delete ret.__v;

@@ -22,7 +22,7 @@ export class GoogleStrategy extends PassportStrategy(OAuth2Strategy) {
     });
   }
 
-  async validate(accessToken, refreshToken, profile) {
+  async validate(accessToken: string, refreshToken: string, profile: object) {
     return profile;
   }
 }

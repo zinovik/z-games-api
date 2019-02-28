@@ -7,9 +7,9 @@ import { LogGateway } from './log.gateway';
 import { LogController } from './log.controller';
 import { LogService } from './log.service';
 import { LoggerModule } from '../logger/logger.module';
-import { logSchema } from 'src/db/schemas/log.schema';
-import { userSchema } from 'src/db/schemas/user.schema';
-import { gameSchema } from 'src/db/schemas/game.schema';
+import { logSchema } from '../db/schemas/log.schema';
+import { userSchema } from '../db/schemas/user.schema';
+import { gameSchema } from '../db/schemas/game.schema';
 
 @Module({
   imports: [
