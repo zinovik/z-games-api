@@ -21,32 +21,13 @@ export class LogService {
     @InjectModel('Game') private readonly gameModel: Model<any>,
   ) { }
 
-  public findAll(): Promise<Log[]> {
-    this.logger.info('Get all logs');
-
-    return this.connection.getRepository(Log)
-      .createQueryBuilder('log')
-      .select()
-      .getMany();
-  }
-
-  public findByUser(user: User): Promise<Log[]> {
-    this.logger.info(`Find logs by user: ${user.username}`);
-
-    return this.connection.getRepository(Log)
-      .createQueryBuilder('log')
-      .select()
-      .where({ userId: user.id })
-      .getMany();
-  }
-
   public async create({ type, user, gameId, text }: {
     type: string,
     user: User,
     gameId: string,
     text?: string,
   }): Promise<Log> {
-    this.logger.info(`Create log type ${type} by ${user.username}`);
+    this.logger.info(`Create a log type ${type} by ${user.username}`);
 
     if (IS_MONGO_USED) {
       const logMongo = new this.logModel({
@@ -56,28 +37,23 @@ export class LogService {
         game: gameId,
       });
 
-      try {
-        const newLogMongo = await logMongo.save();
+      const newLogMongo = await logMongo.save();
 
-        await this.gameModel.findOneAndUpdate({ _id: gameId }, {
-          $push: {
-            logs: newLogMongo.id,
-          },
-        });
+      await this.gameModel.findOneAndUpdate({ _id: gameId }, {
+        $push: {
+          logs: newLogMongo.id,
+        },
+      });
 
-        await this.userModel.findOneAndUpdate({ _id: user.id }, {
-          $push: {
-            logs: newLogMongo.id,
-          },
-        });
+      await this.userModel.findOneAndUpdate({ _id: user.id }, {
+        $push: {
+          logs: newLogMongo.id,
+        },
+      });
 
-        newLogMongo.user = user;
+      newLogMongo.user = user;
 
-        return newLogMongo;
-      } catch (error) {
-        console.log(error.message);
-        // TODO
-      }
+      return newLogMongo;
     }
 
     const newUser = new User();
@@ -90,14 +66,7 @@ export class LogService {
     log.gameId = gameId;
     log.text = text;
 
-    try {
-      const newLog = await this.connection.getRepository(Log).save(log);
-
-      return newLog;
-    } catch (error) {
-      console.log(error.message);
-      // TODO
-    }
+    return await this.connection.getRepository(Log).save(log);
   }
 
 }

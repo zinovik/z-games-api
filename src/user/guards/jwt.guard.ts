@@ -12,7 +12,7 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private userService: UserService,
-    private loggerService: LoggerService,
+    private logger: LoggerService,
   ) {
     super();
   }
@@ -24,21 +24,21 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
     const token = client.handshake.query.token;
 
     if (!token) {
-      this.loggerService.info('No token provided');
+      this.logger.info('No token provided');
       return false;
     }
 
     const username = this.jwtService.getUserNameByToken(token);
 
     if (!username) {
-      this.loggerService.info('No username in token');
+      this.logger.info('No username in token');
       return false;
     }
 
     const user: User = await this.userService.findOneByUsername(username);
 
     if (!user) {
-      this.loggerService.info('No user with token username');
+      this.logger.info('No user with token username');
       return false;
     }
 

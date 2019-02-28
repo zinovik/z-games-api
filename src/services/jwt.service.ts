@@ -11,7 +11,7 @@ export class JwtService {
 
   constructor(private logger: LoggerService) { }
 
-  public generateToken = (payload: object, expIn, alg = 'HS256'): string => {
+  public generateToken = (payload: object, expIn: string, alg = 'HS256'): string => {
     return jwt.sign(payload, this.JWT_SECRET, {
       algorithm: alg,
       expiresIn: expIn,
