@@ -16,7 +16,7 @@ COPY tsconfig.json /usr/src/app/
 COPY tslint.json /usr/src/app/
 
 # Install app dependencies
-RUN yarn install
+RUN yarn
 
 # Build and run the app
-CMD yarn start start:dev
+CMD yarn start:dev
