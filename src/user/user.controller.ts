@@ -4,6 +4,24 @@ import { GoogleGuard } from './guards/google.guard';
 import { UserService } from './user.service';
 import { JwtService } from '../services/jwt.service';
 import { ConfigService } from '../config/config.service';
+import { CreatingUserError } from '../errors';
+
+interface GoogleProfile {
+  emails: Array<{
+    value: string,
+  }>;
+
+  displayName: string;
+
+  name: {
+    givenName: string,
+    familyName: string,
+  };
+
+  photos: Array<{
+    value: string,
+  }>;
+}
 
 @Controller('users')
 export class UserController {
@@ -23,24 +41,26 @@ export class UserController {
 
   @Get('authorize/google/callback')
   @UseGuards(GoogleGuard)
-  async googleAuthCallback(@Req() req, @Res() res) {
-    const user = await this.userService.findOne(req.user.emails[0].value);
+  async googleAuthCallback(@Req() req: { user: GoogleProfile }, @Res() res: { redirect: (url: string) => void }) {
+    const user = await this.userService.findOneByEmail(req.user.emails[0].value);
 
     const username = req.user.displayName || req.user.emails[0].value;
 
     if (!user) {
-      const newUser = this.userService.register({
-        username,
-        email: req.user.emails[0].value,
-        provider: 'google',
-        firstName: req.user.name.givenName,
-        lastName: req.user.name.familyName,
-        avatar: req.user.photos[0].value,
-      });
 
-      if (!newUser) {
-        throw new Error(); // TODO: Error
+      try {
+        this.userService.create({
+          username,
+          email: req.user.emails[0].value,
+          provider: 'google',
+          firstName: req.user.name.givenName,
+          lastName: req.user.name.familyName,
+          avatar: req.user.photos[0].value,
+        });
+      } catch (error) {
+        throw new CreatingUserError(error.message);
       }
+
     }
 
     const token = this.jwtService.generateToken({ username }, '7 days');

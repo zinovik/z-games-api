@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { LoggerService } from '../logger/logger.service';
+import { ConfigService } from '../config/config.service';
 import { User } from '../db/entities/user.entity';
 import {
   USER_FIELDS,
@@ -11,7 +12,6 @@ import {
   USER_JOIN_CURRENT_GAMES,
   USER_JOIN_CURRENT_WATCH,
 } from '../db/scopes/User';
-import { ConfigService } from '../config/config.service';
 
 const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
@@ -24,7 +24,7 @@ export class UserService {
     @InjectModel('User') private readonly userModel: Model<any>,
   ) { }
 
-  public async findOne(email: string): Promise<User | undefined> {
+  public findOneByEmail(email: string): Promise<User> {
     this.logger.info(`Find one user by email: ${email}`);
 
     if (IS_MONGO_USED) {
@@ -45,8 +45,8 @@ export class UserService {
       .getOne();
   }
 
-  public async findOneByUsername(username: string): Promise<User | undefined> {
-    this.logger.info(`Find one user by email: ${username}`);
+  public findOneByUsername(username: string): Promise<User> {
+    this.logger.info(`Find one user by username: ${username}`);
 
     if (IS_MONGO_USED) {
       return this.userModel.findOne({ username })
@@ -66,7 +66,7 @@ export class UserService {
       .getOne();
   }
 
-  public async register({
+  public create({
     username,
     email,
     provider,
@@ -83,7 +83,7 @@ export class UserService {
     lastName?: string,
     avatar?: string,
   }): Promise<User> {
-    this.logger.info(`Create a new user: ${username}`);
+    this.logger.info(`Create a user: ${username}`);
 
     const user = new User();
     user.username = username;
@@ -102,28 +102,10 @@ export class UserService {
     if (IS_MONGO_USED) {
       const userMongo = new this.userModel(user);
 
-      try {
-        const newUserMongo = await userMongo.save();
-
-        this.logger.info(JSON.stringify(newUserMongo));
-
-        return newUserMongo;
-      } catch (error) {
-        this.logger.error(error.message, error.trace);
-        throw new Error('error'); // TODO Error
-      }
+      return userMongo.save();
     }
 
-    try {
-      const newUser = await this.connection.getRepository(User).save(user);
-
-      this.logger.info(JSON.stringify(newUser));
-
-      return newUser;
-    } catch (error) {
-      this.logger.error(error.message, error.trace);
-      throw new Error('error'); // TODO Error
-    }
+    return this.connection.getRepository(User).save(user);;
   }
 
 }

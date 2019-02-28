@@ -9,8 +9,8 @@ import { LoggerModule } from '../logger/logger.module';
 import { GameController } from './game.controller';
 import { GameGateway } from './game.gateway';
 import { GameService } from './game.service';
-import { gameSchema } from 'src/db/schemas/game.schema';
-import { userSchema } from 'src/db/schemas/user.schema';
+import { gameSchema } from '../db/schemas/game.schema';
+import { userSchema } from '../db/schemas/user.schema';
 
 @Module({
   imports: [
