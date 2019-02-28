@@ -1,9 +1,7 @@
-import { Schema, set } from 'mongoose';
+import { Schema } from 'mongoose';
 import * as uniqueValidator from 'mongoose-unique-validator';
 
-set('useFindAndModify', false);
-
-const transform = (doc, ret, options) => {
+const transform = (doc: object, ret: { id: string, _id: string, __v: string }, options: object) => {
   ret.id = ret._id;
   delete ret._id;
   delete ret.__v;
