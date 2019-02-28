@@ -8,13 +8,15 @@ import { UserController } from './user.controller';
 import { UserGateway } from './user.gateway';
 import { UserService } from './user.service';
 import { GoogleStrategy } from './strategies/google.strategy';
-import { userSchema } from 'src/db/schemas/user.schema';
+import { DbModule } from '../db/db.module';
+import { userSchema } from '../db/schemas/user.schema';
 
 @Module({
   imports: [
     ConfigModule,
     ServicesModule,
     LoggerModule,
+    DbModule,
     MongooseModule.forFeature([{ name: 'User', schema: userSchema }]),
   ],
   controllers: [UserController],

@@ -197,14 +197,14 @@ cd ..
 
 ```bash
 cd z-games-api
-yarn start start:dev
+yarn start:dev
 ```
 
 or/and
 
 ```bash
 cd z-games
-yarn run dev
+yarn dev
 ```
 That's it!
 Check front-end here: [http://localhost:3000](http://localhost:3000)!
