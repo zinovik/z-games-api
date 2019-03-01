@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectConnection } from '@nestjs/mongoose';
+import { Model, Connection as ConnectionMongo } from 'mongoose';
 
 import { Log } from '../db/entities/log.entity';
 import { User } from '../db/entities/user.entity';
@@ -13,13 +13,19 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 @Injectable()
 export class LogService {
 
+  logModel: Model<any>;
+  gameModel: Model<any>;
+  userModel: Model<any>;
+
   constructor(
     private readonly connection: Connection,
     private readonly logger: LoggerService,
-    @InjectModel('Log') private readonly logModel: Model<any>,
-    @InjectModel('User') private readonly userModel: Model<any>,
-    @InjectModel('Game') private readonly gameModel: Model<any>,
-  ) { }
+    @InjectConnection() private readonly connectionMongo: ConnectionMongo,
+  ) {
+    this.logModel = this.connectionMongo.model('Log');
+    this.gameModel = this.connectionMongo.model('Game');
+    this.userModel = this.connectionMongo.model('User');
+  }
 
   public async create({ type, user, gameId, text }: {
     type: string,

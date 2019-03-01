@@ -1,3 +1,5 @@
+// PostgreSQL
+
 export const ALL_GAMES_FIELDS = [
   'game.number',
   'game.name',
@@ -72,3 +74,43 @@ export const FIELDS_TO_REMOVE_IN_ALL_GAMES = [
 ];
 
 export const LOGS_FIELD_ORDER_BY = 'logs.createdAt';
+
+// MongoDB
+
+export const ALL_GAMES_FIELDS_MONGO = 'number name state playersMax playersMin isPrivate createdAt updatedAt';
+
+export const ALL_GAMES_POPULATE_PLAYERS: [string, string] = [
+  'players',
+  'username',
+];
+
+export const OPEN_GAME_FIELDS_MONGO = `${ALL_GAMES_FIELDS_MONGO} id gameData`;
+
+const GAME_POPULATE_USERS = 'id username';
+
+export const OPEN_GAME_POPULATE_WATCHERS: [string, string] = [
+  'watchers',
+  GAME_POPULATE_USERS,
+];
+
+export const OPEN_GAME_POPULATE_PLAYERS_ONLINE: [string, string] = [
+  'playersOnline',
+  GAME_POPULATE_USERS,
+];
+
+export const OPEN_GAME_POPULATE_NEXT_PLAYERS: [string, string] = [
+  'nextPlayers',
+  GAME_POPULATE_USERS,
+];
+
+export const OPEN_GAME_POPULATE_LOGS: [string, string] = [
+  'logs',
+  'type text createdAt id',
+];
+
+export const OPEN_GAME_POPULATE_LOGS_USERNAMES: [string, string] = [
+  'user',
+  GAME_POPULATE_USERS,
+];
+
+export const LOGS_FIELD_ORDER_BY_MONGO = 'createdAt';
