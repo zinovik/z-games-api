@@ -1,3 +1,5 @@
+// PostgreSQL
+
 export const USER_FIELDS = [
   'user.id',
   'user.username',
@@ -29,4 +31,25 @@ export const USER_JOIN_CURRENT_GAMES: [string, string] = [
 export const USER_JOIN_CURRENT_WATCH: [string, string] = [
   'user.currentWatch',
   'currentWatch',
+];
+
+// MongoDB
+
+export const USER_FIELDS_MONGO = 'id username password avatar email firstName lastName createdAt updatedAt';
+
+const USER_POPULATE_GAMES = 'id number';
+
+export const USER_POPULATE_OPENED_GAME: [string, string] = [
+  'openedGame',
+  USER_POPULATE_GAMES,
+];
+
+export const USER_POPULATE_CURRENT_GAMES: [string, string] = [
+  'currentGames',
+  USER_POPULATE_GAMES,
+];
+
+export const USER_POPULATE_CURRENT_WATCH: [string, string] = [
+  'currentWatch',
+  USER_POPULATE_GAMES,
 ];
