@@ -1,23 +1,24 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { ConfigModule } from './config/config.module';
-import { DbModule } from './db/db.module';
+
+import { UserModule } from './user/user.module';
 import { GameModule } from './game/game.module';
 import { LogModule } from './log/log.module';
-import { UserModule } from './user/user.module';
-import { LoggerModule } from './logger/logger.module';
+import { ConfigModule } from './config/config.module';
 import { ServicesModule } from './services/services.module';
+import { DbModule } from './db/db.module';
+import { LoggerModule } from './logger/logger.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
-    ConfigModule,
-    DbModule,
+    UserModule,
     GameModule,
     LogModule,
-    UserModule,
-    LoggerModule,
+    ConfigModule,
     ServicesModule,
+    DbModule,
+    LoggerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

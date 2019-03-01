@@ -7,7 +7,7 @@ import {
   OnGatewayDisconnect,
   WsResponse,
 } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 
 import { GameService } from './game.service';
 import { UserService } from '../user/user.service';
@@ -25,7 +25,7 @@ import * as types from '../constants/Games';
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @WebSocketServer()
-  server: any;
+  server: Server;
 
   private disconnectTimers: { [key: string]: NodeJS.Timeout } = {};
   private connectTimers: { [key: string]: NodeJS.Timeout } = {};
@@ -40,6 +40,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     const token = client.handshake.query.token;
+
+    if (this.connectTimers[token]) {
+      return;
+    }
+
+    this.connectTimers[token] = setTimeout(async () => {
+      delete this.connectTimers[token];
+    }, 4000);
 
     const username = this.jwtService.getUserNameByToken(token);
 
@@ -60,14 +68,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       delete this.disconnectTimers[user.id];
       return;
     }
-
-    if (this.connectTimers[token]) {
-      return;
-    }
-
-    this.connectTimers[token] = setTimeout(async () => {
-      delete this.connectTimers[token];
-    }, 3000);
 
     const game = JSON.parse(JSON.stringify(await this.gameService.findOne(user.openedGame.number)));
 
@@ -105,7 +105,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
 
       delete this.disconnectTimers[user.id];
-    }, 5000);
+    }, 4000);
   }
 
   @SubscribeMessage('get-all-games')
@@ -119,7 +119,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @UseGuards(JwtGuard)
   @SubscribeMessage('get-opened-game')
-  public async getOpenedGame(client: Socket & { user: User }): Promise<WsResponse<Game | undefined>> {
+  public async getOpenedGame(client: Socket & { user: User }): Promise<WsResponse<Game>> {
     if (!client.user) {
       return;
     }
@@ -260,7 +260,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.sendGameToGameUsers({ game });
     this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
 
-    return { event: 'update-opened-game', data: undefined };
+    return { event: 'update-opened-game', data: null };
   }
 
   @UseGuards(JwtGuard)
@@ -291,7 +291,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.sendGameToGameUsers({ game });
     this.server.emit('update-game', this.gameService.parseGameForAllUsers(game));
 
-    return { event: 'update-opened-game', data: undefined };
+    return { event: 'update-opened-game', data: null };
   }
 
   @UseGuards(JwtGuard)
@@ -388,7 +388,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     Object.keys(this.server.sockets.adapter.rooms[game.id].sockets).forEach(socketId => {
-      const socketInGame = this.server.sockets.connected[socketId];
+      const socketInGame = this.server.sockets.connected[socketId] as Socket & { user: User };
       const userInGame = socketInGame.user;
 
       if (userInGame) {
