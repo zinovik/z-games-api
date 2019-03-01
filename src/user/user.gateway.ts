@@ -15,8 +15,8 @@ export class UserGateway {
   }
 
   @SubscribeMessage('logout')
-  public logout(client: Socket, payload: void): WsResponse<undefined> {
-    return { event: 'update-current-user', data: undefined };
+  public logout(client: Socket, payload: void): WsResponse<null> {
+    return { event: 'update-current-user', data: null };
   }
 
 }

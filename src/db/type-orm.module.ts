@@ -6,7 +6,7 @@ import { ConfigService } from '../config/config.service';
 const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
 @Module({})
-export class SqlModule implements OnModuleDestroy {
+export class TypeOrmModule implements OnModuleDestroy {
 
   public static forRoot(): DynamicModule {
     const databaseProvider = {
@@ -32,7 +32,7 @@ export class SqlModule implements OnModuleDestroy {
     };
 
     return {
-      module: SqlModule,
+      module: TypeOrmModule,
       providers: [databaseProvider],
       exports: [databaseProvider],
     };
