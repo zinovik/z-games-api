@@ -1,16 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectConnection } from '@nestjs/mongoose';
+import { Model, Connection as ConnectionMongo } from 'mongoose';
 
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
 import { User } from '../db/entities/user.entity';
+import { IUser } from '../db/interfaces/user.interface';
 import {
   USER_FIELDS,
   USER_JOIN_OPENED_GAME,
   USER_JOIN_CURRENT_GAMES,
   USER_JOIN_CURRENT_WATCH,
+  USER_FIELDS_MONGO,
+  USER_POPULATE_OPENED_GAME,
+  USER_POPULATE_CURRENT_GAMES,
+  USER_POPULATE_CURRENT_WATCH,
 } from '../db/scopes/User';
 
 const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
@@ -18,20 +23,24 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 @Injectable()
 export class UserService {
 
+  userModel: Model<any>;
+
   constructor(
     private readonly connection: Connection,
     private readonly logger: LoggerService,
-    @InjectModel('User') private readonly userModel: Model<any>,
-  ) { }
+    @InjectConnection() private readonly connectionMongo: ConnectionMongo,
+  ) {
+    this.userModel = this.connectionMongo.model('User');
+  }
 
   public findOneByEmail(email: string): Promise<User> {
     this.logger.info(`Find one user by email: ${email}`);
 
     if (IS_MONGO_USED) {
-      return this.userModel.findOne({ email })
-        .populate('openedGame')
-        .populate('currentGames')
-        .populate('currentWatch')
+      return this.userModel.findOne({ email }, USER_FIELDS_MONGO)
+        .populate(...USER_POPULATE_OPENED_GAME)
+        .populate(...USER_POPULATE_CURRENT_GAMES)
+        .populate(...USER_POPULATE_CURRENT_WATCH)
         .exec();
     }
 
@@ -49,10 +58,10 @@ export class UserService {
     this.logger.info(`Find one user by username: ${username}`);
 
     if (IS_MONGO_USED) {
-      return this.userModel.findOne({ username })
-        .populate('openedGame')
-        .populate('currentGames')
-        .populate('currentWatch')
+      return this.userModel.findOne({ username }, USER_FIELDS_MONGO)
+        .populate(...USER_POPULATE_OPENED_GAME)
+        .populate(...USER_POPULATE_CURRENT_GAMES)
+        .populate(...USER_POPULATE_CURRENT_WATCH)
         .exec();
     }
 

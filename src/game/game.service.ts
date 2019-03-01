@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { BaseGame } from 'z-games-base-game';
+import { InjectConnection } from '@nestjs/mongoose';
+import { Model, Connection as ConnectionMongo } from 'mongoose';
+import { BaseGame, BaseGameData, BaseGamePlayer } from 'z-games-base-game';
 import { NoThanks } from 'z-games-no-thanks';
 import { Perudo } from 'z-games-perudo';
 
 import { Game } from '../db/entities/game.entity';
 import { User } from '../db/entities/user.entity';
+import { IUser } from '../db/interfaces/user.interface';
+import { IGame } from '../db/interfaces/game.interface';
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
 import {
@@ -30,6 +32,15 @@ import {
   LOGS_FIELD_ORDER_BY,
   FIELDS_TO_REMOVE_IN_ALL_GAMES,
   ALL_GAMES_FIELDS,
+  ALL_GAMES_FIELDS_MONGO,
+  ALL_GAMES_POPULATE_PLAYERS,
+  OPEN_GAME_FIELDS_MONGO,
+  OPEN_GAME_POPULATE_WATCHERS,
+  OPEN_GAME_POPULATE_PLAYERS_ONLINE,
+  OPEN_GAME_POPULATE_NEXT_PLAYERS,
+  OPEN_GAME_POPULATE_LOGS,
+  OPEN_GAME_POPULATE_LOGS_USERNAMES,
+  LOGS_FIELD_ORDER_BY_MONGO,
 } from '../db/scopes/Game';
 
 import * as types from '../constants';
@@ -44,26 +55,35 @@ const gamesServices: { [key: string]: BaseGame } = {
 @Injectable()
 export class GameService {
 
+  gameModel: Model<any>;
+  userModel: Model<IUser>;
+
   constructor(
     private readonly connection: Connection,
     private readonly logger: LoggerService,
-    @InjectModel('Game') private readonly gameModel: Model<any>,
-    @InjectModel('User') private readonly userModel: Model<any>,
-  ) { }
+    @InjectConnection() private readonly connectionMongo: ConnectionMongo,
+  ) {
+    this.gameModel = this.connectionMongo.model('Game');
+    this.userModel = this.connectionMongo.model('User');
+  }
 
-  public async findOne(gameNumber: number): Promise<Game | undefined> {
+  public async findOne(gameNumber: number): Promise<Game> {
     this.logger.info(`Find one game number ${gameNumber}`);
 
     if (IS_MONGO_USED) {
-      return this.gameModel.findOne({ number: gameNumber })
-        .populate('players')
-        .populate('watchers')
-        .populate('playersOnline')
-        .populate('nextPlayers')
+      return this.gameModel.findOne({ number: gameNumber }, OPEN_GAME_FIELDS_MONGO)
+        .populate(...ALL_GAMES_POPULATE_PLAYERS)
+        .populate(...OPEN_GAME_POPULATE_WATCHERS)
+        .populate(...OPEN_GAME_POPULATE_PLAYERS_ONLINE)
+        .populate(...OPEN_GAME_POPULATE_NEXT_PLAYERS)
         .populate({
-          path: 'logs',
-          options: { sort: { createdAt: -1 } },
-          populate: { path: 'user' },
+          path: OPEN_GAME_POPULATE_LOGS[0],
+          select: OPEN_GAME_POPULATE_LOGS[1],
+          populate: {
+            path: OPEN_GAME_POPULATE_LOGS_USERNAMES[0],
+            select: OPEN_GAME_POPULATE_LOGS_USERNAMES[1],
+          },
+          options: { sort: { [LOGS_FIELD_ORDER_BY_MONGO]: -1 } },
         })
         .exec();
     }
@@ -91,15 +111,8 @@ export class GameService {
 
     if (IS_MONGO_USED) {
       return JSON.parse(JSON.stringify(
-        await this.gameModel.find()
-          .populate('players')
-          .populate('watchers')
-          .populate('playersOnline')
-          .populate('nextPlayers')
-          .populate({
-            path: 'logs',
-            populate: { path: 'user' },
-          })
+        await this.gameModel.find({}, ALL_GAMES_FIELDS_MONGO)
+          .populate(...ALL_GAMES_POPULATE_PLAYERS)
           .sort({ number: -1 })
           .exec(),
       ));
@@ -298,7 +311,7 @@ export class GameService {
       });
 
       await this.userModel.findOneAndUpdate({ _id: user.id }, {
-        openedGame: undefined,
+        openedGame: null,
         $pull: {
           currentGames: game.id,
         },
@@ -337,8 +350,8 @@ export class GameService {
       });
 
       await this.userModel.findOneAndUpdate({ _id: user.id }, {
-        openedGame: undefined,
-        currentWatch: undefined,
+        openedGame: null,
+        currentWatch: null,
       });
 
       return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
@@ -477,7 +490,24 @@ export class GameService {
 
     } else {
 
+      const gameDataParsed: BaseGameData = JSON.parse(game.gameData);
+
       if (IS_MONGO_USED) {
+
+        const playersIds = game.players.map(player => player.id);
+        const playerWonId = gameDataParsed.players.find((playerInGame: BaseGamePlayer) => playerInGame.place === 0)!.id;
+
+        await this.userModel.updateMany({ _id: { $in: playersIds } }, {
+          $inc: {
+            gamesPlayed: 1,
+          },
+        });
+
+        await this.userModel.findOneAndUpdate({ _id: playerWonId }, {
+          $inc: {
+            gamesWon: 1,
+          },
+        });
 
         await this.gameModel.findOneAndUpdate({ _id: game.id }, {
           gameData,
@@ -494,24 +524,21 @@ export class GameService {
         return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
       }
 
-      game.state = types.GAME_FINISHED;
-
-      game.gameData = gameData;
-      const gameDataParsed = JSON.parse(game.gameData);
-
       game.players.forEach(player => {
         const user = new User();
 
         user.id = player.id;
         user.gamesPlayed = player.gamesPlayed + 1;
 
-        if (gameDataParsed.players.find((playerInGame: any) => playerInGame.id === player.id)!.place === 1) {
+        if (gameDataParsed.players.find((playerInGame: BaseGamePlayer) => playerInGame.id === player.id)!.place === 0) {
           user.gamesWon = player.gamesWon + 1;
         }
 
-        this.connection.getRepository(Game).save(user);
+        this.connection.getRepository(User).save(user);
       });
 
+      game.state = types.GAME_FINISHED;
+      game.gameData = gameData;
     }
 
     return this.connection.getRepository(Game).save(game);

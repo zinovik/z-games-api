@@ -1,6 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 
 import { LogService } from '../log/log.service';
 import { LoggerService } from '../logger/logger.service';
@@ -12,7 +12,7 @@ import { Log } from '../db/entities/log.entity';
 export class LogGateway {
 
   @WebSocketServer()
-  server: any;
+  server: Server;
 
   constructor(
     private readonly logService: LogService,
