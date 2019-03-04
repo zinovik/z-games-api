@@ -55,7 +55,7 @@ const gamesServices: { [key: string]: BaseGame } = {
 @Injectable()
 export class GameService {
 
-  gameModel: Model<any>;
+  gameModel: Model<IGame>;
   userModel: Model<IUser>;
 
   constructor(
@@ -71,7 +71,7 @@ export class GameService {
     this.logger.info(`Find one game number ${gameNumber}`);
 
     if (IS_MONGO_USED) {
-      return this.gameModel.findOne({ number: gameNumber }, OPEN_GAME_FIELDS_MONGO)
+      return (this.gameModel as Model<any>).findOne({ number: gameNumber }, OPEN_GAME_FIELDS_MONGO)
         .populate(...ALL_GAMES_POPULATE_PLAYERS)
         .populate(...OPEN_GAME_POPULATE_WATCHERS)
         .populate(...OPEN_GAME_POPULATE_PLAYERS_ONLINE)
