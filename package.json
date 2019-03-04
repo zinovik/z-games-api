@@ -46,7 +46,7 @@
     "@types/jsonwebtoken": "^8.3.0",
     "@types/mongoose": "^5.3.20",
     "@types/mongoose-unique-validator": "^1.0.1",
-    "@types/node": "^11.9.5",
+    "@types/node": "^11.10.4",
     "@types/passport-google-oauth": "^1.0.39",
     "@types/socket.io": "^2.1.2",
     "@types/supertest": "^2.0.7",
@@ -69,8 +69,8 @@
     "typeorm": "^0.2.14",
     "typescript": "^3.3.3333",
     "z-games-base-game": "0.0.13",
-    "z-games-no-thanks": "0.0.10",
-    "z-games-perudo": "0.0.8"
+    "z-games-no-thanks": "0.0.11",
+    "z-games-perudo": "0.0.9"
   },
   "devDependencies": {
     "jest": "^24.1.0",
