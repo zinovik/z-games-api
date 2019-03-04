@@ -28,20 +28,23 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
       return false;
     }
 
-    const username = this.jwtService.getUserNameByToken(token);
+    const userId = this.jwtService.getUserIdByToken(token);
 
-    if (!username) {
-      this.logger.info('No username in token');
+    if (!userId) {
+      this.logger.info('No user id in token');
       return false;
     }
 
-    const user: User = await this.userService.findOneByUsername(username);
+    const user: User = await this.userService.findOneByUserId(userId);
 
     if (!user) {
       this.logger.info('No user with token username');
       return false;
     }
 
+    const newToken = this.jwtService.generateToken({ id: userId }, '7 days');
+
+    context.switchToWs().getClient().emit('new-token', newToken);
     context.switchToWs().getClient().user = user;
 
     return true;

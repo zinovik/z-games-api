@@ -1,4 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
+import { ServicesModule } from '../services/services.module';
+import { DbModule } from '../db/db.module';
+import { LoggerModule } from '../logger/logger.module';
+import { UserModule } from '../user/user.module';
+import { LogGateway } from './log.gateway';
 import { LogService } from './log.service';
 
 describe('LogService', () => {
@@ -6,7 +12,13 @@ describe('LogService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [LogService],
+      imports: [
+        ServicesModule,
+        DbModule,
+        LoggerModule,
+        UserModule,
+      ],
+      providers: [LogGateway, LogService],
     }).compile();
 
     service = module.get<LogService>(LogService);
