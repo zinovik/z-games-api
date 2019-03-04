@@ -5,6 +5,9 @@ import { Model, Connection as ConnectionMongo } from 'mongoose';
 
 import { Log } from '../db/entities/log.entity';
 import { User } from '../db/entities/user.entity';
+import { ILog } from '../db/interfaces/log.interface';
+import { IUser } from '../db/interfaces/user.interface';
+import { IGame } from '../db/interfaces/game.interface';
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
 
@@ -13,9 +16,9 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 @Injectable()
 export class LogService {
 
-  logModel: Model<any>;
-  gameModel: Model<any>;
-  userModel: Model<any>;
+  logModel: Model<ILog>;
+  gameModel: Model<IGame>;
+  userModel: Model<IUser>;
 
   constructor(
     private readonly connection: Connection,
@@ -57,9 +60,9 @@ export class LogService {
         },
       });
 
-      newLogMongo.user = user;
+      (newLogMongo as any).user = user;
 
-      return newLogMongo;
+      return newLogMongo as any;
     }
 
     const newUser = new User();

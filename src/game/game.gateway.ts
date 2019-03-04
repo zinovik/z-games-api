@@ -49,9 +49,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       delete this.connectTimers[token];
     }, 4000);
 
-    const username = this.jwtService.getUserNameByToken(token);
+    const userId = this.jwtService.getUserIdByToken(token);
 
-    const user = await this.userService.findOneByUsername(username);
+    const user = await this.userService.findOneByUserId(userId);
 
     if (!user) {
       return;
@@ -81,9 +81,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleDisconnect(client: Socket) {
     const token = client.handshake.query.token;
 
-    const username = this.jwtService.getUserNameByToken(token);
+    const userId = this.jwtService.getUserIdByToken(token);
 
-    const user = await this.userService.findOneByUsername(username);
+    const user = await this.userService.findOneByUserId(userId);
 
     if (!user) {
       return;
