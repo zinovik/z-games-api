@@ -1,0 +1,13 @@
+{
+  "editor.tabSize": 2,
+  "importSorter.importStringConfiguration.tabSize": 2,
+  "cSpell.words": [
+    "perudo"
+  ],
+  "mongoRunner": {
+    "connections": [{
+      "name": "connection",
+      "url": "mongodb://root:dbpass123@localhost:29017/admin"
+    }]
+  }
+}
