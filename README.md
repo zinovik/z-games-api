@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/zinovik/z-games-api.svg?branch=master)](https://travis-ci.org/zinovik/z-games-api)
+
 ![img](./logo.png)
 
 # What #
@@ -99,7 +101,7 @@ git clone https://github.com/zinovik/z-games-api
 
 ```bash
 cd z-games-api
-cd database
+cd database_postgresql
 docker-compose up --build
 ```
 
@@ -107,7 +109,7 @@ or
 
 ```bash
 cd z-games-api
-cd database_mongo
+cd database_mongodb
 docker-compose up --build
 ```
 

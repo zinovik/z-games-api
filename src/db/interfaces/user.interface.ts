@@ -1,5 +1,8 @@
 import { Document } from 'mongoose';
 
+import { IGame } from './game.interface';
+import { ILog } from './log.interface';
+
 export interface IUser extends Document {
   firstName: string;
   lastName: string;
@@ -10,12 +13,12 @@ export interface IUser extends Document {
   provider: string;
   avatar: string;
   openedGame: any;
-  currentGames: Array<any>;
-  currentWatch: any;
-  currentMove: Array<any>;
+  currentGames: IGame[];
+  currentWatch: IGame;
+  currentMove: IGame[];
   gamesPlayed: number;
   gamesWon: number;
-  logs: Array<any>;
+  logs: ILog[];
   createdAt: Date;
   updatedAt: Date;
 }

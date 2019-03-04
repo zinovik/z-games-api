@@ -12,6 +12,7 @@ import {
   USER_JOIN_OPENED_GAME,
   USER_JOIN_CURRENT_GAMES,
   USER_JOIN_CURRENT_WATCH,
+  ALL_USER_FIELDS_MONGO,
   USER_FIELDS_MONGO,
   USER_POPULATE_OPENED_GAME,
   USER_POPULATE_CURRENT_GAMES,
@@ -23,7 +24,7 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 @Injectable()
 export class UserService {
 
-  userModel: Model<any>;
+  userModel: Model<IUser>;
 
   constructor(
     private readonly connection: Connection,
@@ -33,11 +34,26 @@ export class UserService {
     this.userModel = this.connectionMongo.model('User');
   }
 
+  public getAllUsers(): Promise<User[]> {
+    if (IS_MONGO_USED) {
+      return (this.userModel as Model<any>).find({}, ALL_USER_FIELDS_MONGO, {
+        sort: {
+          gamesWon: -1,
+          gamesPlayed: 1,
+          createdAt: 1,
+        },
+      })
+        .exec();
+    }
+
+    // TODO PostgreSQL
+  }
+
   public findOneByEmail(email: string): Promise<User> {
     this.logger.info(`Find one user by email: ${email}`);
 
     if (IS_MONGO_USED) {
-      return this.userModel.findOne({ email }, USER_FIELDS_MONGO)
+      return (this.userModel as Model<any>).findOne({ email }, USER_FIELDS_MONGO)
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
         .populate(...USER_POPULATE_CURRENT_WATCH)
@@ -54,11 +70,11 @@ export class UserService {
       .getOne();
   }
 
-  public findOneByUsername(username: string): Promise<User> {
-    this.logger.info(`Find one user by username: ${username}`);
+  public findOneByUserId(userId: string): Promise<User> {
+    this.logger.info(`Find one user by user id: ${userId}`);
 
     if (IS_MONGO_USED) {
-      return this.userModel.findOne({ username }, USER_FIELDS_MONGO)
+      return (this.userModel as Model<any>).findOne({ _id: userId }, USER_FIELDS_MONGO)
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
         .populate(...USER_POPULATE_CURRENT_WATCH)
@@ -71,7 +87,7 @@ export class UserService {
       .leftJoin(...USER_JOIN_OPENED_GAME)
       .leftJoin(...USER_JOIN_CURRENT_GAMES)
       .leftJoin(...USER_JOIN_CURRENT_WATCH)
-      .where({ username })
+      .where({ id: userId })
       .getOne();
   }
 
@@ -91,7 +107,7 @@ export class UserService {
     firstName?: string,
     lastName?: string,
     avatar?: string,
-  }): Promise<User> {
+  }): Promise<User | IUser> {
     this.logger.info(`Create a user: ${username}`);
 
     const user = new User();
@@ -114,7 +130,7 @@ export class UserService {
       return userMongo.save();
     }
 
-    return this.connection.getRepository(User).save(user);;
+    return this.connection.getRepository(User).save(user);
   }
 
 }
