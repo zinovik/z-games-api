@@ -7,6 +7,7 @@ import { LoggerService } from '../logger/logger.service';
 import { JwtGuard } from '../user/guards/jwt.guard';
 import { User } from '../db/entities/user.entity';
 import { Log } from '../db/entities/log.entity';
+import { ILog } from '../db/interfaces/log.interface';
 
 @WebSocketGateway()
 export class LogGateway {
@@ -30,7 +31,7 @@ export class LogGateway {
       return this.sendError({ client, message: 'You can\'t make a move if you are not this game player' });
     }
 
-    let log: Log;
+    let log: Log | ILog;
 
     try {
       log = await this.logService.create({ type: 'message', user: client.user, gameId, text: message });

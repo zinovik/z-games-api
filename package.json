@@ -68,7 +68,7 @@
     "tsconfig-paths": "^3.8.0",
     "typeorm": "^0.2.14",
     "typescript": "^3.3.3333",
-    "z-games-base-game": "0.0.11",
+    "z-games-base-game": "0.0.13",
     "z-games-no-thanks": "0.0.10",
     "z-games-perudo": "0.0.8"
   },

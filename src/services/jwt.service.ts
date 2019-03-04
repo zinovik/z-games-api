@@ -5,7 +5,7 @@ import { ConfigService } from '../config/config.service';
 import { LoggerService } from '../logger/logger.service';
 
 interface TokenDecoded {
-  username: string;
+  id: string;
 }
 
 @Injectable()
@@ -22,7 +22,7 @@ export class JwtService {
     });
   }
 
-  public getUserNameByToken = (token: string): string => {
+  public getUserIdByToken = (token: string): string => {
 
     let jwtDecoded: TokenDecoded;
 
@@ -33,9 +33,9 @@ export class JwtService {
       return null;
     }
 
-    this.logger.info(`Token successfully decoded: ${(jwtDecoded as any).username}`);
+    this.logger.info(`Token successfully decoded: ${jwtDecoded.id}`);
 
-    return jwtDecoded.username;
+    return jwtDecoded.id;
   }
 
 }
