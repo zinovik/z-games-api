@@ -453,7 +453,9 @@ export class GameService {
       throw new MakingMoveError('It\'s not your turn to move');
     }
 
-    const { gameData, nextPlayersIds } = gamesServices[game.name].makeMove({ gameData: game.gameData, move, userId });
+    const { gameData, nextPlayersIds } = gamesServices[game.name].makeMove(
+      { gameData: game.gameData, move, userId },
+    );
 
     if (nextPlayersIds.length) {
 
@@ -495,13 +497,16 @@ export class GameService {
       if (IS_MONGO_USED) {
 
         const playersIds = game.players.map(player => player.id);
-        const playerWonId = gameDataParsed.players.find((playerInGame: BaseGamePlayer) => playerInGame.place === 0)!.id;
 
         await this.userModel.updateMany({ _id: { $in: playersIds } }, {
           $inc: {
             gamesPlayed: 1,
           },
         });
+
+        const playerWonId = gameDataParsed.players.find(
+          (playerInGame: BaseGamePlayer) => playerInGame.place === 1 || playerInGame.place === 0,
+        ).id;
 
         await this.userModel.findOneAndUpdate({ _id: playerWonId }, {
           $inc: {
@@ -530,7 +535,9 @@ export class GameService {
         user.id = player.id;
         user.gamesPlayed = player.gamesPlayed + 1;
 
-        if (gameDataParsed.players.find((playerInGame: BaseGamePlayer) => playerInGame.id === player.id)!.place === 0) {
+        if (gameDataParsed.players.find(
+          (playerInGame: BaseGamePlayer) => playerInGame.id === player.id,
+        ).place === 1) {
           user.gamesWon = player.gamesWon + 1;
         }
 
