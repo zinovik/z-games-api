@@ -10,14 +10,9 @@ import { UserService } from './user.service';
 import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
-  imports: [
-    ConfigModule,
-    ServicesModule,
-    DbModule,
-    LoggerModule,
-  ],
+  imports: [ConfigModule, ServicesModule, DbModule, LoggerModule],
   controllers: [UserController],
   providers: [UserGateway, UserService, GoogleStrategy],
   exports: [UserService],
 })
-export class UserModule { }
+export class UserModule {}

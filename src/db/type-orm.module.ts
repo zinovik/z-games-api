@@ -7,7 +7,6 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
 @Module({})
 export class TypeOrmModule implements OnModuleDestroy {
-
   public static forRoot(): DynamicModule {
     const databaseProvider = {
       provide: Connection,
@@ -16,7 +15,10 @@ export class TypeOrmModule implements OnModuleDestroy {
           return {};
         }
 
-        const dbUrl = url.parse(ConfigService.get().DATABASE_URL);
+        const dbUrl = url.parse(
+          ConfigService.get().DATABASE_URL ||
+            'postgres://postgres:dbpass123@localhost:9432/z-games',
+        );
 
         return createConnection({
           type: 'postgres',
@@ -38,10 +40,9 @@ export class TypeOrmModule implements OnModuleDestroy {
     };
   }
 
-  public constructor(protected connection: Connection) { }
+  public constructor(protected connection: Connection) {}
 
   public onModuleDestroy() {
     return this.connection.close();
   }
-
 }

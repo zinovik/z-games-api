@@ -9,14 +9,9 @@ import { LogController } from './log.controller';
 import { LogService } from './log.service';
 
 @Module({
-  imports: [
-    ServicesModule,
-    DbModule,
-    LoggerModule,
-    UserModule,
-  ],
+  imports: [ServicesModule, DbModule, LoggerModule, UserModule],
   controllers: [LogController],
   providers: [LogGateway, LogService],
   exports: [LogService],
 })
-export class LogModule { }
+export class LogModule {}
