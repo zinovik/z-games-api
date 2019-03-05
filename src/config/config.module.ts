@@ -5,4 +5,4 @@ import { ConfigService } from './config.service';
 @Module({
   providers: [ConfigService],
 })
-export class ConfigModule { }
+export class ConfigModule {}

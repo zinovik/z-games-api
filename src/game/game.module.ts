@@ -22,4 +22,4 @@ import { GameService } from './game.service';
   controllers: [GameController],
   providers: [GameGateway, GameService],
 })
-export class GameModule { }
+export class GameModule {}

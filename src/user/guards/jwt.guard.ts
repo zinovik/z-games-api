@@ -8,7 +8,6 @@ import { User } from '../../db/entities/user.entity';
 
 @Injectable()
 export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
-
   constructor(
     private jwtService: JwtService,
     private userService: UserService,
@@ -17,9 +16,7 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
     super();
   }
 
-  async canActivate(
-    context: ExecutionContext,
-  ): Promise<boolean> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const client = context.switchToWs().getClient();
     const token = client.handshake.query.token;
 
@@ -44,7 +41,10 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
 
     const newToken = this.jwtService.generateToken({ id: userId }, '7 days');
 
-    context.switchToWs().getClient().emit('new-token', newToken);
+    context
+      .switchToWs()
+      .getClient()
+      .emit('new-token', newToken);
     context.switchToWs().getClient().user = user;
 
     return true;
