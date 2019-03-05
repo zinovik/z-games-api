@@ -23,7 +23,6 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
 @Injectable()
 export class UserService {
-
   userModel: Model<IUser>;
 
   constructor(
@@ -36,13 +35,14 @@ export class UserService {
 
   public getAllUsers(): Promise<User[]> {
     if (IS_MONGO_USED) {
-      return (this.userModel as Model<any>).find({}, ALL_USER_FIELDS_MONGO, {
-        sort: {
-          gamesWon: -1,
-          gamesPlayed: 1,
-          createdAt: 1,
-        },
-      })
+      return (this.userModel as Model<any>)
+        .find({}, ALL_USER_FIELDS_MONGO, {
+          sort: {
+            gamesWon: -1,
+            gamesPlayed: 1,
+            createdAt: 1,
+          },
+        })
         .exec();
     }
 
@@ -53,14 +53,16 @@ export class UserService {
     this.logger.info(`Find one user by email: ${email}`);
 
     if (IS_MONGO_USED) {
-      return (this.userModel as Model<any>).findOne({ email }, USER_FIELDS_MONGO)
+      return (this.userModel as Model<any>)
+        .findOne({ email }, USER_FIELDS_MONGO)
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
         .populate(...USER_POPULATE_CURRENT_WATCH)
         .exec();
     }
 
-    return this.connection.getRepository(User)
+    return this.connection
+      .getRepository(User)
       .createQueryBuilder('user')
       .select(USER_FIELDS)
       .leftJoin(...USER_JOIN_OPENED_GAME)
@@ -74,14 +76,16 @@ export class UserService {
     this.logger.info(`Find one user by user id: ${userId}`);
 
     if (IS_MONGO_USED) {
-      return (this.userModel as Model<any>).findOne({ _id: userId }, USER_FIELDS_MONGO)
+      return (this.userModel as Model<any>)
+        .findOne({ _id: userId }, USER_FIELDS_MONGO)
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
         .populate(...USER_POPULATE_CURRENT_WATCH)
         .exec();
     }
 
-    return this.connection.getRepository(User)
+    return this.connection
+      .getRepository(User)
       .createQueryBuilder('user')
       .select(USER_FIELDS)
       .leftJoin(...USER_JOIN_OPENED_GAME)
@@ -100,13 +104,13 @@ export class UserService {
     lastName,
     avatar,
   }: {
-    username: string,
-    email: string,
-    provider?: string,
-    password?: string,
-    firstName?: string,
-    lastName?: string,
-    avatar?: string,
+    username: string;
+    email: string;
+    provider?: string;
+    password?: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
   }): Promise<User | IUser> {
     this.logger.info(`Create a user: ${username}`);
 
@@ -132,5 +136,4 @@ export class UserService {
 
     return this.connection.getRepository(User).save(user);
   }
-
 }

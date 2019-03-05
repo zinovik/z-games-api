@@ -12,12 +12,7 @@ describe('UserGateway', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule,
-        ServicesModule,
-        DbModule,
-        LoggerModule,
-      ],
+      imports: [ConfigModule, ServicesModule, DbModule, LoggerModule],
       providers: [UserGateway, UserService],
     }).compile();
 

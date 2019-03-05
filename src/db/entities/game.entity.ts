@@ -23,7 +23,6 @@ import * as types from '../../constants';
 @Entity()
 @Unique(['number'])
 export class Game extends DefaultNamingStrategy {
-
   @PrimaryColumn('uuid')
   public id: string;
 
