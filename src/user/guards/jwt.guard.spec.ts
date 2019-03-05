@@ -9,10 +9,6 @@ describe('JwtGuard', () => {
   let loggerService: LoggerService;
 
   it('should be defined', () => {
-    expect(new JwtGuard(
-      jwtService,
-      userService,
-      loggerService,
-    )).toBeDefined();
+    expect(new JwtGuard(jwtService, userService, loggerService)).toBeDefined();
   });
 });

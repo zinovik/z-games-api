@@ -16,11 +16,16 @@ const mongod = new MongoMemoryServer();
   imports: [
     ConfigModule,
     (async () => {
-      return MongooseModule.forRoot(IS_MONGO_USED ? ConfigService.get().MONGODB_URI : await mongod.getConnectionString(), {
-        useCreateIndex: true,
-        useNewUrlParser: true,
-        useFindAndModify: false,
-      });
+      return MongooseModule.forRoot(
+        IS_MONGO_USED
+          ? ConfigService.get().MONGODB_URI
+          : await mongod.getConnectionString(),
+        {
+          useCreateIndex: true,
+          useNewUrlParser: true,
+          useFindAndModify: false,
+        },
+      );
     })(),
     MongooseModule.forFeature([
       { name: 'User', schema: userSchema },
@@ -29,4 +34,4 @@ const mongod = new MongoMemoryServer();
     ]),
   ],
 })
-export class Mongoose { }
+export class Mongoose {}
