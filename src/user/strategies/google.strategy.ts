@@ -7,14 +7,13 @@ import { ConfigService } from '../../config/config.service';
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(OAuth2Strategy) {
   constructor() {
-
     const GOOGLE_CONSUMER_KEY = ConfigService.get().GOOGLE_CONSUMER_KEY;
     const GOOGLE_CONSUMER_SECRET = ConfigService.get().GOOGLE_CONSUMER_SECRET;
     const BASE_URL = ConfigService.get().BASE_URL;
 
     super({
-      clientID: GOOGLE_CONSUMER_KEY,
-      clientSecret: GOOGLE_CONSUMER_SECRET,
+      clientID: GOOGLE_CONSUMER_KEY || 'GOOGLE_CONSUMER_KEY',
+      clientSecret: GOOGLE_CONSUMER_SECRET || 'GOOGLE_CONSUMER_SECRET',
       callbackURL: `${BASE_URL}/api/users/authorize/google/callback`,
       scope: ['profile', 'email'],
       session: false,

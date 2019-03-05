@@ -13,12 +13,7 @@ describe('User Controller', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule,
-        ServicesModule,
-        DbModule,
-        LoggerModule,
-      ],
+      imports: [ConfigModule, ServicesModule, DbModule, LoggerModule],
       controllers: [UserController],
       providers: [UserService, GoogleStrategy],
       exports: [UserService],

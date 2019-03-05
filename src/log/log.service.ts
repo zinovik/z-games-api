@@ -15,7 +15,6 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
 @Injectable()
 export class LogService {
-
   logModel: Model<ILog>;
   gameModel: Model<IGame>;
   userModel: Model<IUser>;
@@ -30,11 +29,16 @@ export class LogService {
     this.userModel = this.connectionMongo.model('User');
   }
 
-  public async create({ type, user, gameId, text }: {
-    type: string,
-    user: User,
-    gameId: string,
-    text?: string,
+  public async create({
+    type,
+    user,
+    gameId,
+    text,
+  }: {
+    type: string;
+    user: User;
+    gameId: string;
+    text?: string;
   }): Promise<Log> {
     this.logger.info(`Create a log type ${type} by ${user.username}`);
 
@@ -48,17 +52,23 @@ export class LogService {
 
       const newLogMongo = await logMongo.save();
 
-      await this.gameModel.findOneAndUpdate({ _id: gameId }, {
-        $push: {
-          logs: newLogMongo.id,
+      await this.gameModel.findOneAndUpdate(
+        { _id: gameId },
+        {
+          $push: {
+            logs: newLogMongo.id,
+          },
         },
-      });
+      );
 
-      await this.userModel.findOneAndUpdate({ _id: user.id }, {
-        $push: {
-          logs: newLogMongo.id,
+      await this.userModel.findOneAndUpdate(
+        { _id: user.id },
+        {
+          $push: {
+            logs: newLogMongo.id,
+          },
         },
-      });
+      );
 
       (newLogMongo as any).user = user;
 
@@ -77,5 +87,4 @@ export class LogService {
 
     return await this.connection.getRepository(Log).save(log);
   }
-
 }

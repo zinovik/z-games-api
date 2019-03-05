@@ -16,7 +16,6 @@ import { User } from '../../db/entities/user.entity';
 
 @Entity()
 export class Log extends DefaultNamingStrategy {
-
   @PrimaryColumn('uuid')
   public id: string;
 
@@ -57,5 +56,4 @@ export class Log extends DefaultNamingStrategy {
   public toString(): string {
     return `${this.type}`;
   }
-
 }

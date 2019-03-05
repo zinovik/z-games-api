@@ -9,4 +9,4 @@ import { LoggerModule } from '../logger/logger.module';
   providers: [JwtService],
   exports: [JwtService],
 })
-export class ServicesModule { }
+export class ServicesModule {}
