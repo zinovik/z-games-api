@@ -12,12 +12,7 @@ describe('LogService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [
-        ServicesModule,
-        DbModule,
-        LoggerModule,
-        UserModule,
-      ],
+      imports: [ServicesModule, DbModule, LoggerModule, UserModule],
       providers: [LogGateway, LogService],
     }).compile();
 

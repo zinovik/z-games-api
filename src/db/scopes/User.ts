@@ -46,9 +46,11 @@ export const USER_JOIN_CURRENT_WATCH: [string, string] = [
 
 // MongoDB
 
-export const ALL_USER_FIELDS_MONGO = 'id username avatar firstName lastName createdAt gamesPlayed gamesWon';
+export const ALL_USER_FIELDS_MONGO =
+  'id username avatar firstName lastName createdAt gamesPlayed gamesWon';
 
-export const USER_FIELDS_MONGO = 'id username password avatar email firstName lastName createdAt updatedAt';
+export const USER_FIELDS_MONGO =
+  'id username password avatar email firstName lastName createdAt updatedAt';
 
 const USER_POPULATE_GAMES = 'id number';
 

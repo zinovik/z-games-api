@@ -24,7 +24,6 @@ import { Log } from '../../db/entities/log.entity';
 @Unique(['email'])
 @Unique(['username'])
 export class User extends DefaultNamingStrategy {
-
   public static hashPassword(password: string): Promise<string> {
     return new Promise((resolve, reject) => {
       bcrypt.hash(password, 10, (err, hash) => {
@@ -36,7 +35,10 @@ export class User extends DefaultNamingStrategy {
     });
   }
 
-  public static comparePassword(user: User, password: string): Promise<boolean> {
+  public static comparePassword(
+    user: User,
+    password: string,
+  ): Promise<boolean> {
     return new Promise((resolve, reject) => {
       bcrypt.compare(password, user.password, (err, res) => {
         resolve(res === true);
@@ -120,5 +122,4 @@ export class User extends DefaultNamingStrategy {
     this.gamesPlayed = 0;
     this.gamesWon = 0;
   }
-
 }

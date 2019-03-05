@@ -4,9 +4,6 @@ import { TypeOrmModule } from './type-orm.module';
 import { Mongoose } from './mongoose.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forRoot(),
-    Mongoose,
-  ],
+  imports: [TypeOrmModule.forRoot(), Mongoose],
 })
-export class DbModule { }
+export class DbModule {}

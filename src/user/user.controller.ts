@@ -1,4 +1,13 @@
-import { Controller, Get, UseGuards, Req, Res, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  Req,
+  Res,
+  Param,
+  UploadedFile,
+} from '@nestjs/common';
 
 import { GoogleGuard } from './guards/google.guard';
 import { UserService } from './user.service';
@@ -7,32 +16,31 @@ import { ConfigService } from '../config/config.service';
 import { CreatingUserError } from '../errors';
 import { User } from '../db/entities/user.entity';
 
-interface GoogleProfile {
+interface IGoogleProfile {
   emails: Array<{
-    value: string,
+    value: string;
   }>;
 
   displayName: string;
 
   name: {
-    givenName: string,
-    familyName: string,
+    givenName: string;
+    familyName: string;
   };
 
   photos: Array<{
-    value: string,
+    value: string;
   }>;
 }
 
 @Controller('users')
 export class UserController {
-
   private readonly CLIENT_URL = ConfigService.get().CLIENT_URL;
 
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   @Get()
   getAllUsers(): Promise<User[]> {
@@ -44,6 +52,18 @@ export class UserController {
     return this.userService.findOneByUserId(userId);
   }
 
+  @Post('avatar')
+  // @UseGuards(JwtGuard)
+  // @UseInterceptors(FileUploadInterceptor)
+  async updateAvatar(
+    @UploadedFile() file: any,
+    @Req() req: any,
+    @Res() res: any,
+  ) {
+    // const user = await this.userService.updateAvatar(req.user.email, file && file.secure_url);
+    // res.send(user);
+  }
+
   @Get('authorize/google')
   @UseGuards(GoogleGuard)
   googleAuth() {
@@ -52,8 +72,13 @@ export class UserController {
 
   @Get('authorize/google/callback')
   @UseGuards(GoogleGuard)
-  async googleAuthCallback(@Req() req: { user: GoogleProfile }, @Res() res: { redirect: (url: string) => void }) {
-    const user = await this.userService.findOneByEmail(req.user.emails[0].value);
+  async googleAuthCallback(
+    @Req() req: { user: IGoogleProfile },
+    @Res() res: { redirect: (url: string) => void },
+  ) {
+    const user = await this.userService.findOneByEmail(
+      req.user.emails[0].value,
+    );
 
     let id: string;
 
@@ -74,12 +99,10 @@ export class UserController {
       } catch (error) {
         throw new CreatingUserError(error.message);
       }
-
     }
 
     const token = this.jwtService.generateToken({ id }, '7 days');
 
     res.redirect(`${this.CLIENT_URL}/${token}`);
   }
-
 }
