@@ -9,7 +9,7 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 
-import { GoogleGuard } from './guards/google.guard';
+import { GoogleGuard } from '../guards/google.guard';
 import { UserService } from './user.service';
 import { JwtService } from '../services/jwt.service';
 import { ConfigService } from '../config/config.service';

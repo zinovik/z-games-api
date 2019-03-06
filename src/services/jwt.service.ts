@@ -23,7 +23,7 @@ export class JwtService {
       algorithm: alg,
       expiresIn: expIn,
     });
-  };
+  }
 
   public getUserIdByToken = (token: string): string => {
     let jwtDecoded: ITokenDecoded;
@@ -38,5 +38,5 @@ export class JwtService {
     this.logger.info(`Token successfully decoded: ${jwtDecoded.id}`);
 
     return jwtDecoded.id;
-  };
+  }
 }
