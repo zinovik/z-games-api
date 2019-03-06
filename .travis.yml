@@ -5,12 +5,3 @@ node_js:
 script:
   - yarn run lint
   - yarn run test
-
-# deploy:
-#   provider: heroku
-#   api_key:
-#     secure: "YOUR ENCRYPTED API KEY"
-#   app:
-#     work: z-games-api-dev
-#     dev: z-games-api-dev
-#     master: z-games-api
