@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  database:
+  database_postgresql:
     image: postgres:latest
     restart: always
     ports:
