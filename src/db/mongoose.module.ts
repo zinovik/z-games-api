@@ -17,7 +17,7 @@ const mongod = new MongoMemoryServer();
     ConfigModule,
     (async () => {
       return MongooseModule.forRoot(
-        IS_MONGO_USED
+        IS_MONGO_USED && ConfigService.get().MONGODB_URI
           ? ConfigService.get().MONGODB_URI
           : await mongod.getConnectionString(),
         {
