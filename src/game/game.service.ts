@@ -173,19 +173,19 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (game.state) {
-      throw new JoiningGameError("Can't join started or finished game");
+      throw new JoiningGameError('Can\'t join started or finished game');
     }
 
     if (game.players.length >= game.playersMax) {
-      throw new JoiningGameError("Can't join game with maximum players inside");
+      throw new JoiningGameError('Can\'t join game with maximum players inside');
     }
 
     if (game.players.some(player => player.id === user.id)) {
-      throw new JoiningGameError("Can't join game twice");
+      throw new JoiningGameError('Can\'t join game twice');
     }
 
     if (game.playersOnline.some(playerOnline => playerOnline.id === user.id)) {
-      throw new JoiningGameError("Can't join opened game");
+      throw new JoiningGameError('Can\'t join opened game');
     }
 
     const gameData = gamesServices[game.name].addPlayer({
@@ -242,11 +242,11 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (!game.players.some(player => player.id === user.id)) {
-      throw new OpeningGameError("Can't open game without joining");
+      throw new OpeningGameError('Can\'t open game without joining');
     }
 
     if (game.playersOnline.some(playerOnline => playerOnline.id === user.id)) {
-      throw new OpeningGameError("Can't open game twice");
+      throw new OpeningGameError('Can\'t open game twice');
     }
 
     if (IS_MONGO_USED) {
@@ -291,15 +291,15 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (!game.state) {
-      throw new WatchingGameError("Can't watch not started game");
+      throw new WatchingGameError('Can\'t watch not started game');
     }
 
     if (game.players.some(player => player.id === user.id)) {
-      throw new WatchingGameError("Can't watch joining game");
+      throw new WatchingGameError('Can\'t watch joining game');
     }
 
     if (game.watchers.some(watcher => watcher.id === user.id)) {
-      throw new WatchingGameError("Can't watch game twice");
+      throw new WatchingGameError('Can\'t watch game twice');
     }
 
     if (IS_MONGO_USED) {
@@ -344,11 +344,11 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (game.state === types.GAME_STARTED) {
-      throw new LeavingGameError("Can't leave started and not finished game");
+      throw new LeavingGameError('Can\'t leave started and not finished game');
     }
 
     if (!game.players.some(player => player.id === user.id)) {
-      throw new LeavingGameError("Can't leave game without joining");
+      throw new LeavingGameError('Can\'t leave game without joining');
     }
 
     const gameData = gamesServices[game.name].removePlayer({
@@ -407,7 +407,7 @@ export class GameService {
 
     if (!isUserInPlayers && !isUserInWatchers) {
       throw new ClosingGameError(
-        "Can't close game without joining or watching",
+        'Can\'t close game without joining or watching',
       );
     }
 
@@ -559,7 +559,7 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (!game.nextPlayers.some(nextPlayer => nextPlayer.id === userId)) {
-      throw new MakingMoveError("It's not your turn to move");
+      throw new MakingMoveError('It\'s not your turn to move');
     }
 
     const { gameData, nextPlayersIds } = gamesServices[game.name].makeMove({

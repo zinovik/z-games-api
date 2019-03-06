@@ -13,7 +13,7 @@ import { GameService } from './game.service';
 import { UserService } from '../user/user.service';
 import { LogService } from '../log/log.service';
 import { LoggerService } from '../logger/logger.service';
-import { JwtGuard } from '../user/guards/jwt.guard';
+import { JwtGuard } from '../guards/jwt.guard';
 import { JwtService } from '../services/jwt.service';
 import { Game } from '../db/entities/game.entity';
 import { User } from '../db/entities/user.entity';
@@ -475,7 +475,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     ) {
       return this.sendError({
         client,
-        message: "You can't make move if you are not this game player",
+        message: 'You can\'t make move if you are not this game player',
       });
     }
 
