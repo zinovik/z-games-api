@@ -11,7 +11,7 @@ export class TypeOrmModule implements OnModuleDestroy {
     const databaseProvider = {
       provide: Connection,
       useFactory: () => {
-        if (IS_MONGO_USED) {
+        if (IS_MONGO_USED || !ConfigService.get().DATABASE_URL) {
           return {};
         }
 
