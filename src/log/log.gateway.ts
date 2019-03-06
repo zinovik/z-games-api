@@ -8,7 +8,7 @@ import { Server, Socket } from 'socket.io';
 
 import { LogService } from '../log/log.service';
 import { LoggerService } from '../logger/logger.service';
-import { JwtGuard } from '../user/guards/jwt.guard';
+import { JwtGuard } from '../guards/jwt.guard';
 import { User } from '../db/entities/user.entity';
 import { Log } from '../db/entities/log.entity';
 import { ILog } from '../db/interfaces/log.interface';
@@ -41,7 +41,7 @@ export class LogGateway {
     ) {
       return this.sendError({
         client,
-        message: "You can't make a move if you are not this game player",
+        message: 'You can\'t make a move if you are not this game player',
       });
     }
 
