@@ -6,7 +6,7 @@ import {
 import { UseGuards } from '@nestjs/common';
 import { Socket } from 'socket.io';
 
-import { JwtGuard } from './guards/jwt.guard';
+import { JwtGuard } from '../guards/jwt.guard';
 import { User } from '../db/entities/user.entity';
 
 @WebSocketGateway()
