@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  database:
+  database_postgresql:
     image: postgres:latest
     restart: always
     ports:
@@ -11,7 +11,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=dbpass123
 
-  database_mongo:
+  database_mongodb:
     image: mongo:latest
     restart: always
     ports:
@@ -28,5 +28,5 @@ services:
     ports:
       - 4000:4000
     depends_on:
-      - database
-      - database_mongo
+      - database_postgresql
+      - database_mongodb
