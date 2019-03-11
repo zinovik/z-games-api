@@ -6,6 +6,7 @@ import {
   Req,
   Res,
   Param,
+  UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
 
@@ -15,6 +16,7 @@ import { JwtService } from '../services/jwt.service';
 import { ConfigService } from '../config/config.service';
 import { CreatingUserError } from '../errors';
 import { User } from '../db/entities/user.entity';
+import { FileUploadInterceptor } from '../interceptors/file-interceptor';
 
 interface IGoogleProfile {
   emails: Array<{
@@ -52,9 +54,23 @@ export class UserController {
     return this.userService.findOneByUserId(userId);
   }
 
+  @Post('register')
+  async register(
+    @Req() { body: { username, password, email } }: { body: { username: string, password: string, email: string } },
+    @Res() res: any,
+  ) {
+    const user = await this.userService.create({
+      username,
+      password,
+      email,
+    });
+
+    res.send(user);
+  }
+
   @Post('avatar')
   // @UseGuards(JwtGuard)
-  // @UseInterceptors(FileUploadInterceptor)
+  @UseInterceptors(FileUploadInterceptor)
   async updateAvatar(
     @UploadedFile() file: any,
     @Req() req: any,
