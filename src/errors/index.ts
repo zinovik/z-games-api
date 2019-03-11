@@ -1,5 +1,6 @@
 export * from './closing-game';
 export * from './creating-user';
+export * from './invalid-file';
 export * from './joining-game';
 export * from './leaving-game';
 export * from './making-move';
