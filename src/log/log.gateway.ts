@@ -15,6 +15,7 @@ import { ILog } from '../db/interfaces/log.interface';
 
 @WebSocketGateway()
 export class LogGateway {
+
   @WebSocketServer()
   server: Server;
 
