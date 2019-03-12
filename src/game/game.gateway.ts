@@ -23,6 +23,7 @@ import * as types from '../constants/Games';
 
 @WebSocketGateway()
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
+
   @WebSocketServer()
   server: Server;
 
@@ -79,7 +80,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
     game.logs = [log, ...game.logs];
 
-    this.sendGameToGameUsers({ game });
+    this.sendGameToGameUsers({ server: this.server, game });
     this.server.emit(
       'update-game',
       this.gameService.parseGameForAllUsers(game),
@@ -115,7 +116,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.leave(game.id);
 
-      this.sendGameToGameUsers({ game });
+      this.sendGameToGameUsers({ server: this.server, game });
       this.server.emit(
         'update-game',
         this.gameService.parseGameForAllUsers(game),
@@ -220,7 +221,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     client.join(game.id);
 
-    this.sendGameToGameUsers({ game });
+    this.sendGameToGameUsers({ server: this.server, game });
     this.server.emit(
       'update-game',
       this.gameService.parseGameForAllUsers(game),
@@ -257,7 +258,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     client.join(game.id);
 
-    this.sendGameToGameUsers({ game });
+    this.sendGameToGameUsers({ server: this.server, game });
     this.server.emit(
       'update-game',
       this.gameService.parseGameForAllUsers(game),
@@ -297,7 +298,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     client.join(game.id);
 
-    this.sendGameToGameUsers({ game });
+    this.sendGameToGameUsers({ server: this.server, game });
     this.server.emit(
       'update-game',
       this.gameService.parseGameForAllUsers(game),
@@ -339,7 +340,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     client.leave(game.id);
 
-    this.sendGameToGameUsers({ game });
+    this.sendGameToGameUsers({ server: this.server, game });
     this.server.emit(
       'update-game',
       this.gameService.parseGameForAllUsers(game),
@@ -383,7 +384,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     client.leave(game.id);
 
-    this.sendGameToGameUsers({ game });
+    this.sendGameToGameUsers({ server: this.server, game });
     this.server.emit(
       'update-game',
       this.gameService.parseGameForAllUsers(game),
@@ -423,7 +424,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     game.logs = [log, ...game.logs];
 
-    this.sendGameToGameUsers({ game });
+    this.sendGameToGameUsers({ server: this.server, game });
   }
 
   @UseGuards(JwtGuard)
@@ -454,7 +455,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     game.logs = [log, ...game.logs];
 
-    this.sendGameToGameUsers({ game });
+    this.sendGameToGameUsers({ server: this.server, game });
     this.server.emit(
       'update-game',
       this.gameService.parseGameForAllUsers(game),
@@ -515,7 +516,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       game.logs = [finishLog, ...game.logs];
     }
 
-    this.sendGameToGameUsers({ game });
+    this.sendGameToGameUsers({ server: this.server, game });
 
     if (game.state === types.GAME_FINISHED) {
       this.server.emit(
@@ -525,14 +526,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  private sendGameToGameUsers({ game }: { game: Game }): void {
-    if (!this.server.sockets.adapter.rooms[game.id]) {
+  private sendGameToGameUsers({ server, game }: { server: Server, game: Game }): void {
+    if (!server.sockets.adapter.rooms[game.id]) {
       return;
     }
 
-    Object.keys(this.server.sockets.adapter.rooms[game.id].sockets).forEach(
-      socketId => {
-        const socketInGame = this.server.sockets.connected[
+    Object.keys(server.sockets.adapter.rooms[game.id].sockets).forEach(
+      (socketId: string) => {
+        const socketInGame = server.sockets.connected[
           socketId
         ] as Socket & { user: User };
         const userInGame = socketInGame.user;
