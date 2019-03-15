@@ -16,6 +16,7 @@ import { JwtService } from '../services/jwt.service';
 import { ConfigService } from '../config/config.service';
 import { CreatingUserError } from '../errors';
 import { User } from '../db/entities/user.entity';
+import { IUser } from '../db/interfaces/user.interface';
 import { FileUploadInterceptor } from '../interceptors/file-interceptor';
 
 interface IGoogleProfile {
@@ -59,11 +60,18 @@ export class UserController {
     @Req() { body: { username, password, email } }: { body: { username: string, password: string, email: string } },
     @Res() res: any,
   ) {
-    const user = await this.userService.create({
-      username,
-      password,
-      email,
-    });
+
+    let user: User | IUser;
+
+    try {
+      user = await this.userService.create({
+        username,
+        password,
+        email,
+      });
+    } catch (error) {
+      throw new CreatingUserError(error.message);
+    }
 
     res.send(user);
   }

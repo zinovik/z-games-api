@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
-import { BaseGame, BaseGameData, BaseGamePlayer } from 'z-games-base-game';
-import { NoThanks } from 'z-games-no-thanks';
-import { Perudo } from 'z-games-perudo';
+import { BaseGame, BaseGameData, BaseGamePlayer, GAME_STARTED, GAME_FINISHED } from 'z-games-base-game';
+import { NoThanks, NO_THANKS } from 'z-games-no-thanks';
+import { Perudo, PERUDO } from 'z-games-perudo';
+import { LostCities, LOST_CITIES } from 'z-games-lost-cities';
 
 import { Game } from '../db/entities/game.entity';
 import { User } from '../db/entities/user.entity';
@@ -43,13 +44,12 @@ import {
   LOGS_FIELD_ORDER_BY_MONGO,
 } from '../db/scopes/Game';
 
-import * as types from '../constants';
-
 const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
 const gamesServices: { [key: string]: BaseGame } = {
-  [types.NO_THANKS]: NoThanks.Instance,
-  [types.PERUDO]: Perudo.Instance,
+  [NO_THANKS]: NoThanks.Instance,
+  [PERUDO]: Perudo.Instance,
+  [LOST_CITIES]: LostCities.Instance,
 };
 
 @Injectable()
@@ -343,7 +343,7 @@ export class GameService {
 
     const game = await this.findOne(gameNumber);
 
-    if (game.state === types.GAME_STARTED) {
+    if (game.state === GAME_STARTED) {
       throw new LeavingGameError('Can\'t leave started and not finished game');
     }
 
@@ -506,7 +506,7 @@ export class GameService {
         { _id: game.id },
         {
           gameData,
-          state: types.GAME_STARTED,
+          state: GAME_STARTED,
           nextPlayers: nextPlayersIds,
         },
       );
@@ -533,7 +533,7 @@ export class GameService {
     }
 
     game.gameData = gameData;
-    game.state = types.GAME_STARTED;
+    game.state = GAME_STARTED;
     game.nextPlayers = [];
 
     nextPlayersIds.forEach(nextPlayerId => {
@@ -640,7 +640,7 @@ export class GameService {
           { _id: game.id },
           {
             gameData,
-            state: types.GAME_FINISHED,
+            state: GAME_FINISHED,
             nextPlayers: nextPlayersIds,
           },
         );
@@ -674,7 +674,7 @@ export class GameService {
         this.connection.getRepository(User).save(user);
       });
 
-      game.state = types.GAME_FINISHED;
+      game.state = GAME_FINISHED;
       game.gameData = gameData;
     }
 
@@ -694,7 +694,7 @@ export class GameService {
   }
 
   public parseGameForUser({ game, user }: { game: Game; user: User }): Game {
-    if (game.state === types.GAME_FINISHED) {
+    if (game.state === GAME_FINISHED) {
       return {
         ...game,
         gameData: JSON.parse(JSON.stringify(game.gameData)),

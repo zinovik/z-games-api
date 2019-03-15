@@ -8,6 +8,7 @@ import {
   WsResponse,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { GAME_FINISHED } from 'z-games-base-game';
 
 import { GameService } from './game.service';
 import { UserService } from '../user/user.service';
@@ -18,8 +19,6 @@ import { JwtService } from '../services/jwt.service';
 import { Game } from '../db/entities/game.entity';
 import { User } from '../db/entities/user.entity';
 import { Log } from '../db/entities/log.entity';
-
-import * as types from '../constants/Games';
 
 @WebSocketGateway()
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -507,7 +506,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     game.logs = [log, ...game.logs];
 
-    if (game.state === types.GAME_FINISHED) {
+    if (game.state === GAME_FINISHED) {
       const finishLog = await this.logService.create({
         type: 'finish',
         user: client.user,
@@ -518,7 +517,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.sendGameToGameUsers({ server: this.server, game });
 
-    if (game.state === types.GAME_FINISHED) {
+    if (game.state === GAME_FINISHED) {
       this.server.emit(
         'update-game',
         this.gameService.parseGameForAllUsers(game),
