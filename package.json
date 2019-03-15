@@ -30,6 +30,10 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
+  "engines": {
+    "node": ">=10",
+    "npm": "6.4.1"
+  },
   "dependencies": {
     "@nestjs/common": "^5.7.4",
     "@nestjs/core": "^5.7.4",
@@ -71,9 +75,11 @@
     "tsconfig-paths": "^3.8.0",
     "typeorm": "^0.2.15",
     "typescript": "^3.3.3333",
-    "z-games-base-game": "0.0.16",
-    "z-games-no-thanks": "0.0.12",
-    "z-games-perudo": "0.0.10"
+    "z-games-base-game": "^0.0.16",
+    "z-games-lost-cities": "^0.0.11",
+    "z-games-no-thanks": "^0.0.12",
+    "z-games-perudo": "^0.0.10",
+    "z-games-six-nimmt": "^0.0.10"
   },
   "devDependencies": {
     "jest": "^24.5.0",
