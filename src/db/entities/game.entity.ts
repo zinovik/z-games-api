@@ -14,11 +14,10 @@ import {
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
+import { GAME_NOT_STARTED } from 'z-games-base-game';
 
 import { Log } from '../../db/entities/log.entity';
 import { User } from '../../db/entities/user.entity';
-
-import * as types from '../../constants';
 
 @Entity()
 @Unique(['number'])
@@ -90,6 +89,6 @@ export class Game extends DefaultNamingStrategy {
   public async setState(): Promise<void> {
     this.id = uuid.v1();
 
-    this.state = types.GAME_NOT_STARTED;
+    this.state = GAME_NOT_STARTED;
   }
 }
