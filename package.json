@@ -77,6 +77,7 @@
     "rimraf": "^2.6.3",
     "rxjs": "^6.4.0",
     "tsconfig-paths": "^3.8.0",
+    "ts-node": "^8.0.3",
     "typeorm": "^0.2.15",
     "typescript": "^3.3.3333",
     "z-games-base-game": "^0.0.16",
@@ -91,7 +92,6 @@
     "prettier": "^1.16.4",
     "supertest": "^4.0.0",
     "ts-jest": "^24.0.0",
-    "ts-node": "^8.0.3",
     "tsconfig-paths": "^3.8.0",
     "tslint": "^5.14.0",
     "typescript": "^3.3.3333"
