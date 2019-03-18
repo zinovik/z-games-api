@@ -7,3 +7,4 @@ export * from './making-move';
 export * from './opening-game';
 export * from './starting-game';
 export * from './watching-game';
+export * from './activating-user';

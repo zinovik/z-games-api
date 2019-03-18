@@ -9,41 +9,33 @@ import {
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/mongoose';
+import { Model, Connection as ConnectionMongo } from 'mongoose';
 
 import { GoogleGuard } from '../guards/google.guard';
 import { UserService } from './user.service';
 import { JwtService } from '../services/jwt.service';
 import { ConfigService } from '../config/config.service';
-import { CreatingUserError } from '../errors';
+import { CreatingUserError, ActivationUserError } from '../errors';
 import { User } from '../db/entities/user.entity';
 import { IUser } from '../db/interfaces/user.interface';
 import { FileUploadInterceptor } from '../interceptors/file-interceptor';
-
-interface IGoogleProfile {
-  emails: Array<{
-    value: string;
-  }>;
-
-  displayName: string;
-
-  name: {
-    givenName: string;
-    familyName: string;
-  };
-
-  photos: Array<{
-    value: string;
-  }>;
-}
+import { IGoogleProfile } from './google-profile.interface';
+import { EmailService } from '../services/email.service';
 
 @Controller('users')
 export class UserController {
   private readonly CLIENT_URL = ConfigService.get().CLIENT_URL;
+  userModel: Model<IUser>;
 
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
-  ) {}
+    private emailService: EmailService,
+    @InjectConnection() private readonly connectionMongo: ConnectionMongo,
+  ) {
+    this.userModel = this.connectionMongo.model('User');
+  }
 
   @Get()
   getAllUsers(): Promise<User[]> {
@@ -60,6 +52,9 @@ export class UserController {
     @Req() { body: { username, password, email } }: { body: { username: string, password: string, email: string } },
     @Res() res: any,
   ) {
+    if (!username || !password || !email) {
+      throw new CreatingUserError('All fields are required!');
+    }
 
     let user: User | IUser;
 
@@ -72,6 +67,32 @@ export class UserController {
     } catch (error) {
       throw new CreatingUserError(error.message);
     }
+
+    try {
+      await this.emailService.sendRegistrationMail({ id: user.id, email: user.email });
+    } catch (error) {
+      throw new CreatingUserError('Error sending email, please contact administration to support');
+    }
+
+    res.send(user);
+  }
+
+  @Get('activate/:token')
+  async activate(@Param('token') token: string, @Res() res: any) {
+    const userId = this.jwtService.getUserIdByToken(token);
+
+    const user = await this.userService.findOneByUserId(userId);
+
+    if (!user) {
+      throw new ActivationUserError('Invalid link!');
+    }
+
+    await this.userModel.findOneAndUpdate(
+      { _id: user.id },
+      {
+        isConfirmed: true,
+      },
+    );
 
     res.send(user);
   }

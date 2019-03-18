@@ -3,10 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 import { ConfigService } from '../config/config.service';
 import { LoggerService } from '../logger/logger.service';
-
-interface ITokenDecoded {
-  id: string;
-}
+import { IJwtToken } from './jwt-token.interface';
 
 @Injectable()
 export class JwtService {
@@ -15,7 +12,7 @@ export class JwtService {
   constructor(private logger: LoggerService) {}
 
   public generateToken = (
-    payload: ITokenDecoded,
+    payload: IJwtToken,
     expIn: string,
     alg = 'HS256',
   ): string => {
@@ -26,10 +23,10 @@ export class JwtService {
   }
 
   public getUserIdByToken = (token: string): string => {
-    let jwtDecoded: ITokenDecoded;
+    let jwtDecoded: IJwtToken;
 
     try {
-      jwtDecoded = jwt.verify(token, this.JWT_SECRET) as ITokenDecoded;
+      jwtDecoded = jwt.verify(token, this.JWT_SECRET) as IJwtToken;
     } catch (err) {
       this.logger.warn(`Error verifying token: ${err.name}`);
       return null;
