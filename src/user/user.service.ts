@@ -95,7 +95,30 @@ export class UserService {
       .getOne();
   }
 
-  public create({
+  public findOneByUsername(username: string): Promise<User> {
+    this.logger.info(`Find one user by username: ${username}`);
+
+    if (IS_MONGO_USED) {
+      return (this.userModel as Model<any>)
+        .findOne({ username }, USER_FIELDS_MONGO)
+        .populate(...USER_POPULATE_OPENED_GAME)
+        .populate(...USER_POPULATE_CURRENT_GAMES)
+        .populate(...USER_POPULATE_CURRENT_WATCH)
+        .exec();
+    }
+
+    return this.connection
+      .getRepository(User)
+      .createQueryBuilder('user')
+      .select(USER_FIELDS)
+      .leftJoin(...USER_JOIN_OPENED_GAME)
+      .leftJoin(...USER_JOIN_CURRENT_GAMES)
+      .leftJoin(...USER_JOIN_CURRENT_WATCH)
+      .where({ username })
+      .getOne();
+  }
+
+  public async create({
     username,
     email,
     provider,
@@ -129,6 +152,8 @@ export class UserService {
     }
 
     if (IS_MONGO_USED) {
+      user.password = await User.hashPassword(password); // TODO: Update mongo model to hash password
+
       const userMongo = new this.userModel(user);
 
       return userMongo.save();
