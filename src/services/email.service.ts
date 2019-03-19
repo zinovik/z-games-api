@@ -5,8 +5,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '../config/config.service';
 import { JwtService } from './jwt.service';
 import { LoggerService } from '../logger/logger.service';
-import { IEmailTemplateOptions } from './email-template-options.interface';
-import { IEmailOptions } from './email-options.interface';
 
 @Injectable()
 export class EmailService {
@@ -26,30 +24,19 @@ export class EmailService {
     });
   }
 
-  private send({ to, subject, html }: IEmailOptions): Promise<any> {
+  public sendRegistrationMail({ id, email }: { id: string, email: string }): Promise<any> {
+    const token = this.jwtService.generateToken({ id }, '2 hours');
+    const link = `${ConfigService.get().CLIENT_URL}/activate/${token}`;
+
+    const templatePath = __dirname + '/email-templates/registration.pug';
+
     return this.server.sendMail({
       text: '',
       from: '"Z-Games" <zinovik@gmail.com>',
-      to,
-      subject,
-      html,
-    });
-  }
-
-  public sendRegistrationMail({ id, email }: { id: string, email: string }): Promise<any> {
-    const token = this.jwtService.generateToken({ id }, '2 hours');
-    const link = `${ConfigService.get().CLIENT_URL}/users/activate/${token}`;
-
-    const templatePath = __dirname + '/email-templates/registration.pug';
-    const templateOptions: IEmailTemplateOptions = { link, additionalText: '' };
-
-    const options: IEmailOptions = {
       to: email,
       subject: 'Confirm your email in z-games',
-      html: pug.renderFile(templatePath, templateOptions),
-    };
-
-    return this.send(options);
+      html: pug.renderFile(templatePath, { link, additionalText: '' }),
+    });
   }
 
 }
