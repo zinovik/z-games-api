@@ -152,8 +152,9 @@ export class UserService {
     }
 
     if (IS_MONGO_USED) {
-      user.password = await User.hashPassword(password); // TODO: Update mongo model to hash password
-
+      if (!provider) {
+        user.password = await User.hashPassword(password); // TODO: Update mongo model to hash password
+      }
       const userMongo = new this.userModel(user);
 
       return userMongo.save();
