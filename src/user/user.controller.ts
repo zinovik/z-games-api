@@ -16,7 +16,7 @@ import { GoogleGuard } from '../guards/google.guard';
 import { UserService } from './user.service';
 import { JwtService } from '../services/jwt.service';
 import { ConfigService } from '../config/config.service';
-import { CreatingUserError, ActivationUserError } from '../errors';
+import { CreatingUserError, ActivationUserError, AuthorizationUserError } from '../errors';
 import { User } from '../db/entities/user.entity';
 import { IUser } from '../db/interfaces/user.interface';
 import { FileUploadInterceptor } from '../interceptors/file-interceptor';
@@ -77,9 +77,9 @@ export class UserController {
     res.send(user);
   }
 
-  @Get('activate/:token')
-  async activate(@Param('token') token: string, @Res() res: any) {
-    const userId = this.jwtService.getUserIdByToken(token);
+  @Post('activate')
+  async activate(@Req() { body: { token: activationToken } }: { body: { token: string } }, @Res() res: any) {
+    const userId = this.jwtService.getUserIdByToken(activationToken);
 
     const user = await this.userService.findOneByUserId(userId);
 
@@ -94,7 +94,26 @@ export class UserController {
       },
     );
 
-    res.send(user);
+    const token = this.jwtService.generateToken({ id: user.id }, '7 days');
+
+    res.send({ token });
+  }
+
+  @Post('authorize')
+  async authorize(@Req() { body: { username, password } }: { body: { username: string, password: string } }, @Res() res: any) {
+    const user = await this.userService.findOneByUsername(username);
+
+    if (!user) {
+      throw new AuthorizationUserError('Invalid username!');
+    }
+
+    if (!await User.comparePassword(user, password)) {
+      throw new AuthorizationUserError('Invalid password!');
+    }
+
+    const token = this.jwtService.generateToken({ id: user.id }, '7 days');
+
+    res.send({ token });
   }
 
   @Post('avatar')
