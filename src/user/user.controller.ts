@@ -52,15 +52,15 @@ export class UserController {
     @Req() { body: { username, password, email } }: { body: { username: string, password: string, email: string } },
     @Res() res: any,
   ) {
-    if (!username || !password || !email) {
-      throw new CreatingUserError('All fields are required!');
+    if (!password || !email) {
+      throw new CreatingUserError('Email and password are required fields!');
     }
 
     let user: User | IUser;
 
     try {
       user = await this.userService.create({
-        username,
+        username: username || email,
         password,
         email,
       });
@@ -87,6 +87,10 @@ export class UserController {
       throw new ActivationUserError('Invalid link!');
     }
 
+    if (user.isConfirmed) {
+      throw new ActivationUserError('User has already been activated!');
+    }
+
     await this.userModel.findOneAndUpdate(
       { _id: user.id },
       {
@@ -109,6 +113,10 @@ export class UserController {
 
     if (!await User.comparePassword(user, password)) {
       throw new AuthorizationUserError('Invalid password!');
+    }
+
+    if (!user.isConfirmed) {
+      throw new AuthorizationUserError('User is not activated! Check email to activate user');
     }
 
     const token = this.jwtService.generateToken({ id: user.id }, '7 days');
