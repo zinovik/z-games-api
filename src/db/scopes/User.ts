@@ -21,6 +21,7 @@ export const USER_FIELDS = [
   'user.lastName',
   'user.createdAt',
   'user.updatedAt',
+  'user.isConfirmed',
   'openedGame.number',
   'openedGame.id',
   'currentGames.number',
@@ -50,7 +51,7 @@ export const ALL_USER_FIELDS_MONGO =
   'id username avatar firstName lastName createdAt gamesPlayed gamesWon';
 
 export const USER_FIELDS_MONGO =
-  'id username password avatar email firstName lastName createdAt updatedAt';
+  'id username password avatar email firstName lastName createdAt updatedAt isConfirmed';
 
 const USER_POPULATE_GAMES = 'id number';
 
