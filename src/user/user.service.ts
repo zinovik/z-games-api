@@ -23,6 +23,7 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
 @Injectable()
 export class UserService {
+
   userModel: Model<IUser>;
 
   constructor(
