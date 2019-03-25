@@ -19,7 +19,7 @@ import { ConfigService } from '../config/config.service';
 import { CreatingUserError, ActivationUserError, AuthorizationUserError } from '../errors';
 import { User } from '../db/entities/user.entity';
 import { IUser } from '../db/interfaces/user.interface';
-import { FileUploadInterceptor } from '../interceptors/file-interceptor';
+// import { FileUploadInterceptor } from '../interceptors/file-interceptor';
 import { IGoogleProfile } from './google-profile.interface';
 import { EmailService } from '../services/email.service';
 
@@ -126,7 +126,7 @@ export class UserController {
 
   @Post('avatar')
   // @UseGuards(JwtGuard)
-  @UseInterceptors(FileUploadInterceptor)
+  // @UseInterceptors(FileUploadInterceptor)
   async updateAvatar(
     @UploadedFile() file: any,
     @Req() req: any,
