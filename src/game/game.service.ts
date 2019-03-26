@@ -14,14 +14,14 @@ import { IGame } from '../db/interfaces/game.interface';
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
 import {
-  JoiningGameError,
-  OpeningGameError,
-  WatchingGameError,
-  LeavingGameError,
-  ClosingGameError,
-  StartingGameError,
-  MakingMoveError,
-} from '../errors';
+  JoiningGameException,
+  OpeningGameException,
+  WatchingGameException,
+  LeavingGameException,
+  ClosingGameException,
+  StartingGameException,
+  MakingMoveException,
+} from '../exceptions';
 import {
   OPEN_GAME_FIELDS,
   ALL_GAMES_JOIN_PLAYERS,
@@ -173,19 +173,19 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (game.state) {
-      throw new JoiningGameError('Can\'t join started or finished game');
+      throw new JoiningGameException('Can\'t join started or finished game');
     }
 
     if (game.players.length >= game.playersMax) {
-      throw new JoiningGameError('Can\'t join game with maximum players inside');
+      throw new JoiningGameException('Can\'t join game with maximum players inside');
     }
 
     if (game.players.some(player => player.id === user.id)) {
-      throw new JoiningGameError('Can\'t join game twice');
+      throw new JoiningGameException('Can\'t join game twice');
     }
 
     if (game.playersOnline.some(playerOnline => playerOnline.id === user.id)) {
-      throw new JoiningGameError('Can\'t join opened game');
+      throw new JoiningGameException('Can\'t join opened game');
     }
 
     const gameData = gamesServices[game.name].addPlayer({
@@ -242,11 +242,11 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (!game.players.some(player => player.id === user.id)) {
-      throw new OpeningGameError('Can\'t open game without joining');
+      throw new OpeningGameException('Can\'t open game without joining');
     }
 
     if (game.playersOnline.some(playerOnline => playerOnline.id === user.id)) {
-      throw new OpeningGameError('Can\'t open game twice');
+      throw new OpeningGameException('Can\'t open game twice');
     }
 
     if (IS_MONGO_USED) {
@@ -291,15 +291,15 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (!game.state) {
-      throw new WatchingGameError('Can\'t watch not started game');
+      throw new WatchingGameException('Can\'t watch not started game');
     }
 
     if (game.players.some(player => player.id === user.id)) {
-      throw new WatchingGameError('Can\'t watch joining game');
+      throw new WatchingGameException('Can\'t watch joining game');
     }
 
     if (game.watchers.some(watcher => watcher.id === user.id)) {
-      throw new WatchingGameError('Can\'t watch game twice');
+      throw new WatchingGameException('Can\'t watch game twice');
     }
 
     if (IS_MONGO_USED) {
@@ -344,11 +344,11 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (game.state === GAME_STARTED) {
-      throw new LeavingGameError('Can\'t leave started and not finished game');
+      throw new LeavingGameException('Can\'t leave started and not finished game');
     }
 
     if (!game.players.some(player => player.id === user.id)) {
-      throw new LeavingGameError('Can\'t leave game without joining');
+      throw new LeavingGameException('Can\'t leave game without joining');
     }
 
     const gameData = gamesServices[game.name].removePlayer({
@@ -406,7 +406,7 @@ export class GameService {
     );
 
     if (!isUserInPlayers && !isUserInWatchers) {
-      throw new ClosingGameError(
+      throw new ClosingGameException(
         'Can\'t close game without joining or watching',
       );
     }
@@ -486,15 +486,15 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (game.players.length < game.playersMin) {
-      throw new StartingGameError('Not enough players');
+      throw new StartingGameException('Not enough players');
     }
 
     if (game.players.length > game.playersMax) {
-      throw new StartingGameError('Too many players');
+      throw new StartingGameException('Too many players');
     }
 
     if (!gamesServices[game.name].checkReady(game.gameData)) {
-      throw new StartingGameError('Not all players are ready');
+      throw new StartingGameException('Not all players are ready');
     }
 
     const { gameData, nextPlayersIds } = gamesServices[game.name].startGame(
@@ -559,7 +559,7 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (!game.nextPlayers.some(nextPlayer => nextPlayer.id === userId)) {
-      throw new MakingMoveError('It\'s not your turn to move');
+      throw new MakingMoveException('It\'s not your turn to move');
     }
 
     const { gameData, nextPlayersIds } = gamesServices[game.name].makeMove({
