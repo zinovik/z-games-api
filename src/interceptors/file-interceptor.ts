@@ -3,7 +3,7 @@
 // // import * as cloudinary from 'cloudinary';
 // // import * as cloudinaryStorage from 'multer-storage-cloudinary';
 
-// import { InvalidFileError } from '../errors';
+// import { InvalidFileError } from '../exceptions';
 
 // const localOptions = {
 //   // storage: cloudinaryStorage({
