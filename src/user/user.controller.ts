@@ -16,7 +16,7 @@ import { GoogleGuard } from '../guards/google.guard';
 import { UserService } from './user.service';
 import { JwtService } from '../services/jwt.service';
 import { ConfigService } from '../config/config.service';
-import { CreatingUserError, ActivationUserError, AuthorizationUserError } from '../errors';
+import { CreatingUserException, ActivationUserException, AuthorizationUserException } from '../exceptions';
 import { User } from '../db/entities/user.entity';
 import { IUser } from '../db/interfaces/user.interface';
 // import { FileUploadInterceptor } from '../interceptors/file-interceptor';
@@ -52,8 +52,8 @@ export class UserController {
     @Req() { body: { username, password, email } }: { body: { username: string, password: string, email: string } },
     @Res() res: any,
   ) {
-    if (!password || !email) {
-      throw new CreatingUserError('Email and password are required fields!');
+    if (!password || !email || !username) {
+      throw new CreatingUserException('All fields are are required!');
     }
 
     let user: User | IUser;
@@ -65,13 +65,13 @@ export class UserController {
         email,
       });
     } catch (error) {
-      throw new CreatingUserError(error.message);
+      throw new CreatingUserException(error.message);
     }
 
     try {
       await this.emailService.sendRegistrationMail({ id: user.id, email: user.email });
     } catch (error) {
-      throw new CreatingUserError('Error sending email, please contact administration to support');
+      throw new CreatingUserException('Error sending email, please contact administration to support');
     }
 
     res.send(user);
@@ -84,11 +84,11 @@ export class UserController {
     const user = await this.userService.findOneByUserId(userId);
 
     if (!user) {
-      throw new ActivationUserError('Invalid link!');
+      throw new ActivationUserException('Invalid link!');
     }
 
     if (user.isConfirmed) {
-      throw new ActivationUserError('User has already been activated!');
+      throw new ActivationUserException('User has already been activated!');
     }
 
     await this.userModel.findOneAndUpdate(
@@ -108,15 +108,15 @@ export class UserController {
     const user = await this.userService.findOneByUsername(username);
 
     if (!user) {
-      throw new AuthorizationUserError('Invalid username!');
+      throw new AuthorizationUserException('Invalid username!');
     }
 
     if (!await User.comparePassword(user, password)) {
-      throw new AuthorizationUserError('Invalid password!');
+      throw new AuthorizationUserException('Invalid password!');
     }
 
     if (!user.isConfirmed) {
-      throw new AuthorizationUserError('User is not activated! Check email to activate user');
+      throw new AuthorizationUserException('User is not activated! Check email to activate user');
     }
 
     const token = this.jwtService.generateToken({ id: user.id }, '7 days');
@@ -169,7 +169,7 @@ export class UserController {
 
         id = newUser.id;
       } catch (error) {
-        throw new CreatingUserError(error.message);
+        throw new CreatingUserException(error.message);
       }
     }
 
