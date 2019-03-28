@@ -44,6 +44,10 @@ export class UserGateway {
     return { event: 'update-current-user', data: null };
   }
 
+  private updateUsersOnline() {
+    this.server.emit('update-users-online', this.getUsersOnlineFromSockets(this.server.sockets.connected));
+  }
+
   private getUsersOnlineFromSockets(sockets: { [key: string]: Socket }): {
     users: User[],
     usersCount: number,
@@ -62,10 +66,6 @@ export class UserGateway {
       users,
       usersCount: Object.keys(sockets).length,
     };
-  }
-
-  updateUsersOnline() {
-    this.server.emit('update-users-online', this.getUsersOnlineFromSockets(this.server.sockets.connected));
   }
 
 }
