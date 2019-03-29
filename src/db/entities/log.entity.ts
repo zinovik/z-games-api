@@ -11,8 +11,7 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 
-import { Game } from '../../db/entities/game.entity';
-import { User } from '../../db/entities/user.entity';
+import { User, Game } from '../../db/entities';
 
 @Entity()
 export class Log extends DefaultNamingStrategy {
