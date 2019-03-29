@@ -3,11 +3,8 @@ import { Connection } from 'typeorm';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
 
-import { Log } from '../db/entities/log.entity';
-import { User } from '../db/entities/user.entity';
-import { ILog } from '../db/interfaces/log.interface';
-import { IUser } from '../db/interfaces/user.interface';
-import { IGame } from '../db/interfaces/game.interface';
+import { User, Log } from '../db/entities';
+import { IUser, ILog, IGame } from '../db/interfaces';
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
 

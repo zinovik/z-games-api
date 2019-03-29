@@ -8,7 +8,7 @@ import { UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 
 import { JwtGuard } from '../guards/jwt.guard';
-import { User } from '../db/entities/user.entity';
+import { User } from '../db/entities';
 
 @WebSocketGateway()
 export class UserGateway {
