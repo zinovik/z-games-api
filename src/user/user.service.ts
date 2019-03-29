@@ -5,8 +5,8 @@ import { Model, Connection as ConnectionMongo } from 'mongoose';
 
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
-import { User } from '../db/entities/user.entity';
-import { IUser } from '../db/interfaces/user.interface';
+import { User } from '../db/entities';
+import { IUser } from '../db/interfaces';
 import {
   USER_FIELDS,
   USER_JOIN_OPENED_GAME,
