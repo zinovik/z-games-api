@@ -17,8 +17,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { Game } from '../../db/entities/game.entity';
-import { Log } from '../../db/entities/log.entity';
+import { Game, Log } from '../../db/entities';
 
 @Entity()
 @Unique(['email'])

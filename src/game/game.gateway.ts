@@ -16,9 +16,7 @@ import { LogService } from '../log/log.service';
 import { LoggerService } from '../logger/logger.service';
 import { JwtGuard } from '../guards/jwt.guard';
 import { JwtService } from '../services/jwt.service';
-import { Game } from '../db/entities/game.entity';
-import { User } from '../db/entities/user.entity';
-import { Log } from '../db/entities/log.entity';
+import { Game, User, Log } from '../db/entities';
 
 @WebSocketGateway()
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -35,7 +33,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly logService: LogService,
     private readonly logger: LoggerService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async handleConnection(client: Socket) {
     const token = client.handshake.query.token;
@@ -555,6 +553,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     message: string;
   }): void {
     this.logger.error(message, '');
-    client.emit('error-message', message);
+    client.emit('error-message', { message });
   }
 }

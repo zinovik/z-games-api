@@ -1,7 +1,6 @@
 import { Document } from 'mongoose';
 
-import { IGame } from './game.interface';
-import { ILog } from './log.interface';
+import { IGame, ILog } from './';
 
 export interface IUser extends Document {
   firstName: string;

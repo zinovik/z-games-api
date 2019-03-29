@@ -7,10 +7,8 @@ import { NoThanks, NO_THANKS } from 'z-games-no-thanks';
 import { Perudo, PERUDO } from 'z-games-perudo';
 import { LostCities, LOST_CITIES } from 'z-games-lost-cities';
 
-import { Game } from '../db/entities/game.entity';
-import { User } from '../db/entities/user.entity';
-import { IUser } from '../db/interfaces/user.interface';
-import { IGame } from '../db/interfaces/game.interface';
+import { User, Game } from '../db/entities';
+import { IUser, IGame } from '../db/interfaces';
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
 import {
