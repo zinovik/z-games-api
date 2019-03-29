@@ -9,9 +9,8 @@ import { Server, Socket } from 'socket.io';
 import { LogService } from '../log/log.service';
 import { LoggerService } from '../logger/logger.service';
 import { JwtGuard } from '../guards/jwt.guard';
-import { User } from '../db/entities/user.entity';
-import { Log } from '../db/entities/log.entity';
-import { ILog } from '../db/interfaces/log.interface';
+import { User, Log } from '../db/entities';
+import { ILog } from '../db/interfaces';
 
 @WebSocketGateway()
 export class LogGateway {
@@ -22,7 +21,7 @@ export class LogGateway {
   constructor(
     private readonly logService: LogService,
     private readonly logger: LoggerService,
-  ) {}
+  ) { }
 
   @UseGuards(JwtGuard)
   @SubscribeMessage('message')
@@ -37,12 +36,12 @@ export class LogGateway {
     },
   ): Promise<void> {
     if (
-      !client.user.currentGames ||
-      !client.user.currentGames.some(currentGame => currentGame.id === gameId)
+      (!client.user.currentGames || !client.user.currentGames.some(game => game.id === gameId)) &&
+      (!client.user.currentWatch || client.user.currentWatch.id !== gameId)
     ) {
       return this.sendError({
         client,
-        message: 'You can\'t make a move if you are not this game player',
+        message: 'You can\'t send a message if you are not this game player',
       });
     }
 
@@ -59,7 +58,7 @@ export class LogGateway {
       return this.sendError({ client, message: error.message });
     }
 
-    this.server.to(client.user.openedGame.id).emit('new-log', log);
+    this.server.to(gameId).emit('new-log', log);
   }
 
   private sendError({
@@ -70,6 +69,6 @@ export class LogGateway {
     message: string;
   }): void {
     this.logger.error(message, '');
-    client.emit('error-message', message);
+    client.emit('error-message', { message });
   }
 }

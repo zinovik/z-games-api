@@ -16,8 +16,7 @@ import {
 } from 'typeorm';
 import { GAME_NOT_STARTED } from 'z-games-base-game';
 
-import { Log } from '../../db/entities/log.entity';
-import { User } from '../../db/entities/user.entity';
+import { User, Log } from '../../db/entities';
 
 @Entity()
 @Unique(['number'])
