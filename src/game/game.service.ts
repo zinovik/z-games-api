@@ -64,11 +64,11 @@ export class GameService {
     this.userModel = this.connectionMongo.model('User');
   }
 
-  public async findOne(gameNumber: number): Promise<Game> {
+  public async findOne(gameNumber: number): Promise<Game | IGame> {
     this.logger.info(`Find one game number ${gameNumber}`);
 
     if (IS_MONGO_USED) {
-      return (this.gameModel as Model<any>)
+      return this.gameModel
         .findOne({ number: gameNumber }, OPEN_GAME_FIELDS_MONGO)
         .populate(...ALL_GAMES_POPULATE_PLAYERS)
         .populate(...OPEN_GAME_POPULATE_WATCHERS)
@@ -178,11 +178,11 @@ export class GameService {
       throw new JoiningGameException('Can\'t join game with maximum players inside');
     }
 
-    if (game.players.some(player => player.id === user.id)) {
+    if (game.players.some((player: User | IUser) => player.id === user.id)) {
       throw new JoiningGameException('Can\'t join game twice');
     }
 
-    if (game.playersOnline.some(playerOnline => playerOnline.id === user.id)) {
+    if (game.playersOnline.some((playerOnline: User | IUser) => playerOnline.id === user.id)) {
       throw new JoiningGameException('Can\'t join opened game');
     }
 
@@ -220,8 +220,8 @@ export class GameService {
     newUser.id = user.id;
     newUser.username = user.username;
 
-    game.players.push(newUser);
-    game.playersOnline.push(newUser);
+    game.players.push(newUser as User & IUser);
+    game.playersOnline.push(newUser as User & IUser);
 
     game.gameData = gameData;
 
@@ -239,11 +239,11 @@ export class GameService {
 
     const game = await this.findOne(gameNumber);
 
-    if (!game.players.some(player => player.id === user.id)) {
+    if (!game.players.some((player: User | IUser) => player.id === user.id)) {
       throw new OpeningGameException('Can\'t open game without joining');
     }
 
-    if (game.playersOnline.some(playerOnline => playerOnline.id === user.id)) {
+    if (game.playersOnline.some((playerOnline: User | IUser) => playerOnline.id === user.id)) {
       throw new OpeningGameException('Can\'t open game twice');
     }
 
@@ -272,7 +272,7 @@ export class GameService {
     newUser.id = user.id;
     newUser.username = user.username;
 
-    game.playersOnline.push(newUser);
+    game.playersOnline.push(newUser as User & IUser);
 
     return await this.connection.getRepository(Game).save(game);
   }
@@ -292,11 +292,11 @@ export class GameService {
       throw new WatchingGameException('Can\'t watch not started game');
     }
 
-    if (game.players.some(player => player.id === user.id)) {
+    if (game.players.some((player: User | IUser) => player.id === user.id)) {
       throw new WatchingGameException('Can\'t watch joining game');
     }
 
-    if (game.watchers.some(watcher => watcher.id === user.id)) {
+    if (game.watchers.some((watcher: User | IUser) => watcher.id === user.id)) {
       throw new WatchingGameException('Can\'t watch game twice');
     }
 
@@ -325,7 +325,7 @@ export class GameService {
     newUser.id = user.id;
     newUser.username = user.username;
 
-    game.watchers.push(newUser);
+    game.watchers.push(newUser as User & IUser);
 
     return await this.connection.getRepository(Game).save(game);
   }
@@ -345,7 +345,7 @@ export class GameService {
       throw new LeavingGameException('Can\'t leave started and not finished game');
     }
 
-    if (!game.players.some(player => player.id === user.id)) {
+    if (!game.players.some((player: User | IUser) => player.id === user.id)) {
       throw new LeavingGameException('Can\'t leave game without joining');
     }
 
@@ -379,8 +379,8 @@ export class GameService {
       return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
     }
 
-    game.players = game.players.filter(player => player.id !== user.id);
-    game.playersOnline = game.players.filter(player => player.id !== user.id);
+    game.players = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
+    game.playersOnline = (game.players as Array<User | IUser>).filter((player: User | IUser) => player.id !== user.id) as User[] | IUser[];
 
     game.gameData = gameData;
 
@@ -398,9 +398,9 @@ export class GameService {
 
     const game = await this.findOne(gameNumber);
 
-    const isUserInPlayers = game.players.some(player => player.id === user.id);
+    const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
     const isUserInWatchers = game.watchers.some(
-      player => player.id === user.id,
+      (player: User | IUser) => player.id === user.id,
     );
 
     if (!isUserInPlayers && !isUserInWatchers) {
@@ -432,11 +432,11 @@ export class GameService {
     }
 
     if (isUserInWatchers) {
-      game.watchers = game.watchers.filter(watcher => watcher.id !== user.id);
+      game.watchers = (game.watchers as Array<User | IUser>).filter(watcher => watcher.id !== user.id) as User[] | IUser[];
     }
 
     if (isUserInPlayers) {
-      game.playersOnline = game.players.filter(player => player.id !== user.id);
+      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
     }
 
     return await this.connection.getRepository(Game).save(game);
@@ -537,7 +537,7 @@ export class GameService {
     nextPlayersIds.forEach(nextPlayerId => {
       const nextUser = new User();
       nextUser.id = nextPlayerId;
-      game.nextPlayers.push(nextUser);
+      game.nextPlayers.push(nextUser as User & IUser);
     });
 
     return this.connection.getRepository(Game).save(game);
@@ -556,7 +556,7 @@ export class GameService {
 
     const game = await this.findOne(gameNumber);
 
-    if (!game.nextPlayers.some(nextPlayer => nextPlayer.id === userId)) {
+    if (!game.nextPlayers.some((nextPlayer: User | IUser) => nextPlayer.id === userId)) {
       throw new MakingMoveException('It\'s not your turn to move');
     }
 
@@ -603,13 +603,13 @@ export class GameService {
       nextPlayersIds.forEach(nextPlayerId => {
         const nextUser = new User();
         nextUser.id = nextPlayerId;
-        game.nextPlayers.push(nextUser);
+        game.nextPlayers.push(nextUser as User & IUser);
       });
     } else {
       const gameDataParsed: BaseGameData = JSON.parse(game.gameData);
 
       if (IS_MONGO_USED) {
-        const playersIds = game.players.map(player => player.id);
+        const playersIds: string[] = (game.players as Array<User | IUser>).map((player: User | IUser) => player.id);
 
         await this.userModel.updateMany(
           { _id: { $in: playersIds } },
@@ -655,7 +655,7 @@ export class GameService {
         return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
       }
 
-      game.players.forEach(player => {
+      game.players.forEach((player: User | IUser) => {
         const user = new User();
 
         user.id = player.id;
@@ -680,7 +680,7 @@ export class GameService {
   }
 
   public parseGameForAllUsers(game: Game): Game {
-    const newGame = { ...game } as any;
+    const newGame = { ...game } as { [key: string]: any };
 
     FIELDS_TO_REMOVE_IN_ALL_GAMES.forEach(field => {
       if (newGame[field]) {

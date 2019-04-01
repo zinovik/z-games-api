@@ -1,6 +1,9 @@
 import { Schema } from 'mongoose';
 import * as uniqueValidator from 'mongoose-unique-validator';
 
+import { CryptService } from './../../services/crypt.service';
+import { IUser } from '../interfaces/user.interface';
+
 const transform = (
   doc: object,
   ret: { id: string; _id: string; __v: string },
@@ -35,5 +38,17 @@ export const userSchema = new Schema(
     timestamps: true,
   },
 );
+
+userSchema.pre('save', async function(next) {
+  const user = this as IUser;
+
+  if (!user.isModified('password')) {
+    return next();
+  }
+
+  const hash = await CryptService.hashPassword(user.password);
+  user.password = hash;
+  next();
+});
 
 userSchema.plugin(uniqueValidator);

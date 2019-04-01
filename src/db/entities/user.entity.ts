@@ -1,4 +1,3 @@
-import * as bcrypt from 'bcrypt';
 import * as uuid from 'uuid';
 import { Exclude } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
@@ -18,32 +17,12 @@ import {
 } from 'typeorm';
 
 import { Game, Log } from '../../db/entities';
+import { CryptService } from '../../services/crypt.service';
 
 @Entity()
 @Unique(['email'])
 @Unique(['username'])
 export class User extends DefaultNamingStrategy {
-  public static hashPassword(password: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      bcrypt.hash(password, 10, (err, hash) => {
-        if (err) {
-          return reject(err);
-        }
-        resolve(hash);
-      });
-    });
-  }
-
-  public static comparePassword(
-    user: User,
-    password: string,
-  ): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-      bcrypt.compare(password, user.password, (err, res) => {
-        resolve(res === true);
-      });
-    });
-  }
 
   @PrimaryColumn('uuid')
   public id: string;
@@ -111,11 +90,11 @@ export class User extends DefaultNamingStrategy {
   }
 
   @BeforeInsert()
-  public async hashPassword(): Promise<void> {
+  public async beforeInsert(): Promise<void> {
     this.id = uuid.v1();
 
     if (this.password) {
-      this.password = await User.hashPassword(this.password);
+      this.password = await CryptService.hashPassword(this.password);
     }
 
     this.gamesPlayed = 0;
