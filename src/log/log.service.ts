@@ -33,7 +33,7 @@ export class LogService {
     text,
   }: {
     type: string;
-    user: User;
+    user: User | IUser;
     gameId: string;
     text?: string;
   }): Promise<Log> {
@@ -67,7 +67,7 @@ export class LogService {
         },
       );
 
-      (newLogMongo as any).user = user;
+      (newLogMongo as ILog).user = user as IUser;
 
       return newLogMongo as any;
     }
