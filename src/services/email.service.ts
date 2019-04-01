@@ -6,6 +6,20 @@ import { ConfigService } from '../config/config.service';
 import { JwtService } from './jwt.service';
 import { LoggerService } from '../logger/logger.service';
 
+export interface ISendGridResult {
+  accepted: string[];
+  rejected: string[];
+  envelopeTime: number;
+  messageTime: number;
+  messageSize: number;
+  response: string;
+  envelope: {
+    from: string,
+    to: string[],
+  };
+  messageId: string;
+}
+
 @Injectable()
 export class EmailService {
 
@@ -24,7 +38,7 @@ export class EmailService {
     });
   }
 
-  public sendRegistrationMail({ id, email }: { id: string, email: string }): Promise<any> {
+  public sendRegistrationMail({ id, email }: { id: string, email: string }): Promise<ISendGridResult> {
     const token = this.jwtService.generateToken({ id }, '2 hours');
     const link = `${ConfigService.get().CLIENT_URL}/activate/${token}`;
 
