@@ -6,8 +6,10 @@ import {
   Req,
   Res,
   Param,
-  UseInterceptors,
+  // UseInterceptors,
   UploadedFile,
+  Request,
+  Response,
 } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
@@ -22,6 +24,7 @@ import { IUser } from '../db/interfaces';
 // import { FileUploadInterceptor } from '../interceptors/file-interceptor';
 import { IGoogleProfile } from './google-profile.interface';
 import { EmailService } from '../services/email.service';
+import { CryptService } from '../services/crypt.service';
 
 @Controller('users')
 export class UserController {
@@ -38,22 +41,31 @@ export class UserController {
   }
 
   @Get()
-  getAllUsers(): Promise<User[]> {
+  getAllUsers(): Promise<User[] | IUser[]> {
     return this.userService.getAllUsers();
   }
 
   @Get(':userId')
-  findOneByUserId(@Param('userId') userId: string): Promise<User> {
+  findOneByUserId(@Param('userId') userId: string): Promise<User | IUser> {
     return this.userService.findOneByUserId(userId);
   }
 
   @Post('register')
   async register(
-    @Req() { body: { username, password, email } }: { body: { username: string, password: string, email: string } },
-    @Res() res: any,
+    @Req() { body: { username, password, email } }: Request & { body: { username: string, password: string, email: string } },
+    @Res() res: Response & { send: (user: User | IUser) => null },
   ) {
     if (!password || !email || !username) {
       throw new CreatingUserException('All fields are are required!');
+    }
+
+    const isUsernameOk = /^(?=.{6,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/.test(username);
+    const isPasswordOk = /[0-9a-zA-Z]{6,20}/.test(password);
+    const isEmailOk =
+      /^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/.test(email);
+
+    if (!isUsernameOk || !isPasswordOk || !isEmailOk) {
+      throw new CreatingUserException('Error fields validation!');
     }
 
     let user: User | IUser;
@@ -78,7 +90,10 @@ export class UserController {
   }
 
   @Post('activate')
-  async activate(@Req() { body: { token: activationToken } }: { body: { token: string } }, @Res() res: any) {
+  async activate(
+    @Req() { body: { token: activationToken } }: Request & { body: { token: string } },
+    @Res() res: Response & { send: ({ token }: { token: string }) => null },
+  ) {
     const userId = this.jwtService.getUserIdByToken(activationToken);
 
     const user = await this.userService.findOneByUserId(userId);
@@ -104,14 +119,17 @@ export class UserController {
   }
 
   @Post('authorize')
-  async authorize(@Req() { body: { username, password } }: { body: { username: string, password: string } }, @Res() res: any) {
+  async authorize(
+    @Req() { body: { username, password } }: Request & { body: { username: string, password: string } },
+    @Res() res: Response & { send: ({ token }: { token: string }) => null },
+  ) {
     const user = await this.userService.findOneByUsername(username);
 
     if (!user) {
       throw new AuthorizationUserException('Invalid username!');
     }
 
-    if (!await User.comparePassword(user, password)) {
+    if (!await CryptService.comparePassword(password, user.password)) {
       throw new AuthorizationUserException('Invalid password!');
     }
 
@@ -129,8 +147,8 @@ export class UserController {
   // @UseInterceptors(FileUploadInterceptor)
   async updateAvatar(
     @UploadedFile() file: any,
-    @Req() req: any,
-    @Res() res: any,
+    @Req() req: Request,
+    @Res() res: Response,
   ) {
     // const user = await this.userService.updateAvatar(req.user.email, file && file.secure_url);
     // res.send(user);
@@ -146,7 +164,7 @@ export class UserController {
   @UseGuards(GoogleGuard)
   async googleAuthCallback(
     @Req() req: { user: IGoogleProfile },
-    @Res() res: { redirect: (url: string) => void },
+    @Res() res: Response & { redirect: (url: string) => void },
   ) {
     const user = await this.userService.findOneByEmail(
       req.user.emails[0].value,

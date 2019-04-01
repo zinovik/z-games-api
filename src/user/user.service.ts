@@ -5,6 +5,7 @@ import { Model, Connection as ConnectionMongo } from 'mongoose';
 
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
+import { CryptService } from '../services/crypt.service';
 import { User } from '../db/entities';
 import { IUser } from '../db/interfaces';
 import {
@@ -12,6 +13,7 @@ import {
   USER_JOIN_OPENED_GAME,
   USER_JOIN_CURRENT_GAMES,
   USER_JOIN_CURRENT_WATCH,
+  ALL_USER_FIELDS,
   ALL_USER_FIELDS_MONGO,
   USER_FIELDS_MONGO,
   USER_POPULATE_OPENED_GAME,
@@ -34,9 +36,9 @@ export class UserService {
     this.userModel = this.connectionMongo.model('User');
   }
 
-  public getAllUsers(): Promise<User[]> {
+  public getAllUsers(): Promise<User[] | IUser[]> {
     if (IS_MONGO_USED) {
-      return (this.userModel as Model<any>)
+      return this.userModel
         .find({}, ALL_USER_FIELDS_MONGO, {
           sort: {
             gamesWon: -1,
@@ -47,14 +49,19 @@ export class UserService {
         .exec();
     }
 
-    // TODO PostgreSQL
+    // TODO Add sorting
+    return this.connection
+      .getRepository(User)
+      .createQueryBuilder('user')
+      .select(ALL_USER_FIELDS)
+      .getMany();
   }
 
-  public findOneByEmail(email: string): Promise<User> {
+  public findOneByEmail(email: string): Promise<User | IUser> {
     this.logger.info(`Find one user by email: ${email}`);
 
     if (IS_MONGO_USED) {
-      return (this.userModel as Model<any>)
+      return this.userModel
         .findOne({ email }, USER_FIELDS_MONGO)
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
@@ -73,11 +80,11 @@ export class UserService {
       .getOne();
   }
 
-  public findOneByUserId(userId: string): Promise<User> {
+  public findOneByUserId(userId: string): Promise<User | IUser> {
     this.logger.info(`Find one user by user id: ${userId}`);
 
     if (IS_MONGO_USED) {
-      return (this.userModel as Model<any>)
+      return this.userModel
         .findOne({ _id: userId }, USER_FIELDS_MONGO)
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
@@ -96,11 +103,11 @@ export class UserService {
       .getOne();
   }
 
-  public findOneByUsername(username: string): Promise<User> {
+  public findOneByUsername(username: string): Promise<User | IUser> {
     this.logger.info(`Find one user by username: ${username}`);
 
     if (IS_MONGO_USED) {
-      return (this.userModel as Model<any>)
+      return this.userModel
         .findOne({ username }, USER_FIELDS_MONGO)
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
@@ -153,9 +160,6 @@ export class UserService {
     }
 
     if (IS_MONGO_USED) {
-      if (!provider) {
-        user.password = await User.hashPassword(password); // TODO: Update mongo model to hash password
-      }
       const userMongo = new this.userModel(user);
 
       return userMongo.save();
