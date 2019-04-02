@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
-import { BaseGame, BaseGameData, BaseGamePlayer, GAME_STARTED, GAME_FINISHED } from 'z-games-base-game';
-import { NoThanks, NO_THANKS } from 'z-games-no-thanks';
-import { Perudo, PERUDO } from 'z-games-perudo';
-import { LostCities, LOST_CITIES } from 'z-games-lost-cities';
+import { BaseGame, IBaseGameData, IBaseGamePlayer, GAME_STARTED, GAME_FINISHED } from 'z-games-base-game';
+import { NoThanks, NAME as NO_THANKS } from 'z-games-no-thanks';
+import { Perudo, NAME as PERUDO } from 'z-games-perudo';
+import { LostCities, NAME as LOST_CITIES } from 'z-games-lost-cities';
 
 import { User, Game } from '../db/entities';
 import { IUser, IGame } from '../db/interfaces';
@@ -606,7 +606,7 @@ export class GameService {
         game.nextPlayers.push(nextUser as User & IUser);
       });
     } else {
-      const gameDataParsed: BaseGameData = JSON.parse(game.gameData);
+      const gameDataParsed: IBaseGameData = JSON.parse(game.gameData);
 
       if (IS_MONGO_USED) {
         const playersIds: string[] = (game.players as Array<User | IUser>).map((player: User | IUser) => player.id);
@@ -620,10 +620,7 @@ export class GameService {
           },
         );
 
-        const playerWonId = gameDataParsed.players.find(
-          (playerInGame: BaseGamePlayer) =>
-            playerInGame.place === 1 || playerInGame.place === 0,
-        ).id;
+        const playerWonId = gameDataParsed.players.find(gamePlayer => gamePlayer.place === 1 || gamePlayer.place === 0).id;
 
         await this.userModel.findOneAndUpdate(
           { _id: playerWonId },
@@ -661,11 +658,7 @@ export class GameService {
         user.id = player.id;
         user.gamesPlayed = player.gamesPlayed + 1;
 
-        if (
-          gameDataParsed.players.find(
-            (playerInGame: BaseGamePlayer) => playerInGame.id === player.id,
-          ).place === 1
-        ) {
+        if (gameDataParsed.players.find(gamePlayer => gamePlayer.id === player.id).place === 1) {
           user.gamesWon = player.gamesWon + 1;
         }
 
