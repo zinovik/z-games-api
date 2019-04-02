@@ -2,7 +2,7 @@
   "name": "z-games-api",
   "version": "0.1.0",
   "private": false,
-  "description": "Back-end part of tiny board games portal",
+  "description": "A back-end part of the tiny board games portal",
   "license": "Apache-2.0",
   "repository": "git+ssh://git@github.com:zinovik/z-games-api.git",
   "keywords": [
@@ -53,7 +53,7 @@
     "@types/jsonwebtoken": "^8.3.2",
     "@types/mongoose": "^5.3.24",
     "@types/mongoose-unique-validator": "^1.0.1",
-    "@types/node": "^11.12.1",
+    "@types/node": "^11.13.0",
     "@types/nodemailer": "^4.6.7",
     "@types/passport-google-oauth": "^1.0.39",
     "@types/pug": "^2.0.4",
@@ -81,12 +81,12 @@
     "ts-node": "^8.0.3",
     "tsconfig-paths": "^3.8.0",
     "typeorm": "^0.2.16",
-    "typescript": "^3.3.4000",
-    "z-games-base-game": "^0.0.16",
-    "z-games-lost-cities": "^0.0.11",
-    "z-games-no-thanks": "^0.0.12",
-    "z-games-perudo": "^0.0.10",
-    "z-games-six-nimmt": "^0.0.10"
+    "typescript": "^3.4.1",
+    "z-games-base-game": "^0.0.17",
+    "z-games-lost-cities": "^0.0.12",
+    "z-games-no-thanks": "^0.0.13",
+    "z-games-perudo": "^0.0.11",
+    "z-games-six-nimmt": "^0.0.11"
   },
   "devDependencies": {
     "jest": "^24.5.0",
