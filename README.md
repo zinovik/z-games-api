@@ -12,7 +12,7 @@ The project consists of two main parts and several games modules:
 - [Game template](https://github.com/zinovik/z-games-base-game)
 - [No, Thanks game](https://github.com/zinovik/z-games-no-thanks) [[wiki](https://en.wikipedia.org/wiki/No_Thanks!_(game))]
 - [Perudo game](https://github.com/zinovik/z-games-perudo) [[wiki](https://en.wikipedia.org/wiki/Dudo)]
-- [Lost cities game](https://github.com/zinovik/z-games-lost-cities) [[wiki](https://en.wikipedia.org/wiki/Lost_Cities)] (in development)
+- [Lost cities game](https://github.com/zinovik/z-games-lost-cities) [[wiki](https://en.wikipedia.org/wiki/Lost_Cities)]
 - [6 nimmt! game](https://github.com/zinovik/z-games-six-nimmt) [[wiki](https://en.wikipedia.org/wiki/6_Nimmt!)] (in development)
 
 # Where #
