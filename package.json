@@ -83,7 +83,7 @@
     "typeorm": "^0.2.16",
     "typescript": "^3.4.1",
     "z-games-base-game": "^0.0.17",
-    "z-games-lost-cities": "^0.0.12",
+    "z-games-lost-cities": "^0.0.13",
     "z-games-no-thanks": "^0.0.13",
     "z-games-perudo": "^0.0.11",
     "z-games-six-nimmt": "^0.0.11"
