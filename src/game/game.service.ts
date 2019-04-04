@@ -606,7 +606,7 @@ export class GameService {
         game.nextPlayers.push(nextUser as User & IUser);
       });
     } else {
-      const gameDataParsed: IBaseGameData = JSON.parse(game.gameData);
+      const gameDataParsed: IBaseGameData = JSON.parse(gameData);
 
       if (IS_MONGO_USED) {
         const playersIds: string[] = (game.players as Array<User | IUser>).map((player: User | IUser) => player.id);
@@ -620,7 +620,7 @@ export class GameService {
           },
         );
 
-        const playerWonId = gameDataParsed.players.find(gamePlayer => gamePlayer.place === 1 || gamePlayer.place === 0).id;
+        const playerWonId = gameDataParsed.players.find(gamePlayer => gamePlayer.place === 1).id;
 
         await this.userModel.findOneAndUpdate(
           { _id: playerWonId },
