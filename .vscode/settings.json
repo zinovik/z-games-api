@@ -2,7 +2,8 @@
   "editor.tabSize": 2,
   "importSorter.importStringConfiguration.tabSize": 2,
   "cSpell.words": [
-    "perudo"
+    "perudo",
+    "nimmt"
   ],
   "mongoRunner": {
     "connections": [{
