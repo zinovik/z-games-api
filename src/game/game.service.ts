@@ -2,15 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
-import { BaseGame, IBaseGameData, IBaseGamePlayer, GAME_STARTED, GAME_FINISHED } from 'z-games-base-game';
-import { NoThanks, NAME as NO_THANKS } from 'z-games-no-thanks';
-import { Perudo, NAME as PERUDO } from 'z-games-perudo';
-import { LostCities, NAME as LOST_CITIES } from 'z-games-lost-cities';
+import { IBaseGameData, GAME_STARTED, GAME_FINISHED } from 'z-games-base-game';
 
 import { User, Game } from '../db/entities';
 import { IUser, IGame } from '../db/interfaces';
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
+import { GamesServices } from '../games';
 import {
   JoiningGameException,
   OpeningGameException,
@@ -43,12 +41,6 @@ import {
 } from '../db/scopes/Game';
 
 const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
-
-const gamesServices: { [key: string]: BaseGame } = {
-  [NO_THANKS]: NoThanks.Instance,
-  [PERUDO]: Perudo.Instance,
-  [LOST_CITIES]: LostCities.Instance,
-};
 
 @Injectable()
 export class GameService {
@@ -136,9 +128,7 @@ export class GameService {
   public async newGame(name: string): Promise<Game> {
     this.logger.info(`New ${name} game`);
 
-    const { playersMax, playersMin, gameData } = gamesServices[
-      name
-    ].getNewGame();
+    const { playersMax, playersMin, gameData } = GamesServices[name].getNewGame();
 
     const game = new Game();
     game.name = name;
@@ -186,7 +176,7 @@ export class GameService {
       throw new JoiningGameException('Can\'t join opened game');
     }
 
-    const gameData = gamesServices[game.name].addPlayer({
+    const gameData = GamesServices[game.name].addPlayer({
       gameData: game.gameData,
       userId: user.id,
     });
@@ -349,7 +339,7 @@ export class GameService {
       throw new LeavingGameException('Can\'t leave game without joining');
     }
 
-    const gameData = gamesServices[game.name].removePlayer({
+    const gameData = GamesServices[game.name].removePlayer({
       gameData: game.gameData,
       userId: user.id,
     });
@@ -453,7 +443,7 @@ export class GameService {
 
     const game = await this.findOne(gameNumber);
 
-    const gameData = gamesServices[game.name].toggleReady({
+    const gameData = GamesServices[game.name].toggleReady({
       gameData: game.gameData,
       userId: user.id,
     });
@@ -491,11 +481,11 @@ export class GameService {
       throw new StartingGameException('Too many players');
     }
 
-    if (!gamesServices[game.name].checkReady(game.gameData)) {
+    if (!GamesServices[game.name].checkReady(game.gameData)) {
       throw new StartingGameException('Not all players are ready');
     }
 
-    const { gameData, nextPlayersIds } = gamesServices[game.name].startGame(
+    const { gameData, nextPlayersIds } = GamesServices[game.name].startGame(
       game.gameData,
     );
 
@@ -560,7 +550,7 @@ export class GameService {
       throw new MakingMoveException('It\'s not your turn to move');
     }
 
-    const { gameData, nextPlayersIds } = gamesServices[game.name].makeMove({
+    const { gameData, nextPlayersIds } = GamesServices[game.name].makeMove({
       gameData: game.gameData,
       move,
       userId,
@@ -692,7 +682,7 @@ export class GameService {
       } as Game;
     }
 
-    const gameData = gamesServices[game.name].parseGameDataForUser({
+    const gameData = GamesServices[game.name].parseGameDataForUser({
       gameData: game.gameData,
       userId: user.id,
     });
