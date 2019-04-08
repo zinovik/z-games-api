@@ -155,11 +155,11 @@ export class UserService {
       user.lastName = lastName;
       user.avatar = avatar;
     } else {
-      // TODO: Add email regexp verification
       user.password = password;
     }
 
     if (IS_MONGO_USED) {
+      // user.createdGames = [];
       const userMongo = new this.userModel(user);
 
       return userMongo.save();
