@@ -4,8 +4,6 @@ export const ALL_USER_FIELDS = [
   'user.id',
   'user.username',
   'user.avatar',
-  'user.firstName',
-  'user.lastName',
   'user.createdAt',
   'user.gamesPlayed',
   'user.gamesWon',
@@ -48,7 +46,7 @@ export const USER_JOIN_CURRENT_WATCH: [string, string] = [
 // MongoDB
 
 export const ALL_USER_FIELDS_MONGO =
-  'id username avatar firstName lastName createdAt gamesPlayed gamesWon';
+  'id username avatar createdAt gamesPlayed gamesWon';
 
 export const USER_FIELDS_MONGO =
   'id username password avatar email firstName lastName createdAt updatedAt isConfirmed';

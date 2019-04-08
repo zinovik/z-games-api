@@ -13,6 +13,8 @@ import {
   PrimaryColumn,
   Unique,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { GAME_NOT_STARTED } from 'z-games-base-game';
 
@@ -76,6 +78,10 @@ export class Game extends DefaultNamingStrategy {
   @IsNotEmpty()
   @UpdateDateColumn({ name: 'updated_at' })
   public updatedAt: Date;
+
+  // @ManyToOne(type => User, user => user.createdGames)
+  // @JoinColumn({ name: 'opened_game' })
+  // public createdBy: User;
 
   @OneToMany(type => Log, log => log.game)
   public logs: Log[];
