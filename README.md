@@ -19,7 +19,7 @@ The project consists of two main parts and several games modules:
 
 There are two environments where you can check current versions:
 1. Development (dev branch) (https://z-games-dev.herokuapp.com)
-2. Production (master branch) (http://www.z-games.club)
+2. Production (master branch) (http://z-games.club)
 
 # How #
 
