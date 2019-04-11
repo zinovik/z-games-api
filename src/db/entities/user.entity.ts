@@ -64,7 +64,7 @@ export class User extends DefaultNamingStrategy {
   public currentWatch: Game;
 
   @ManyToMany(type => Game, game => game.nextPlayers)
-  public currentMove: Game[];
+  public currentMoves: Game[];
 
   @IsNotEmpty()
   @Column({ name: 'games_played' })

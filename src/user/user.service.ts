@@ -5,7 +5,6 @@ import { Model, Connection as ConnectionMongo } from 'mongoose';
 
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
-import { CryptService } from '../services/crypt.service';
 import { User } from '../db/entities';
 import { IUser } from '../db/interfaces';
 import {

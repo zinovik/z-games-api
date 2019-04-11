@@ -27,7 +27,7 @@ export const userSchema = new Schema(
     openedGame: { type: Schema.Types.ObjectId, ref: 'Game' },
     currentGames: [{ type: Schema.Types.ObjectId, ref: 'Game' }],
     currentWatch: { type: Schema.Types.ObjectId, ref: 'Game' },
-    currentMove: [{ type: Schema.Types.ObjectId, ref: 'Game' }],
+    currentMoves: [{ type: Schema.Types.ObjectId, ref: 'Game' }],
     gamesPlayed: { type: Number, required: true, default: 0 },
     gamesWon: { type: Number, required: true, default: 0 },
     logs: [{ type: Schema.Types.ObjectId, ref: 'Log' }],
