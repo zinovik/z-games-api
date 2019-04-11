@@ -10,11 +10,19 @@ export const ALL_GAMES_FIELDS = [
   'game.createdAt',
   'game.updatedAt',
   'players.username',
+  'players.id',
+  'nextPlayers.username',
+  'nextPlayers.id',
 ];
 
 export const ALL_GAMES_JOIN_PLAYERS: [string, string] = [
   'game.players',
   'players',
+];
+
+export const ALL_GAMES_JOIN_NEXT_PLAYERS: [string, string] = [
+  'game.nextPlayers',
+  'nextPlayers',
 ];
 
 export const OPEN_GAME_FIELDS = [
@@ -30,8 +38,6 @@ export const OPEN_GAME_FIELDS = [
   'watchers.id',
   'playersOnline.username',
   'playersOnline.id',
-  'nextPlayers.username',
-  'nextPlayers.id',
   'logs.type',
   'logs.text',
   'logs.createdAt',
@@ -47,11 +53,6 @@ export const OPEN_GAME_JOIN_WATCHERS: [string, string] = [
 export const OPEN_GAME_JOIN_PLAYERS_ONLINE: [string, string] = [
   'game.playersOnline',
   'playersOnline',
-];
-
-export const OPEN_GAME_JOIN_NEXT_PLAYERS: [string, string] = [
-  'game.nextPlayers',
-  'nextPlayers',
 ];
 
 export const OPEN_GAME_JOIN_LOGS: [string, string] = ['game.logs', 'logs'];
@@ -79,6 +80,11 @@ export const ALL_GAMES_FIELDS_MONGO =
 
 export const ALL_GAMES_POPULATE_PLAYERS: [string, string] = [
   'players',
+  'username avatar gamesPlayed gamesWon',
+];
+
+export const ALL_GAMES_POPULATE_NEXT_PLAYERS: [string, string] = [
+  'nextPlayers',
   'username avatar gamesPlayed gamesWon',
 ];
 
