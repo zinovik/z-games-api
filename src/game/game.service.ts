@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
-import { IBaseGameData, GAME_STARTED, GAME_FINISHED } from 'z-games-base-game';
+import { IBaseGameData, GAME_NOT_STARTED, GAME_STARTED, GAME_FINISHED } from 'z-games-base-game';
 
 import { User, Game } from '../db/entities';
 import { IUser, IGame } from '../db/interfaces';
@@ -21,9 +21,9 @@ import {
 import {
   OPEN_GAME_FIELDS,
   ALL_GAMES_JOIN_PLAYERS,
+  ALL_GAMES_JOIN_NEXT_PLAYERS,
   OPEN_GAME_JOIN_WATCHERS,
   OPEN_GAME_JOIN_PLAYERS_ONLINE,
-  OPEN_GAME_JOIN_NEXT_PLAYERS,
   OPEN_GAME_JOIN_LOGS,
   OPEN_GAME_JOIN_LOGS_USERNAMES,
   LOGS_FIELD_ORDER_BY,
@@ -31,6 +31,7 @@ import {
   ALL_GAMES_FIELDS,
   ALL_GAMES_FIELDS_MONGO,
   ALL_GAMES_POPULATE_PLAYERS,
+  ALL_GAMES_POPULATE_NEXT_PLAYERS,
   OPEN_GAME_FIELDS_MONGO,
   OPEN_GAME_POPULATE_WATCHERS,
   OPEN_GAME_POPULATE_PLAYERS_ONLINE,
@@ -63,6 +64,7 @@ export class GameService {
       return this.gameModel
         .findOne({ number: gameNumber }, OPEN_GAME_FIELDS_MONGO)
         .populate(...ALL_GAMES_POPULATE_PLAYERS)
+        .populate(...ALL_GAMES_POPULATE_NEXT_PLAYERS)
         .populate(...OPEN_GAME_POPULATE_WATCHERS)
         .populate(...OPEN_GAME_POPULATE_PLAYERS_ONLINE)
         .populate(...OPEN_GAME_POPULATE_NEXT_PLAYERS)
@@ -83,9 +85,9 @@ export class GameService {
       .createQueryBuilder('game')
       .select(OPEN_GAME_FIELDS)
       .leftJoin(...ALL_GAMES_JOIN_PLAYERS)
+      .leftJoin(...ALL_GAMES_JOIN_NEXT_PLAYERS)
       .leftJoin(...OPEN_GAME_JOIN_WATCHERS)
       .leftJoin(...OPEN_GAME_JOIN_PLAYERS_ONLINE)
-      .leftJoin(...OPEN_GAME_JOIN_NEXT_PLAYERS)
       .leftJoin(...OPEN_GAME_JOIN_LOGS)
       .leftJoin(...OPEN_GAME_JOIN_LOGS_USERNAMES)
       .where({ number: gameNumber })
@@ -110,6 +112,7 @@ export class GameService {
           await this.gameModel
             .find({}, ALL_GAMES_FIELDS_MONGO)
             .populate(...ALL_GAMES_POPULATE_PLAYERS)
+            .populate(...ALL_GAMES_POPULATE_NEXT_PLAYERS)
             .sort({ number: -1 })
             .exec(),
         ),
@@ -121,6 +124,7 @@ export class GameService {
       .createQueryBuilder('game')
       .select(ALL_GAMES_FIELDS)
       .leftJoin(...ALL_GAMES_JOIN_PLAYERS)
+      .leftJoin(...ALL_GAMES_JOIN_NEXT_PLAYERS)
       .orderBy({ number: 'DESC' })
       .getMany();
   }
@@ -485,6 +489,10 @@ export class GameService {
       throw new StartingGameException('Not all players are ready');
     }
 
+    if (game.state !== GAME_NOT_STARTED) {
+      throw new StartingGameException('You can\'t start started game');
+    }
+
     const { gameData, nextPlayersIds } = GamesServices[game.name].startGame(
       game.gameData,
     );
@@ -503,7 +511,7 @@ export class GameService {
         {},
         {
           $pull: {
-            currentMove: game.id,
+            currentMoves: game.id,
           },
         },
       );
@@ -512,7 +520,7 @@ export class GameService {
         { _id: { $in: nextPlayersIds } },
         {
           $push: {
-            currentMove: game.id,
+            currentMoves: game.id,
           },
         },
       );
@@ -570,7 +578,7 @@ export class GameService {
           {},
           {
             $pull: {
-              currentMove: game.id,
+              currentMoves: game.id,
             },
           },
         );
@@ -579,7 +587,7 @@ export class GameService {
           { _id: { $in: nextPlayersIds } },
           {
             $push: {
-              currentMove: game.id,
+              currentMoves: game.id,
             },
           },
         );
@@ -634,7 +642,7 @@ export class GameService {
           {},
           {
             $pull: {
-              currentMove: game.id,
+              currentMoves: game.id,
             },
           },
         );
