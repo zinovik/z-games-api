@@ -67,7 +67,7 @@ export class Game extends DefaultNamingStrategy {
   @OneToMany(type => User, user => user.currentWatch)
   public watchers: User[];
 
-  @ManyToMany(type => User, user => user.currentMove)
+  @ManyToMany(type => User, user => user.currentMoves)
   @JoinTable({ name: 'user_current_move_to_game_next_players' })
   public nextPlayers: User[];
 
