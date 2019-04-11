@@ -86,7 +86,7 @@
     "z-games-lost-cities": "^0.0.15",
     "z-games-no-thanks": "^0.0.13",
     "z-games-perudo": "^0.0.12",
-    "z-games-six-nimmt": "^0.0.15"
+    "z-games-six-nimmt": "^0.0.16"
   },
   "devDependencies": {
     "jest": "^24.5.0",
