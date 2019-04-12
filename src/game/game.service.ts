@@ -40,6 +40,7 @@ import {
   OPEN_GAME_POPULATE_LOGS_USERNAMES,
   LOGS_FIELD_ORDER_BY_MONGO,
 } from '../db/scopes/Game';
+import { IFilterSettings } from './IFilterSettings.interface';
 
 const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
@@ -95,15 +96,7 @@ export class GameService {
       .getOne();
   }
 
-  public async getAllGames({
-    ignoreNotStarted,
-    ignoreStarted,
-    ignoreFinished,
-  }: {
-    ignoreNotStarted?: boolean;
-    ignoreStarted?: boolean;
-    ignoreFinished?: boolean;
-  }): Promise<Game[]> {
+  public async getAllGames(filterSettings: IFilterSettings): Promise<Game[]> {
     this.logger.info('Get all games');
 
     if (IS_MONGO_USED) {
@@ -699,7 +692,7 @@ export class GameService {
   }
 
   private async getNewGameNumber(): Promise<number> {
-    const allGames = await this.getAllGames({});
+    const allGames = await this.getAllGames({} as IFilterSettings);
 
     const allGamesSorted = allGames.sort(
       (game1, game2) => game2.number - game1.number,
