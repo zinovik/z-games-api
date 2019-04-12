@@ -17,6 +17,7 @@ import { LoggerService } from '../logger/logger.service';
 import { JwtGuard } from '../guards/jwt.guard';
 import { JwtService } from '../services/jwt.service';
 import { Game, User, Log } from '../db/entities';
+import { IFilterSettings } from './IFilterSettings.interface';
 
 @WebSocketGateway()
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -126,15 +127,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('get-all-games')
   async getAllGames(
     client: Socket,
-    conditions: {
-      ignoreNotStarted: boolean;
-      ignoreStarted: boolean;
-      ignoreFinished: boolean;
-    },
+    filterSettings: IFilterSettings,
   ): Promise<WsResponse<Game[]>> {
     return {
       event: 'all-games',
-      data: await this.gameService.getAllGames(conditions),
+      data: await this.gameService.getAllGames(filterSettings),
     };
   }
 
@@ -172,7 +169,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client: Socket & { user: User },
     name: string,
   ): Promise<void> {
-    const game = await this.gameService.newGame(name);
+    let game = await this.gameService.newGame(name);
 
     try {
       await this.logService.create({
@@ -185,6 +182,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     this.server.emit('new-game', this.gameService.parseGameForAllUsers(game));
+
+    await this.joinGame(client, game.number);
   }
 
   @UseGuards(JwtGuard)
