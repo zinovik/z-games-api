@@ -79,9 +79,9 @@ export class Game extends DefaultNamingStrategy {
   @UpdateDateColumn({ name: 'updated_at' })
   public updatedAt: Date;
 
-  // @ManyToOne(type => User, user => user.createdGames)
-  // @JoinColumn({ name: 'opened_game' })
-  // public createdBy: User;
+  @ManyToOne(type => User, user => user.createdGames)
+  @JoinColumn({ name: 'opened_game' })
+  public createdBy: User;
 
   @OneToMany(type => Log, log => log.game)
   public logs: Log[];
