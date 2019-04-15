@@ -8,7 +8,7 @@ import { User, Game } from '../db/entities';
 import { IUser, IGame } from '../db/interfaces';
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
-import { GamesServices } from '../games';
+import { GamesServices, gamesNames } from '../games';
 import {
   JoiningGameException,
   OpeningGameException,
@@ -96,8 +96,34 @@ export class GameService {
       .getOne();
   }
 
-  public async getAllGames(filterSettings: IFilterSettings): Promise<Game[]> {
+  public async getAllGames(filterSettings?: IFilterSettings, userId?: string): Promise<Game[]> {
     this.logger.info('Get all games');
+
+    const isEmptyFilter = !filterSettings || !Object.keys(filterSettings).length;
+
+    const { isNotStarted, isStarted, isFinished, isWithMe, isWithoutMe, isMyMove, isNotMyMove, isGames, limit, offset } = filterSettings || {} as any;
+
+    const stateFilter: number[] = [];
+
+    if (isNotStarted || isEmptyFilter) {
+      stateFilter.push(GAME_NOT_STARTED);
+    }
+
+    if (isStarted || isEmptyFilter) {
+      stateFilter.push(GAME_STARTED);
+    }
+
+    if (isFinished || isEmptyFilter) {
+      stateFilter.push(GAME_FINISHED);
+    }
+
+    const gameNameFilter: string[] = [];
+
+    gamesNames.forEach(gamesName => {
+      if ((isGames && isGames[gamesName]) || isEmptyFilter) {
+        gameNameFilter.push(gamesName);
+      }
+    });
 
     if (IS_MONGO_USED) {
       return JSON.parse(
@@ -106,11 +132,17 @@ export class GameService {
             .find({}, ALL_GAMES_FIELDS_MONGO)
             .populate(...ALL_GAMES_POPULATE_PLAYERS)
             .populate(...ALL_GAMES_POPULATE_NEXT_PLAYERS)
+            .where('state').in(stateFilter)
+            .where('name').in(gameNameFilter)
+            .limit(limit)
+            .skip(offset)
             .sort({ number: -1 })
             .exec(),
         ),
       );
     }
+
+    // TODO: Filter in SQL DB
 
     return await this.connection
       .getRepository(Game)
@@ -122,7 +154,7 @@ export class GameService {
       .getMany();
   }
 
-  public async newGame(name: string): Promise<Game> {
+  public async newGame(name: string, userId: string): Promise<Game> {
     this.logger.info(`New ${name} game`);
 
     const { playersMax, playersMin, gameData } = GamesServices[name].getNewGame();
@@ -138,10 +170,24 @@ export class GameService {
     if (IS_MONGO_USED) {
       game.number = await this.getNewGameNumber();
 
-      const gameMongo = new this.gameModel(game);
+      (game as any).createdBy = userId;
 
-      return JSON.parse(JSON.stringify(await gameMongo.save()));
+      const gameMongo = new this.gameModel(game);
+      const gameMongoNew = await gameMongo.save();
+
+      await this.userModel.findOneAndUpdate(
+        { _id: userId },
+        {
+          $push: {
+            createdGames: gameMongoNew.id,
+          },
+        },
+      );
+
+      return JSON.parse(JSON.stringify(gameMongoNew));
     }
+
+    // TODO: CreatedBy SQL
 
     return await this.connection.getRepository(Game).save(game);
   }
@@ -429,6 +475,61 @@ export class GameService {
     return await this.connection.getRepository(Game).save(game);
   }
 
+  public async removeGame({
+    user,
+    gameNumber,
+  }: {
+    user: User;
+    gameNumber: number;
+  }): Promise<Game> {
+    this.logger.info(`Remove game number ${gameNumber}`);
+
+    const game = await this.findOne(gameNumber);
+
+    const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
+    const isUserInWatchers = game.watchers.some(
+      (player: User | IUser) => player.id === user.id,
+    );
+
+    if (!isUserInPlayers && !isUserInWatchers) {
+      throw new ClosingGameException(
+        'Can\'t close game without joining or watching',
+      );
+    }
+
+    if (IS_MONGO_USED) {
+      await this.gameModel.findOneAndUpdate(
+        { _id: game.id },
+        {
+          $pull: {
+            watchers: user.id,
+            playersOnline: user.id,
+          },
+        },
+      );
+
+      await this.userModel.findOneAndUpdate(
+        { _id: user.id },
+        {
+          openedGame: null,
+          currentWatch: null,
+        },
+      );
+
+      return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+    }
+
+    if (isUserInWatchers) {
+      game.watchers = (game.watchers as Array<User | IUser>).filter(watcher => watcher.id !== user.id) as User[] | IUser[];
+    }
+
+    if (isUserInPlayers) {
+      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
+    }
+
+    return await this.connection.getRepository(Game).save(game);
+  }
+
   public async toggleReady({
     user,
     gameNumber,
@@ -443,6 +544,43 @@ export class GameService {
     const gameData = GamesServices[game.name].toggleReady({
       gameData: game.gameData,
       userId: user.id,
+    });
+
+    if (IS_MONGO_USED) {
+      await this.gameModel.findOneAndUpdate(
+        { _id: game.id },
+        {
+          gameData,
+        },
+      );
+
+      return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+    }
+
+    game.gameData = gameData;
+
+    return await this.connection.getRepository(Game).save(game);
+  }
+
+  public async updateOption({
+    user,
+    gameNumber,
+    name,
+    value,
+  }: {
+    user: User;
+    gameNumber: number;
+    name: string,
+    value: string,
+  }): Promise<Game> {
+    this.logger.info(`Update option game number ${gameNumber}`);
+
+    const game = await this.findOne(gameNumber);
+
+    const gameData = GamesServices[game.name].updateOption({
+      gameData: game.gameData,
+      name,
+      value,
     });
 
     if (IS_MONGO_USED) {

@@ -18,5 +18,5 @@ export interface IGame extends Document {
   logs: ILog[];
   createdAt: Date;
   updatedAt: Date;
-  // createdBy: IUser;
+  createdBy: IUser;
 }

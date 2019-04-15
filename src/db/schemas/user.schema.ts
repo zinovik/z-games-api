@@ -31,6 +31,7 @@ export const userSchema = new Schema(
     gamesPlayed: { type: Number, required: true, default: 0 },
     gamesWon: { type: Number, required: true, default: 0 },
     logs: [{ type: Schema.Types.ObjectId, ref: 'Log' }],
+    createdGames: [{ type: Schema.Types.ObjectId, ref: 'Game' }],
   },
   {
     toJSON: { transform },
@@ -39,7 +40,7 @@ export const userSchema = new Schema(
   },
 );
 
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function(next: () => void) {
   const user = this as IUser;
 
   if (!user.isModified('password')) {
