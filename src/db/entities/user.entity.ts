@@ -85,8 +85,8 @@ export class User extends DefaultNamingStrategy {
   @OneToMany(type => Log, log => log.user)
   public logs: Log[];
 
-  // @OneToMany(type => Game, game => game.createdBy)
-  // public createdGames: Log[];
+  @OneToMany(type => Game, game => game.createdBy)
+  public createdGames: Game[];
 
   public toString(): string {
     return `${this.firstName} ${this.lastName} (${this.email})`;
