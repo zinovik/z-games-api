@@ -26,7 +26,7 @@ export const gameSchema = new Schema(
     watchers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     nextPlayers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     logs: [{ type: Schema.Types.ObjectId, ref: 'Log' }],
-    // createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },
   {
     toJSON: { transform },

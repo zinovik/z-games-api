@@ -15,6 +15,7 @@ export interface IUser extends Document {
   currentGames: IGame[];
   currentWatch: IGame;
   currentMoves: IGame[];
+  createdGames: IGame[];
   gamesPlayed: number;
   gamesWon: number;
   logs: ILog[];

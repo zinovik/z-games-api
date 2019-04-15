@@ -126,7 +126,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('get-all-games')
   async getAllGames(
-    client: Socket,
+    client: Socket & { user: User },
     filterSettings: IFilterSettings,
   ): Promise<WsResponse<Game[]>> {
     return {
@@ -169,7 +169,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client: Socket & { user: User },
     name: string,
   ): Promise<void> {
-    let game = await this.gameService.newGame(name);
+    let game = await this.gameService.newGame(name, client.user.id);
 
     try {
       await this.logService.create({
@@ -390,6 +390,27 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @UseGuards(JwtGuard)
+  @SubscribeMessage('remove-game')
+  public async removeGame(
+    client: Socket & { user: User },
+    gameNumber: number,
+  ): Promise<WsResponse<Game>> {
+    return await this.closeGame(client, gameNumber);
+  }
+
+  @UseGuards(JwtGuard)
+  @SubscribeMessage('repeat-game')
+  public async repeatGame(
+    client: Socket & { user: User },
+    gameNumber: number,
+  ): Promise<void> {
+    const game = await this.gameService.findOne(gameNumber);
+
+    await this.closeGame(client, gameNumber);
+    await this.newGame(client, game.name);
+  }
+
+  @UseGuards(JwtGuard)
   @SubscribeMessage('toggle-ready')
   public async toggleReady(
     client: Socket & { user: User },
@@ -411,6 +432,42 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       log = await this.logService.create({
         type: 'ready',
+        user: client.user,
+        gameId: game.id,
+      });
+    } catch (error) {
+      return this.sendError({ client, message: error.message });
+    }
+
+    game.logs = [log, ...game.logs];
+
+    this.sendGameToGameUsers({ server: this.server, game });
+  }
+
+  @UseGuards(JwtGuard)
+  @SubscribeMessage('update-option')
+  public async updateOption(
+    client: Socket & { user: User },
+    { gameNumber, name, value }: { gameNumber: number, name: string, value: string },
+  ): Promise<void> {
+    let game: Game;
+
+    try {
+      game = await this.gameService.updateOption({
+        user: client.user,
+        gameNumber,
+        name,
+        value,
+      });
+    } catch (error) {
+      return this.sendError({ client, message: error.message });
+    }
+
+    let log: Log;
+
+    try {
+      log = await this.logService.create({
+        type: 'update',
         user: client.user,
         gameId: game.id,
       });
