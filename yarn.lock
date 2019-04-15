@@ -6718,35 +6718,35 @@ yn@^3.0.0:
   resolved "https://registry.yarnpkg.com/yn/-/yn-3.1.0.tgz#fcbe2db63610361afcc5eb9e0ac91e976d046114"
   integrity sha512-kKfnnYkbTfrAdd0xICNFw7Atm8nKpLcLv9AZGEt+kczL/WQVai4e2V6ZN8U/O+iI6WrNuJjNNOyu4zfhl9D3Hg==
 
-z-games-base-game@0.0.17, z-games-base-game@^0.0.18:
-  version "0.0.17"
-  resolved "https://registry.yarnpkg.com/z-games-base-game/-/z-games-base-game-0.0.17.tgz#4ee3d5f6ee948b1842fd8ae3145db3868e97429a"
-  integrity sha512-OHa3psl6ynwY3y+SKPotErGJWc6Dngwflfa9dXMxiDij9zVL1440OWL9KoN+w1ajd2rQM327otdKmztOmlemvg==
+z-games-base-game@0.0.18, z-games-base-game@^0.0.18:
+  version "0.0.18"
+  resolved "https://registry.yarnpkg.com/z-games-base-game/-/z-games-base-game-0.0.18.tgz#bb7ae1cea582883b814c0b46995174c2c35bac72"
+  integrity sha512-OjOGHiBAZBcKdZfJfiWXzKUWXVLWyUn99K75cQJ4lcbxOSvY2NFtpJ27/DeMPz8kGEEaG7e97GHS6E6q891zkw==
 
 z-games-lost-cities@^0.0.16:
-  version "0.0.15"
-  resolved "https://registry.yarnpkg.com/z-games-lost-cities/-/z-games-lost-cities-0.0.15.tgz#1e69997ffa294aad9680def744bbf0bec296fbc8"
-  integrity sha512-dXjMpbC7VFPwjHmXCM3dtMneJkO7T69eJe2Zdr0rcBRV+0656jeASMIi+aT3PMW3tMBnnl6L+9bDoJtvYTveCA==
+  version "0.0.16"
+  resolved "https://registry.yarnpkg.com/z-games-lost-cities/-/z-games-lost-cities-0.0.16.tgz#a3d3eac99a601738db26b05df7e2ca0239f2627e"
+  integrity sha512-FgfzBfQRuNT4XfGs+ynsinXwPyOPq2XsBpPTB6AUpSyRaiFz/JH1UkrRiQ8KftsyqkcPxjLo2EzpzdYfU0Pd9Q==
   dependencies:
-    z-games-base-game "0.0.17"
+    z-games-base-game "0.0.18"
 
 z-games-no-thanks@^0.0.14:
-  version "0.0.13"
-  resolved "https://registry.yarnpkg.com/z-games-no-thanks/-/z-games-no-thanks-0.0.13.tgz#b2fdb594d7b69d5b54d5782a955bfb219883cfad"
-  integrity sha512-bH1wi7GgBMKuO7SHAKI3rBW/B5WyjtXAhDP1wZskrthHMcpNma0LonON8h/688znLrnKHlJlVbXkfca5YK/EUw==
+  version "0.0.14"
+  resolved "https://registry.yarnpkg.com/z-games-no-thanks/-/z-games-no-thanks-0.0.14.tgz#ad0ba94730c473fac380681b460b447fc01603f2"
+  integrity sha512-FJcwpGXUiMNuecyW/Yp26dD33e2mmCcdJ0BQWr1qA6q40vKhCcHzBX0JoK8nfB1f1LZjHapPXjOeEJUqNWSV8A==
   dependencies:
-    z-games-base-game "0.0.17"
+    z-games-base-game "0.0.18"
 
 z-games-perudo@^0.0.13:
-  version "0.0.12"
-  resolved "https://registry.yarnpkg.com/z-games-perudo/-/z-games-perudo-0.0.12.tgz#9b107cd7e1941865345942426845a741f4ef1b55"
-  integrity sha512-i0zAud+XsSHfqnJmTR8agOCOAZsNfWTFd7MasNF3fgtJYes1JHV8NJKcfQMxx4aVb7H34G759dp+ZuPI4abtlQ==
+  version "0.0.13"
+  resolved "https://registry.yarnpkg.com/z-games-perudo/-/z-games-perudo-0.0.13.tgz#6c38216d267daa3a43b7daa6b4ba7e067b0571d6"
+  integrity sha512-T5JIGpl7nMztT7B7T0dLaiHp7EjtA1gR0ugF+ss1CfJxneslI9XdV65syMBts+yNTfixULQLaDIEo3B3P5J/TQ==
   dependencies:
-    z-games-base-game "0.0.17"
+    z-games-base-game "0.0.18"
 
 z-games-six-nimmt@^0.0.17:
-  version "0.0.16"
-  resolved "https://registry.yarnpkg.com/z-games-six-nimmt/-/z-games-six-nimmt-0.0.16.tgz#b4a1a53f699bb4278ac52d331aba2b7f7e3a7b27"
-  integrity sha512-awx64IW1Dtq4ndNNZizxER2SwrXMaE6ZaklBTFnWJqQsTdwKGIyRjV+p7d8QgHiEVQiNIP1PJWIZJAuo3Yyg6A==
+  version "0.0.17"
+  resolved "https://registry.yarnpkg.com/z-games-six-nimmt/-/z-games-six-nimmt-0.0.17.tgz#1e574e0965d12b36185bdd3e21647decc70fdfdd"
+  integrity sha512-pGIdTHTCgkgpgU/lq1ZoGgiTfnyhlJfC8t5lgBb2IRnYDlR06NrnuAB+RFZeRsD+TN4EdHlgAnP3ZHVaxidKUg==
   dependencies:
-    z-games-base-game "0.0.17"
+    z-games-base-game "0.0.18"
