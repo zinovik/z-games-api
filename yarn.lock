@@ -283,19 +283,19 @@
     "@types/istanbul-lib-coverage" "^2.0.0"
     "@types/yargs" "^12.0.9"
 
-"@nestjs/common@^6.0.4":
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-6.1.1.tgz#6f7f0aa0ff45285f9d2b0a66acde1ebeb0c99060"
-  integrity sha512-hwAjk0RUMRFWJktTYovW0LWVRy2oLBwdb4mDcomYUoSGrCYZ9xGS+eeB9B7Lby4xoz01E2NTRmdrIh9gQYAEFA==
+"@nestjs/common@6.0.4":
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-6.0.4.tgz#7cc7e07d43548cdd86466ed100848be9e8153e42"
+  integrity sha512-0xMUEonlptc+TGMu+qHQUlF7JP5YpuF29+MDKFoXexANb+VObwOYPks3tjS/Wl51Z8KzxMNaa9KGZXjc3p0BgA==
   dependencies:
     axios "0.18.0"
     cli-color "1.4.0"
     uuid "3.3.2"
 
-"@nestjs/core@^6.0.4":
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/@nestjs/core/-/core-6.1.1.tgz#10494e8e1a4bcf55059fd114c0934186c2130930"
-  integrity sha512-qIDe+dr+iCuntoewwJgsDBay3JWcCozXKZZLjKwIK5VxWTxT83KHm+1LRR8hSAMCPgQFgRq4639oOSRtceEzNg==
+"@nestjs/core@6.0.4":
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/@nestjs/core/-/core-6.0.4.tgz#1218b23e46a4f2fe22b40c8d5c90686d2f9806e3"
+  integrity sha512-OIKIBHeFCTwgBzpjlPattYEXNDVfCKEQbKUe2iaOs+QyD4RAJzQoQhktEN8tHERR8UANxmIvQDCkYKRMcGhAEg==
   dependencies:
     "@nuxtjs/opencollective" "0.2.1"
     fast-safe-stringify "2.0.6"
@@ -304,50 +304,50 @@
     optional "0.1.4"
     uuid "3.3.2"
 
-"@nestjs/microservices@^6.0.4":
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/@nestjs/microservices/-/microservices-6.1.1.tgz#e3ceeeab61d256d4a2d35721489cc443862e3bbf"
-  integrity sha512-dqEhSh0+9dIdb4aXWsuMnoGjiyhKE6mm2f/IKAIbWwwfmGzeFGcEd1TdqLXVzDgCXxTaUZlO7TY0PRU0Muwlfw==
+"@nestjs/microservices@6.0.4":
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/@nestjs/microservices/-/microservices-6.0.4.tgz#119dd8267a3a8d70a4c53cf92422f7386e10ae32"
+  integrity sha512-TFlYT++Fs2128DEC1tASP0/TmdL1HBk9p4/0rDXAJHx3yJ2OXrAt/fnfY12fNJdI2L9ttXWZVHsA58QL9yMPjg==
   dependencies:
     iterare "1.1.2"
     json-socket "0.3.0"
     optional "0.1.4"
 
-"@nestjs/mongoose@^6.0.0":
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/@nestjs/mongoose/-/mongoose-6.1.0.tgz#117d50ef03a9a43a67e336a7c2c8d3d305c0c770"
-  integrity sha512-GeV3QY3SEbTdO41kE9yyAlAsox7hCjguA3Ri6n1QdJIjoVZX+gisZBoq5ODkAcheGqQT5ADUi0G910zCLMUDog==
+"@nestjs/mongoose@6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@nestjs/mongoose/-/mongoose-6.0.0.tgz#886fad19db41c79ea425e4de32730977c3892aff"
+  integrity sha512-2iag6pGVAQ5ww92KRsVZmtpkcQ1LgaKyLs3LlUFDRXNfXqTvcHdpK0H4nVR19X9IMm0N57+MbQosvTFJDkbK+A==
 
-"@nestjs/passport@^6.0.0":
+"@nestjs/passport@6.0.0":
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/@nestjs/passport/-/passport-6.0.0.tgz#b92fdf90e055eece02c0378fce98e6f60a864c54"
   integrity sha512-+82YJTQpmDrcqS65Jgtdv6+n5lWCZtANw7Cy3KWdSKPBbNheIYBWtKMV2uXZXXtVqxgGaCnrJ03XpHc22RX4xA==
 
-"@nestjs/platform-express@^6.0.4":
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/@nestjs/platform-express/-/platform-express-6.1.1.tgz#4d4d4774a65b14c81646d10da9768f4cb6b922d6"
-  integrity sha512-vA1JhKnZp9Ks0hSznzrRZL0neAGDAOpwJz97ttyxc/F0u6thsk7HmXKPziskqnf9diiY7mXeP57nPcDWPt9W0w==
+"@nestjs/platform-express@6.0.4":
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/@nestjs/platform-express/-/platform-express-6.0.4.tgz#a0c99a69b7a1aeb86a37e211345cc9883d456ee6"
+  integrity sha512-SXKnpZxIkGaGi1V1H7a9aw8eIMu6+YU0Go04c6PnqY4V3AjjKIdCC5Lm+sNSl5Y9BWOx+wjIoyiW+dQFX+EA8A==
   dependencies:
     body-parser "1.18.3"
     cors "2.8.5"
     express "4.16.4"
     multer "1.4.1"
 
-"@nestjs/platform-socket.io@^6.0.4":
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/@nestjs/platform-socket.io/-/platform-socket.io-6.1.1.tgz#ffc24c240870f2b17984a265b30ec5d793e2bdb3"
-  integrity sha512-u7hkGtAWlBmuonFWQwxhOLo+4LDBC2EPjhEAqI3vcQNpuclQNH8gFQLLzm4MyktYnfe6qzXxdchlB1aVTRswEg==
+"@nestjs/platform-socket.io@6.0.4":
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/@nestjs/platform-socket.io/-/platform-socket.io-6.0.4.tgz#880c96bda9dfd9d16600fa1a9e659687db0daee8"
+  integrity sha512-3X8f8zQbhmM3V1EaMgCg266AKe6emb0EG1sk5BY0kT8PrN+XwX1QadPC0mkWV1QDSbyq1oiCOZV8mwEb2tm0wg==
   dependencies:
     socket.io "2.2.0"
 
-"@nestjs/testing@^6.0.4":
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/@nestjs/testing/-/testing-6.1.1.tgz#cc871867f9bd053069467a5a2f1b429945413313"
-  integrity sha512-EQLRES20n8zWkFRXgwFKjCE0s/WsHvqv3v22umqq2XHiep7WiJub0hNG/FcC00WltXPDPAaEDu0XDPr56UWZhQ==
+"@nestjs/testing@6.0.4":
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/@nestjs/testing/-/testing-6.0.4.tgz#3c358b7b21144781d76da7b3bfef898bd783c458"
+  integrity sha512-2FF3XmbHbh4edGczgXk51jJWqDKQ6vCw9u1P0F4Q7OOnURm06iwjmQOsbexA4+dTLwWescdgpGCJlYN8yeK56g==
   dependencies:
     optional "0.1.4"
 
-"@nestjs/typeorm@^6.0.0":
+"@nestjs/typeorm@6.0.0":
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/@nestjs/typeorm/-/typeorm-6.0.0.tgz#a3fb0885f2e0b5d94710c43d06489cfab7200de8"
   integrity sha512-ZUlUu8DxlgN0dFoeTiaWrD0EU8V/dRjSkqPjrbwspYfZkg/Gws/B8EFK0n0hgyVuJaG4oggV+BjupnKtO8KqGw==
