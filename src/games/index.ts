@@ -10,3 +10,5 @@ export const GamesServices: { [key: string]: BaseGame } = {
   [LostCities.Instance.getName()]: LostCities.Instance,
   [SixNimmt.Instance.getName()]: SixNimmt.Instance,
 };
+
+export const gamesNames = Object.keys(GamesServices);
