@@ -9,29 +9,26 @@ import { logSchema } from './schemas/log.schema';
 import { gameSchema } from './schemas/game.schema';
 
 const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
+const IS_USE_REAL_MONGODB = IS_MONGO_USED && ConfigService.get().MONGODB_URI;
 
 const mongod = new MongoMemoryServer();
 
 @Module({
   imports: [
     ConfigModule,
-    (async () => {
-      return MongooseModule.forRoot(
-        IS_MONGO_USED && ConfigService.get().MONGODB_URI
-          ? ConfigService.get().MONGODB_URI
-          : await mongod.getConnectionString(),
-        {
-          useCreateIndex: true,
-          useNewUrlParser: true,
-          useFindAndModify: false,
-        },
-      );
-    })(),
+    (async () => MongooseModule.forRoot(
+      IS_USE_REAL_MONGODB ? ConfigService.get().MONGODB_URI : await mongod.getConnectionString(),
+      {
+        useCreateIndex: true,
+        useNewUrlParser: true,
+        useFindAndModify: false,
+      },
+    ))(),
     MongooseModule.forFeature([
       { name: 'User', schema: userSchema },
       { name: 'Game', schema: gameSchema },
       { name: 'Log', schema: logSchema },
-    ]),
+    ], 'DatabaseConnection'),
   ],
 })
-export class Mongoose {}
+export class Mongoose { }
