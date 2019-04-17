@@ -20,6 +20,7 @@ export const gameSchema = new Schema(
     playersMin: { type: Number, required: true },
     gameData: { type: String, required: true },
     isPrivate: { type: Boolean, required: true },
+    isRemoved: { type: Boolean },
     privatePassword: String,
     playersOnline: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     players: [{ type: Schema.Types.ObjectId, ref: 'User' }],
