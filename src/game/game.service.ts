@@ -5,7 +5,7 @@ import { Model, Connection as ConnectionMongo } from 'mongoose';
 import { IBaseGameData, GAME_NOT_STARTED, GAME_STARTED, GAME_FINISHED } from 'z-games-base-game';
 
 import { User, Game } from '../db/entities';
-import { IUser, IGame } from '../db/interfaces';
+import { IUser, IGame, ILog } from '../db/interfaces';
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
 import { GamesServices, gamesNames } from '../games';
@@ -20,6 +20,7 @@ import {
 } from '../exceptions';
 import {
   OPEN_GAME_FIELDS,
+  ALL_GAMES_JOIN_CREATED_BY,
   ALL_GAMES_JOIN_PLAYERS,
   ALL_GAMES_JOIN_NEXT_PLAYERS,
   OPEN_GAME_JOIN_WATCHERS,
@@ -30,6 +31,7 @@ import {
   FIELDS_TO_REMOVE_IN_ALL_GAMES,
   ALL_GAMES_FIELDS,
   ALL_GAMES_FIELDS_MONGO,
+  ALL_GAMES_POPULATE_CREATED_BY,
   ALL_GAMES_POPULATE_PLAYERS,
   ALL_GAMES_POPULATE_NEXT_PLAYERS,
   OPEN_GAME_FIELDS_MONGO,
@@ -48,6 +50,7 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 export class GameService {
   gameModel: Model<IGame>;
   userModel: Model<IUser>;
+  logModel: Model<ILog>;
 
   constructor(
     private readonly connection: Connection,
@@ -56,6 +59,7 @@ export class GameService {
   ) {
     this.gameModel = this.connectionMongo.model('Game');
     this.userModel = this.connectionMongo.model('User');
+    this.logModel = this.connectionMongo.model('Log');
   }
 
   public async findOne(gameNumber: number): Promise<Game | IGame> {
@@ -96,7 +100,7 @@ export class GameService {
       .getOne();
   }
 
-  public async getAllGames(filterSettings?: IFilterSettings, userId?: string): Promise<Game[]> {
+  public async getAllGames(filterSettings?: IFilterSettings, isRemoved?: boolean, userId?: string): Promise<Game[]> {
     this.logger.info('Get all games');
 
     const isEmptyFilter = !filterSettings || !Object.keys(filterSettings).length;
@@ -129,7 +133,8 @@ export class GameService {
       return JSON.parse(
         JSON.stringify(
           await this.gameModel
-            .find({}, ALL_GAMES_FIELDS_MONGO)
+            .find({ isRemoved: { $ne: !isRemoved } }, ALL_GAMES_FIELDS_MONGO)
+            .populate(...ALL_GAMES_POPULATE_CREATED_BY)
             .populate(...ALL_GAMES_POPULATE_PLAYERS)
             .populate(...ALL_GAMES_POPULATE_NEXT_PLAYERS)
             .where('state').in(stateFilter)
@@ -143,6 +148,7 @@ export class GameService {
     }
 
     // TODO: Filter in SQL DB
+    // TODO: isRemoved in SQL DB
 
     return await this.connection
       .getRepository(Game)
@@ -202,6 +208,10 @@ export class GameService {
     this.logger.info(`Join game number ${gameNumber}`);
 
     const game = await this.findOne(gameNumber);
+
+    if (!game) {
+      throw new JoiningGameException(`There is no game number ${gameNumber}`);
+    }
 
     if (game.state) {
       throw new JoiningGameException('Can\'t join started or finished game');
@@ -272,6 +282,10 @@ export class GameService {
 
     const game = await this.findOne(gameNumber);
 
+    if (!game) {
+      throw new OpeningGameException(`There is no game number ${gameNumber}`);
+    }
+
     if (!game.players.some((player: User | IUser) => player.id === user.id)) {
       throw new OpeningGameException('Can\'t open game without joining');
     }
@@ -320,6 +334,10 @@ export class GameService {
     this.logger.info(`Watch game number ${gameNumber}`);
 
     const game = await this.findOne(gameNumber);
+
+    if (!game) {
+      throw new WatchingGameException(`There is no game number ${gameNumber}`);
+    }
 
     if (!game.state) {
       throw new WatchingGameException('Can\'t watch not started game');
@@ -373,6 +391,10 @@ export class GameService {
     this.logger.info(`Leave game number ${gameNumber}`);
 
     const game = await this.findOne(gameNumber);
+
+    if (!game) {
+      throw new LeavingGameException(`There is no game number ${gameNumber}`);
+    }
 
     if (game.state === GAME_STARTED) {
       throw new LeavingGameException('Can\'t leave started and not finished game');
@@ -431,6 +453,10 @@ export class GameService {
 
     const game = await this.findOne(gameNumber);
 
+    if (!game) {
+      throw new ClosingGameException(`There is no game number ${gameNumber}`);
+    }
+
     const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
     const isUserInWatchers = game.watchers.some(
       (player: User | IUser) => player.id === user.id,
@@ -481,53 +507,66 @@ export class GameService {
   }: {
     user: User;
     gameNumber: number;
-  }): Promise<Game> {
+  }): Promise<boolean> {
     this.logger.info(`Remove game number ${gameNumber}`);
 
     const game = await this.findOne(gameNumber);
 
-    const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
-    const isUserInWatchers = game.watchers.some(
-      (player: User | IUser) => player.id === user.id,
-    );
+    if (!game) {
+      throw new ClosingGameException(`There is no game number ${gameNumber}`); // TODO: RemovingGameException
+    }
 
-    if (!isUserInPlayers && !isUserInWatchers) {
+    const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
+
+    if (!isUserInPlayers) { // TODO: RemovingGameException
       throw new ClosingGameException(
-        'Can\'t close game without joining or watching',
+        'Can\'t remove game without joining',
       );
     }
 
     if (IS_MONGO_USED) {
-      await this.gameModel.findOneAndUpdate(
-        { _id: game.id },
-        {
-          $pull: {
-            watchers: user.id,
-            playersOnline: user.id,
-          },
-        },
-      );
+      const playersIds: string[] = (game.players as IUser[]).map(player => player.id);
+      const watchersIds: string[] = (game.watchers as IUser[]).map(watcher => watcher.id);
 
-      await this.userModel.findOneAndUpdate(
-        { _id: user.id },
+      await this.userModel.updateMany(
+        { _id: { $in: playersIds } },
         {
           openedGame: null,
-          currentWatch: null,
+          // $pull: {
+          //   currentGames: game.id,
+          //   currentMoves: game.id,
+          // },
         },
       );
 
-      return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+      await this.userModel.updateMany(
+        { _id: { $in: watchersIds } },
+        { currentWatch: null },
+      );
+
+      // await this.logModel.deleteMany(
+      //   { game: game.id },
+      // );
+
+      // await this.gameModel.findOneAndDelete(
+      //   { _id: game.id },
+      // );
+
+      await this.gameModel.findOneAndUpdate(
+        { _id: game.id },
+        { isRemoved: true },
+      );
+
+      return true;
     }
 
-    if (isUserInWatchers) {
-      game.watchers = (game.watchers as Array<User | IUser>).filter(watcher => watcher.id !== user.id) as User[] | IUser[];
-    }
+    // TODO Remove game for SQL Database
 
     if (isUserInPlayers) {
       game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
     }
 
-    return await this.connection.getRepository(Game).save(game);
+    return false;
   }
 
   public async toggleReady({
@@ -549,9 +588,7 @@ export class GameService {
     if (IS_MONGO_USED) {
       await this.gameModel.findOneAndUpdate(
         { _id: game.id },
-        {
-          gameData,
-        },
+        { gameData },
       );
 
       return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
@@ -586,9 +623,7 @@ export class GameService {
     if (IS_MONGO_USED) {
       await this.gameModel.findOneAndUpdate(
         { _id: game.id },
-        {
-          gameData,
-        },
+        { gameData },
       );
 
       return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
@@ -813,7 +848,7 @@ export class GameService {
     return newGame as Game;
   }
 
-  public parseGameForUser({ game, user }: { game: Game; user: User }): Game {
+  public parseGameForUser({ game, user }: { game: Game | IGame; user: User }): Game {
     if (game.state === GAME_FINISHED) {
       return {
         ...game,
@@ -830,7 +865,7 @@ export class GameService {
   }
 
   private async getNewGameNumber(): Promise<number> {
-    const allGames = await this.getAllGames({} as IFilterSettings);
+    const allGames = await this.getAllGames({} as IFilterSettings, true);
 
     const allGamesSorted = allGames.sort(
       (game1, game2) => game2.number - game1.number,
