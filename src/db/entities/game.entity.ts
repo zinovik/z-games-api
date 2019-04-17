@@ -54,6 +54,9 @@ export class Game extends DefaultNamingStrategy {
   @Column({ name: 'is_private' })
   public isPrivate: boolean;
 
+  @Column({ name: 'is_removed' })
+  public isRemoved: boolean;
+
   @Column({ name: 'private_password', nullable: true })
   public privatePassword: string;
 

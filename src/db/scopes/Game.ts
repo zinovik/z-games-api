@@ -16,6 +16,11 @@ export const ALL_GAMES_FIELDS = [
   'nextPlayers.id',
 ];
 
+export const ALL_GAMES_JOIN_CREATED_BY: [string, string] = [
+  'game.createdBy',
+  'createdBy',
+];
+
 export const ALL_GAMES_JOIN_PLAYERS: [string, string] = [
   'game.players',
   'players',
@@ -79,6 +84,13 @@ export const LOGS_FIELD_ORDER_BY = 'logs.createdAt';
 export const ALL_GAMES_FIELDS_MONGO =
   'number name state playersMax playersMin isPrivate createdAt updatedAt createdBy';
 
+const GAME_POPULATE_USERS = 'id username';
+
+export const ALL_GAMES_POPULATE_CREATED_BY: [string, string] = [
+  'createdBy',
+  GAME_POPULATE_USERS,
+];
+
 export const ALL_GAMES_POPULATE_PLAYERS: [string, string] = [
   'players',
   'username avatar gamesPlayed gamesWon',
@@ -90,8 +102,6 @@ export const ALL_GAMES_POPULATE_NEXT_PLAYERS: [string, string] = [
 ];
 
 export const OPEN_GAME_FIELDS_MONGO = `${ALL_GAMES_FIELDS_MONGO} id gameData`;
-
-const GAME_POPULATE_USERS = 'id username';
 
 export const OPEN_GAME_POPULATE_WATCHERS: [string, string] = [
   'watchers',
