@@ -18,6 +18,7 @@ import { JwtGuard } from '../guards/jwt.guard';
 import { JwtService } from '../services/jwt.service';
 import { Game, User, Log } from '../db/entities';
 import { IFilterSettings } from './IFilterSettings.interface';
+import { IGame } from '../db/interfaces';
 
 @WebSocketGateway()
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -169,7 +170,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client: Socket & { user: User },
     name: string,
   ): Promise<void> {
-    let game = await this.gameService.newGame(name, client.user.id);
+    let game: Game;
+
+    try {
+      game = await this.gameService.newGame(name, client.user.id);
+    } catch (error) {
+      return this.sendError({ client, message: error.message });
+    }
 
     try {
       await this.logService.create({
@@ -394,8 +401,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   public async removeGame(
     client: Socket & { user: User },
     gameNumber: number,
-  ): Promise<WsResponse<Game>> {
-    return await this.closeGame(client, gameNumber);
+  ): Promise<void> {
+    const game = await this.gameService.findOne(gameNumber);
+
+    await this.gameService.removeGame({ user: client.user, gameNumber });
+
+    this.kickUsersFromGame({ server: this.server, game });
+
+    this.server.emit('remove-game', gameNumber);
   }
 
   @UseGuards(JwtGuard)
@@ -407,6 +420,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const game = await this.gameService.findOne(gameNumber);
 
     await this.closeGame(client, gameNumber);
+
     await this.newGame(client, game.name);
   }
 
@@ -579,25 +593,35 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  private sendGameToGameUsers({ server, game }: { server: Server, game: Game }): void {
+  private kickUsersFromGame({ server, game }: { server: Server, game: Game | IGame }): void {
     if (!server.sockets.adapter.rooms[game.id]) {
       return;
     }
 
-    Object.keys(server.sockets.adapter.rooms[game.id].sockets).forEach(
-      (socketId: string) => {
-        const socketInGame = server.sockets.connected[
-          socketId
-        ] as Socket & { user: User };
-        const userInGame = socketInGame.user;
+    Object.keys(server.sockets.adapter.rooms[game.id].sockets).forEach(socketId => {
+      const socketInGame = server.sockets.connected[socketId] as Socket & { user: User };
+      const userInGame = socketInGame.user;
 
-        if (userInGame) {
-          socketInGame.emit(
-            'update-opened-game',
-            this.gameService.parseGameForUser({ game, user: userInGame }),
-          );
-        }
-      },
+      if (userInGame) {
+        socketInGame.emit('update-opened-game', null);
+      }
+    },
+    );
+  }
+
+  private sendGameToGameUsers({ server, game }: { server: Server, game: Game | IGame }): void {
+    if (!server.sockets.adapter.rooms[game.id]) {
+      return;
+    }
+
+    Object.keys(server.sockets.adapter.rooms[game.id].sockets).forEach(socketId => {
+      const socketInGame = server.sockets.connected[socketId] as Socket & { user: User };
+      const userInGame = socketInGame.user;
+
+      if (userInGame) {
+        socketInGame.emit('update-opened-game', this.gameService.parseGameForUser({ game, user: userInGame }));
+      }
+    },
     );
   }
 
