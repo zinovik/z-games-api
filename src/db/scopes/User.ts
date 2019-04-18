@@ -45,6 +45,16 @@ export const USER_JOIN_CURRENT_WATCH: [string, string] = [
   'currentWatch',
 ];
 
+export const USER_JOIN_INVITES_INVITER: [string, string] = [
+  'user.invitesInviter',
+  'invitesInviter',
+];
+
+export const USER_JOIN_INVITES_INVITEE: [string, string] = [
+  'user.invitesInvitee',
+  'invitesInvitee',
+];
+
 // MongoDB
 
 export const ALL_USER_FIELDS_MONGO =
@@ -68,4 +78,14 @@ export const USER_POPULATE_CURRENT_GAMES: [string, string] = [
 export const USER_POPULATE_CURRENT_WATCH: [string, string] = [
   'currentWatch',
   USER_POPULATE_GAMES,
+];
+
+export const USER_POPULATE_INVITES_INVITER: [string, string] = [
+  'invitesInviter',
+  `id`,
+];
+
+export const USER_POPULATE_INVITES_INVITEE: [string, string] = [
+  'invitesInvitee',
+  `id`,
 ];
