@@ -16,7 +16,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { Game, Log } from '../../db/entities';
+import { Game, Log, Invite } from '../../db/entities';
 import { CryptService } from '../../services/crypt.service';
 
 @Entity()
@@ -84,6 +84,12 @@ export class User extends DefaultNamingStrategy {
 
   @OneToMany(type => Log, log => log.user)
   public logs: Log[];
+
+  @OneToMany(type => Invite, invite => invite.inviter)
+  public invitesInviter: Invite[];
+
+  @OneToMany(type => Invite, invite => invite.invitee)
+  public invitesInvitee: Invite[];
 
   @OneToMany(type => Game, game => game.createdBy)
   public createdGames: Game[];

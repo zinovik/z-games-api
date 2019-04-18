@@ -14,10 +14,14 @@ import {
   USER_JOIN_CURRENT_WATCH,
   ALL_USER_FIELDS,
   ALL_USER_FIELDS_MONGO,
+  USER_JOIN_INVITES_INVITER,
+  USER_JOIN_INVITES_INVITEE,
   USER_FIELDS_MONGO,
   USER_POPULATE_OPENED_GAME,
   USER_POPULATE_CURRENT_GAMES,
   USER_POPULATE_CURRENT_WATCH,
+  USER_POPULATE_INVITES_INVITER,
+  USER_POPULATE_INVITES_INVITEE,
 } from '../db/scopes/User';
 
 const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
@@ -65,6 +69,9 @@ export class UserService {
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
         .populate(...USER_POPULATE_CURRENT_WATCH)
+        .populate(...USER_POPULATE_INVITES_INVITER)
+        .populate(...USER_POPULATE_INVITES_INVITEE)
+        .populate(...USER_POPULATE_CURRENT_WATCH)
         .exec();
     }
 
@@ -75,6 +82,8 @@ export class UserService {
       .leftJoin(...USER_JOIN_OPENED_GAME)
       .leftJoin(...USER_JOIN_CURRENT_GAMES)
       .leftJoin(...USER_JOIN_CURRENT_WATCH)
+      .leftJoin(...USER_JOIN_INVITES_INVITER)
+      .leftJoin(...USER_JOIN_INVITES_INVITEE)
       .where({ email })
       .getOne();
   }
@@ -88,6 +97,8 @@ export class UserService {
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
         .populate(...USER_POPULATE_CURRENT_WATCH)
+        .populate(...USER_POPULATE_INVITES_INVITER)
+        .populate(...USER_POPULATE_INVITES_INVITEE)
         .exec();
     }
 
@@ -98,6 +109,8 @@ export class UserService {
       .leftJoin(...USER_JOIN_OPENED_GAME)
       .leftJoin(...USER_JOIN_CURRENT_GAMES)
       .leftJoin(...USER_JOIN_CURRENT_WATCH)
+      .leftJoin(...USER_JOIN_INVITES_INVITER)
+      .leftJoin(...USER_JOIN_INVITES_INVITEE)
       .where({ id: userId })
       .getOne();
   }
@@ -111,6 +124,8 @@ export class UserService {
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
         .populate(...USER_POPULATE_CURRENT_WATCH)
+        .populate(...USER_POPULATE_INVITES_INVITER)
+        .populate(...USER_POPULATE_INVITES_INVITEE)
         .exec();
     }
 
@@ -121,6 +136,8 @@ export class UserService {
       .leftJoin(...USER_JOIN_OPENED_GAME)
       .leftJoin(...USER_JOIN_CURRENT_GAMES)
       .leftJoin(...USER_JOIN_CURRENT_WATCH)
+      .leftJoin(...USER_JOIN_INVITES_INVITER)
+      .leftJoin(...USER_JOIN_INVITES_INVITEE)
       .where({ username })
       .getOne();
   }
@@ -158,7 +175,6 @@ export class UserService {
     }
 
     if (IS_MONGO_USED) {
-      // user.createdGames = [];
       const userMongo = new this.userModel(user);
 
       return userMongo.save();
