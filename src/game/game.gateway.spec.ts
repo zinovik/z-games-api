@@ -8,6 +8,7 @@ import { UserModule } from '../user/user.module';
 import { LogModule } from '../log/log.module';
 import { GameGateway } from './game.gateway';
 import { GameService } from './game.service';
+import { InviteModule } from '../invite/invite.module';
 
 describe('GameGateway', () => {
   let gateway: GameGateway;
@@ -21,6 +22,7 @@ describe('GameGateway', () => {
         LoggerModule,
         UserModule,
         LogModule,
+        InviteModule,
       ],
       providers: [GameGateway, GameService],
     }).compile();
