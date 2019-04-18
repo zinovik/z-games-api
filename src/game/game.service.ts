@@ -68,6 +68,7 @@ export class GameService {
     if (IS_MONGO_USED) {
       return this.gameModel
         .findOne({ number: gameNumber }, OPEN_GAME_FIELDS_MONGO)
+        .populate(...ALL_GAMES_POPULATE_CREATED_BY)
         .populate(...ALL_GAMES_POPULATE_PLAYERS)
         .populate(...ALL_GAMES_POPULATE_NEXT_PLAYERS)
         .populate(...OPEN_GAME_POPULATE_WATCHERS)
@@ -222,7 +223,7 @@ export class GameService {
     }
 
     if (game.players.some((player: User | IUser) => player.id === user.id)) {
-      throw new JoiningGameException('Can\'t join game twice');
+      throw new JoiningGameException('Can\'t join game twice. Try to refresh the page');
     }
 
     if (game.playersOnline.some((playerOnline: User | IUser) => playerOnline.id === user.id)) {
@@ -291,7 +292,7 @@ export class GameService {
     }
 
     if (game.playersOnline.some((playerOnline: User | IUser) => playerOnline.id === user.id)) {
-      throw new OpeningGameException('Can\'t open game twice');
+      throw new OpeningGameException('Can\'t open game twice. Try to refresh the page');
     }
 
     if (IS_MONGO_USED) {
@@ -348,7 +349,7 @@ export class GameService {
     }
 
     if (game.watchers.some((watcher: User | IUser) => watcher.id === user.id)) {
-      throw new WatchingGameException('Can\'t watch game twice');
+      throw new WatchingGameException('Can\'t watch game twice. Try to refresh the page');
     }
 
     if (IS_MONGO_USED) {
