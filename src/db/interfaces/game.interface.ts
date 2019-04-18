@@ -1,6 +1,6 @@
 import { Document } from 'mongoose';
 
-import { IUser, ILog } from './';
+import { IUser, ILog, IInvite } from './';
 
 export interface IGame extends Document {
   number: number;
@@ -17,6 +17,7 @@ export interface IGame extends Document {
   watchers: IUser[];
   nextPlayers: IUser[];
   logs: ILog[];
+  invites: IInvite[];
   createdAt: Date;
   updatedAt: Date;
   createdBy: IUser;

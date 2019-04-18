@@ -18,7 +18,7 @@ import {
 } from 'typeorm';
 import { GAME_NOT_STARTED } from 'z-games-base-game';
 
-import { User, Log } from '../../db/entities';
+import { User, Log, Invite } from '../../db/entities';
 
 @Entity()
 @Unique(['number'])
@@ -89,12 +89,15 @@ export class Game extends DefaultNamingStrategy {
   @OneToMany(type => Log, log => log.game)
   public logs: Log[];
 
+  @OneToMany(type => Invite, invite => invite.game)
+  public invites: Invite[];
+
   public toString(): string {
     return `${this.name}`;
   }
 
   @BeforeInsert()
-  public async setState(): Promise<void> {
+  public setState(): void {
     this.id = uuid.v1();
 
     this.state = GAME_NOT_STARTED;
