@@ -7,6 +7,12 @@ import { User, Invite } from '../db/entities';
 import { IUser, IInvite, IGame } from '../db/interfaces';
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
+import {
+  INVITE_FIELDS_MONGO,
+  INVITE_POPULATE_GAME,
+  INVITE_POPULATE_INVITEE,
+  INVITE_POPULATE_CREATED_BY,
+} from '../db/scopes';
 
 const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
@@ -26,21 +32,36 @@ export class InviteService {
     this.userModel = this.connectionMongo.model('User');
   }
 
+  public async findOne(inviteId: string): Promise<Invite | IInvite> {
+    this.logger.info(`Find one invite id ${inviteId}`);
+
+    if (IS_MONGO_USED) {
+      return this.inviteModel
+        .findOne({ _id: inviteId }, INVITE_FIELDS_MONGO)
+        .populate(...INVITE_POPULATE_GAME)
+        .populate(...INVITE_POPULATE_INVITEE)
+        .populate(...INVITE_POPULATE_CREATED_BY)
+        .exec();
+    }
+
+    // TODO: SQL
+  }
+
   public async create({
     gameId,
-    inviter,
+    createdBy,
     invitee,
   }: {
     gameId: string;
-    inviter: User;
+    createdBy: User;
     invitee: string;
   }): Promise<Invite> {
-    this.logger.info(`Create an invite by ${inviter.username}`);
+    this.logger.info(`Create an invite by ${createdBy.username}`);
 
     if (IS_MONGO_USED) {
       const inviteMongo = new this.inviteModel({
         game: gameId,
-        inviter: inviter.id,
+        createdBy: createdBy.id,
         invitee,
       });
 
@@ -56,10 +77,10 @@ export class InviteService {
       );
 
       await this.userModel.findOneAndUpdate(
-        { _id: inviter.id },
+        { _id: createdBy.id },
         {
           $push: {
-            invitesInviter: inviter.id,
+            invitesInviter: newInviteMongo.id,
           },
         },
       );
@@ -68,17 +89,17 @@ export class InviteService {
         { _id: invitee },
         {
           $push: {
-            invitesInvitee: invitee,
+            invitesInvitee: newInviteMongo.id,
           },
         },
       );
 
-      return newInviteMongo as any;
+      return JSON.parse(JSON.stringify(await this.findOne(newInviteMongo.id)));
     }
 
     // TODO: Invites SQL
     // const newUser = new User();
-    // newUser.id = inviter.id;
+    // newUser.id = createdBy.id;
     // newUser.username = user.username;
 
     const invite = new Invite();
