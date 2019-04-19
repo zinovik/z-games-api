@@ -85,7 +85,7 @@ export class User extends DefaultNamingStrategy {
   @OneToMany(type => Log, log => log.user)
   public logs: Log[];
 
-  @OneToMany(type => Invite, invite => invite.inviter)
+  @OneToMany(type => Invite, invite => invite.createdBy)
   public invitesInviter: Invite[];
 
   @OneToMany(type => Invite, invite => invite.invitee)

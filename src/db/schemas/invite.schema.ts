@@ -13,9 +13,10 @@ const transform = (
 export const inviteSchema = new Schema(
   {
     game: { type: Schema.Types.ObjectId, ref: 'Game', required: true },
-    inviter: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     invitee: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     isClosed: Boolean,
+    isAccepted: Boolean,
   }, {
     toJSON: { transform },
     toObject: { transform },
