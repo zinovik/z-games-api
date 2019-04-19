@@ -61,7 +61,7 @@ export const ALL_USER_FIELDS_MONGO =
   'id username avatar createdAt gamesPlayed gamesWon';
 
 export const USER_FIELDS_MONGO =
-  'id username password avatar email firstName lastName createdAt updatedAt isConfirmed gamesPlayed gamesWon';
+  'id username password avatar email firstName lastName createdAt updatedAt isConfirmed gamesPlayed gamesWon invitesInviter invitesInvitee';
 
 const USER_POPULATE_GAMES = 'id number';
 
@@ -82,10 +82,20 @@ export const USER_POPULATE_CURRENT_WATCH: [string, string] = [
 
 export const USER_POPULATE_INVITES_INVITER: [string, string] = [
   'invitesInviter',
-  `id`,
+  'id game',
 ];
 
 export const USER_POPULATE_INVITES_INVITEE: [string, string] = [
   'invitesInvitee',
-  `id`,
+  'id game',
+];
+
+export const USER_POPULATE_INVITES_GAME: [string, string] = [
+  'game',
+  'id name number',
+];
+
+export const USER_POPULATE_INVITES_CREATED_BY: [string, string] = [
+  'createdBy',
+  'id username',
 ];
