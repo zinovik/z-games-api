@@ -30,7 +30,7 @@ export class Invite extends DefaultNamingStrategy {
   @IsNotEmpty()
   @ManyToOne(type => User, user => user.invitesInviter)
   @JoinColumn({ name: 'user_id' })
-  public inviter: User;
+  public createdBy: User;
 
   @IsNotEmpty()
   @ManyToOne(type => User, user => user.invitesInvitee)

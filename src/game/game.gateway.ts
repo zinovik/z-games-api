@@ -17,9 +17,9 @@ import { LogService } from '../log/log.service';
 import { LoggerService } from '../logger/logger.service';
 import { JwtGuard } from '../guards/jwt.guard';
 import { JwtService } from '../services/jwt.service';
-import { Game, User, Log } from '../db/entities';
+import { Game, User, Log, Invite } from '../db/entities';
 import { IFilterSettings } from './IFilterSettings.interface';
-import { IGame, IUser } from '../db/interfaces';
+import { IGame, IUser, IInvite } from '../db/interfaces';
 
 @WebSocketGateway()
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -353,7 +353,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let game: Game;
 
     if (!client.user.openedGame) {
-      return; // TODO: Add error
+      this.sendError({ client, message: 'You don\'t have opened game to close' });
+      return;
     }
 
     try {
@@ -418,8 +419,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const newGame = await this.newGame(client, game.name);
 
     game.players.forEach(async (player: User | IUser) => {
-      await this.inviteService.create({ gameId: newGame.id, inviter: client.user, invitee: player.id });
+      if (player.id === client.user.id) {
+        return;
+      }
+
+      const invite = await this.inviteService.create({ gameId: newGame.id, createdBy: client.user, invitee: player.id });
+      this.sendInvite({ server: this.server, invite });
     });
+
+    this.updateCurrentUser({ server: this.server, userId: client.user.id });
   }
 
   @UseGuards(JwtGuard)
@@ -430,7 +438,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let game: Game;
 
     if (!client.user.openedGame) {
-      return; // TODO: Add error
+      this.sendError({ client, message: 'You don\'t have opened game to toggle ready status' });
+      return;
     }
 
     try {
@@ -592,6 +601,29 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  private sendInvite({ server, invite }: { server: Server, invite: Invite | IInvite }): void {
+    Object.keys(server.sockets.sockets).forEach(async (socketId) => {
+      const socketInGame = server.sockets.connected[socketId] as Socket & { user: User };
+      const userInGame = socketInGame.user;
+
+      if (userInGame && userInGame.id === invite.invitee.id) {
+        socketInGame.emit('new-invite', invite);
+      }
+    });
+  }
+
+  private updateCurrentUser({ server, userId }: { server: Server, userId: string }): void {
+    Object.keys(server.sockets.sockets).forEach(async (socketId) => {
+      const socketInGame = server.sockets.connected[socketId] as Socket & { user: User };
+      const userInGame = socketInGame.user;
+
+      if (userInGame && userInGame.id === userId) {
+        const user = await this.userService.findOneByUserId(userId);
+        socketInGame.emit('update-current-user', user);
+      }
+    });
+  }
+
   private kickUsersFromGame({ server, game }: { server: Server, game: Game | IGame }): void {
     if (!server.sockets.adapter.rooms[game.id]) {
       return;
@@ -604,8 +636,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (userInGame) {
         socketInGame.emit('update-opened-game', null);
       }
-    },
-    );
+    });
   }
 
   private sendGameToGameUsers({ server, game }: { server: Server, game: Game | IGame }): void {
@@ -620,8 +651,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (userInGame) {
         socketInGame.emit('update-opened-game', this.gameService.parseGameForUser({ game, user: userInGame }));
       }
-    },
-    );
+    });
   }
 
   private sendError({
