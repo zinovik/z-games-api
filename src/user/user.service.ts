@@ -22,6 +22,8 @@ import {
   USER_POPULATE_CURRENT_WATCH,
   USER_POPULATE_INVITES_INVITER,
   USER_POPULATE_INVITES_INVITEE,
+  USER_POPULATE_INVITES_GAME,
+  USER_POPULATE_INVITES_CREATED_BY,
 } from '../db/scopes/User';
 
 const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
@@ -69,9 +71,25 @@ export class UserService {
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
         .populate(...USER_POPULATE_CURRENT_WATCH)
-        .populate(...USER_POPULATE_INVITES_INVITER)
-        .populate(...USER_POPULATE_INVITES_INVITEE)
-        .populate(...USER_POPULATE_CURRENT_WATCH)
+        .populate({
+          path: USER_POPULATE_INVITES_INVITER[0],
+          select: USER_POPULATE_INVITES_INVITER[1],
+          populate: {
+            path: USER_POPULATE_INVITES_GAME[0],
+            select: USER_POPULATE_INVITES_GAME[1],
+          },
+        })
+        .populate({
+          path: USER_POPULATE_INVITES_INVITEE[0],
+          select: USER_POPULATE_INVITES_INVITEE[1],
+          populate: [{
+            path: USER_POPULATE_INVITES_GAME[0],
+            select: USER_POPULATE_INVITES_GAME[1],
+          }, {
+            path: USER_POPULATE_INVITES_CREATED_BY[0],
+            select: USER_POPULATE_INVITES_CREATED_BY[1],
+          }],
+        })
         .exec();
     }
 
@@ -97,8 +115,25 @@ export class UserService {
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
         .populate(...USER_POPULATE_CURRENT_WATCH)
-        .populate(...USER_POPULATE_INVITES_INVITER)
-        .populate(...USER_POPULATE_INVITES_INVITEE)
+        .populate({
+          path: USER_POPULATE_INVITES_INVITER[0],
+          select: USER_POPULATE_INVITES_INVITER[1],
+          populate: {
+            path: USER_POPULATE_INVITES_GAME[0],
+            select: USER_POPULATE_INVITES_GAME[1],
+          },
+        })
+        .populate({
+          path: USER_POPULATE_INVITES_INVITEE[0],
+          select: USER_POPULATE_INVITES_INVITEE[1],
+          populate: [{
+            path: USER_POPULATE_INVITES_GAME[0],
+            select: USER_POPULATE_INVITES_GAME[1],
+          }, {
+            path: USER_POPULATE_INVITES_CREATED_BY[0],
+            select: USER_POPULATE_INVITES_CREATED_BY[1],
+          }],
+        })
         .exec();
     }
 
@@ -124,8 +159,25 @@ export class UserService {
         .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
         .populate(...USER_POPULATE_CURRENT_WATCH)
-        .populate(...USER_POPULATE_INVITES_INVITER)
-        .populate(...USER_POPULATE_INVITES_INVITEE)
+        .populate({
+          path: USER_POPULATE_INVITES_INVITER[0],
+          select: USER_POPULATE_INVITES_INVITER[1],
+          populate: {
+            path: USER_POPULATE_INVITES_GAME[0],
+            select: USER_POPULATE_INVITES_GAME[1],
+          },
+        })
+        .populate({
+          path: USER_POPULATE_INVITES_INVITEE[0],
+          select: USER_POPULATE_INVITES_INVITEE[1],
+          populate: [{
+            path: USER_POPULATE_INVITES_GAME[0],
+            select: USER_POPULATE_INVITES_GAME[1],
+          }, {
+            path: USER_POPULATE_INVITES_CREATED_BY[0],
+            select: USER_POPULATE_INVITES_CREATED_BY[1],
+          }],
+        })
         .exec();
     }
 
