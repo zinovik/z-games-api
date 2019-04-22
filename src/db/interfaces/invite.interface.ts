@@ -10,4 +10,5 @@ export interface IInvite extends Document {
   updatedAt: Date;
   isClosed: boolean;
   isAccepted: boolean;
+  isDeclined: boolean;
 }
