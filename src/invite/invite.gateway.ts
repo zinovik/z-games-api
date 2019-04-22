@@ -25,7 +25,7 @@ export class InviteGateway {
 
   @UseGuards(JwtGuard)
   @SubscribeMessage('invite')
-  public async message(
+  public async invite(
     client: Socket & { user: User },
     {
       gameId,
