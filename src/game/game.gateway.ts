@@ -601,6 +601,34 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @UseGuards(JwtGuard)
+  @SubscribeMessage('accept-invite')
+  public async acceptInvite(client: Socket & { user: User }, inviteId: string): Promise<void> {
+
+    let invite: Invite | IInvite;
+
+    try {
+      invite = await this.inviteService.closeInvite({ inviteId, isAccepted: true });
+    } catch (error) {
+      return this.sendError({ client, message: error.message });
+    }
+
+    this.joinGame(client, invite.game.number);
+  }
+
+  @UseGuards(JwtGuard)
+  @SubscribeMessage('decline-invite')
+  public async declineInvite(client: Socket & { user: User }, inviteId: string): Promise<void> {
+
+    let invite: Invite | IInvite;
+
+    try {
+      invite = await this.inviteService.closeInvite({ inviteId, isAccepted: false });
+    } catch (error) {
+      return this.sendError({ client, message: error.message });
+    }
+  }
+
   private sendInvite({ server, invite }: { server: Server, invite: Invite | IInvite }): void {
     Object.keys(server.sockets.sockets).forEach(async (socketId) => {
       const socketInGame = server.sockets.connected[socketId] as Socket & { user: User };
