@@ -17,6 +17,7 @@ export const inviteSchema = new Schema(
     invitee: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     isClosed: Boolean,
     isAccepted: Boolean,
+    isDeclined: Boolean,
   }, {
     toJSON: { transform },
     toObject: { transform },
