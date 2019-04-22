@@ -40,6 +40,12 @@ export class Invite extends DefaultNamingStrategy {
   @Column({ name: 'is_closed', nullable: true })
   public isClosed: boolean;
 
+  @Column({ name: 'is_accepted', nullable: true })
+  public isAccepted: boolean;
+
+  @Column({ name: 'is_declined', nullable: true })
+  public isDeclined: boolean;
+
   @BeforeInsert()
   public beforeInsert(): void {
     this.id = uuid.v1();

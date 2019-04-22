@@ -110,4 +110,24 @@ export class InviteService {
 
     return await this.connection.getRepository(Invite).save(invite);
   }
+
+  public async closeInvite({
+    inviteId,
+    isAccepted,
+  }: {
+    inviteId: string;
+    isAccepted: boolean;
+  }): Promise<Invite> {
+
+    await this.inviteModel.findOneAndUpdate(
+      { _id: inviteId },
+      {
+        isClosed: true,
+        isAccepted,
+        isDeclined: !isAccepted,
+      },
+    );
+
+    return JSON.parse(JSON.stringify(await this.findOne(inviteId)));
+  }
 }
