@@ -172,7 +172,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       game = await this.gameService.newGame(name, client.user.id);
     } catch (error) {
-      this.sendError({ client, message: error.message });
+      this.sendError({ client, message: error.response.message });
       return;
     }
 
@@ -183,7 +183,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameId: game.id,
       });
     } catch (error) {
-      this.sendError({ client, message: error.message });
+      this.sendError({ client, message: error.response.message });
       return;
     }
 
@@ -206,7 +206,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       game = await this.gameService.joinGame({ user: client.user, gameNumber });
     } catch (error) {
       client.emit('');
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     try {
@@ -216,7 +216,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameId: game.id,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     client.join(game.id);
@@ -241,7 +241,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       game = await this.gameService.openGame({ user: client.user, gameNumber });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     try {
@@ -251,7 +251,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameId: game.id,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     client.join(game.id);
@@ -279,7 +279,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameNumber,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     try {
@@ -289,7 +289,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameId: game.id,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     client.join(game.id);
@@ -317,7 +317,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameNumber,
       });
     } catch (error) {
-      this.sendError({ client, message: error.message });
+      this.sendError({ client, message: error.response.message });
       return;
     }
 
@@ -328,7 +328,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameId: game.id,
       });
     } catch (error) {
-      this.sendError({ client, message: error.message });
+      this.sendError({ client, message: error.response.message });
       return;
     }
 
@@ -363,7 +363,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameNumber: client.user.openedGame.number,
       });
     } catch (error) {
-      this.sendError({ client, message: error.message });
+      this.sendError({ client, message: error.response.message });
       return;
     }
 
@@ -374,7 +374,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameId: game.id,
       });
     } catch (error) {
-      this.sendError({ client, message: error.message });
+      this.sendError({ client, message: error.response.message });
       return;
     }
 
@@ -399,7 +399,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<void> {
     const game = await this.gameService.findOne(gameNumber);
 
-    await this.gameService.removeGame({ user: client.user, gameNumber });
+    try {
+      await this.gameService.removeGame({ user: client.user, gameNumber });
+    } catch (error) {
+      this.sendError({ client, message: error.response.message });
+      return;
+    }
+
+    try {
+      await this.inviteService.closeInvites({ gameId: game.id });
+    } catch (error) {
+      return this.sendError({ client, message: error.response.message });
+    }
 
     this.kickUsersFromGame({ server: this.server, game });
 
@@ -448,7 +459,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameNumber: client.user.openedGame.number,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     let log: Log;
@@ -460,7 +471,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameId: game.id,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     game.logs = [log, ...game.logs];
@@ -484,7 +495,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         value,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     let log: Log;
@@ -496,7 +507,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameId: game.id,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     game.logs = [log, ...game.logs];
@@ -515,7 +526,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       game = await this.gameService.startGame({ gameNumber });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     try {
@@ -525,7 +536,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameId: game.id,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
+    }
+
+    try {
+      await this.inviteService.closeInvites({ gameId: game.id });
+    } catch (error) {
+      return this.sendError({ client, message: error.response.message });
     }
 
     game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
@@ -564,7 +581,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         userId: client.user.id,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     try {
@@ -575,7 +592,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         text: move,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     if (game.state === GAME_FINISHED) {
@@ -586,7 +603,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           gameId: game.id,
         });
       } catch (error) {
-        return this.sendError({ client, message: error.message });
+        return this.sendError({ client, message: error.response.message });
       }
     }
 
@@ -604,13 +621,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @UseGuards(JwtGuard)
   @SubscribeMessage('accept-invite')
   public async acceptInvite(client: Socket & { user: User }, inviteId: string): Promise<void> {
-
     let invite: Invite | IInvite;
 
     try {
       invite = await this.inviteService.closeInvite({ inviteId, isAccepted: true });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     this.joinGame(client, invite.game.number);
@@ -623,9 +639,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let invite: Invite | IInvite;
 
     try {
-      invite = await this.inviteService.closeInvite({ inviteId, isAccepted: false });
+      invite = await this.inviteService.closeInvite({ inviteId, isDeclined: true });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
   }
 
@@ -682,13 +698,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  private sendError({
-    client,
-    message,
-  }: {
-    client: Socket;
-    message: string;
-  }): void {
+  private sendError({ client, message }: { client: Socket; message: string; }): void {
     this.logger.error(message, '');
     client.emit('error-message', { message });
   }

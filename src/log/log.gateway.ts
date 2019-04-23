@@ -55,19 +55,13 @@ export class LogGateway {
         text: message,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     this.server.to(gameId).emit('new-log', log);
   }
 
-  private sendError({
-    client,
-    message,
-  }: {
-    client: Socket;
-    message: string;
-  }): void {
+  private sendError({ client, message }: { client: Socket; message: string; }): void {
     this.logger.error(message, '');
     client.emit('error-message', { message });
   }
