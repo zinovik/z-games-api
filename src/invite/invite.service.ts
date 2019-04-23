@@ -114,9 +114,11 @@ export class InviteService {
   public async closeInvite({
     inviteId,
     isAccepted,
+    isDeclined,
   }: {
     inviteId: string;
-    isAccepted: boolean;
+    isAccepted?: boolean;
+    isDeclined?: boolean;
   }): Promise<Invite> {
 
     await this.inviteModel.findOneAndUpdate(
@@ -124,10 +126,22 @@ export class InviteService {
       {
         isClosed: true,
         isAccepted,
-        isDeclined: !isAccepted,
+        isDeclined,
       },
     );
 
     return JSON.parse(JSON.stringify(await this.findOne(inviteId)));
+  }
+
+  public async closeInvites({ gameId }: {
+    gameId: string;
+  }): Promise<void> {
+
+    await this.inviteModel.updateMany(
+      { game: gameId },
+      {
+        isClosed: true,
+      },
+    );
   }
 }
