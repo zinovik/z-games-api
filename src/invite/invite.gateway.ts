@@ -54,20 +54,14 @@ export class InviteGateway {
         invitee: userId,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.message });
+      return this.sendError({ client, message: error.response.message });
     }
 
     // TODO: Send to one user
     this.server.to(gameId).emit('new-invite', invite);
   }
 
-  private sendError({
-    client,
-    message,
-  }: {
-    client: Socket;
-    message: string;
-  }): void {
+  private sendError({ client, message }: { client: Socket; message: string; }): void {
     this.logger.error(message, '');
     client.emit('error-message', { message });
   }

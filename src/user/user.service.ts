@@ -23,7 +23,9 @@ import {
   USER_POPULATE_INVITES_INVITER,
   USER_POPULATE_INVITES_INVITEE,
   USER_POPULATE_INVITES_GAME,
+  USER_POPULATE_INVITES_INVITEE_USER,
   USER_POPULATE_INVITES_CREATED_BY,
+  INVITES_FIELD_ORDER_BY_MONGO,
 } from '../db/scopes/User';
 
 const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
@@ -74,21 +76,31 @@ export class UserService {
         .populate({
           path: USER_POPULATE_INVITES_INVITER[0],
           select: USER_POPULATE_INVITES_INVITER[1],
-          populate: {
-            path: USER_POPULATE_INVITES_GAME[0],
-            select: USER_POPULATE_INVITES_GAME[1],
-          },
+          populate: [
+            {
+              path: USER_POPULATE_INVITES_GAME[0],
+              select: USER_POPULATE_INVITES_GAME[1],
+            },
+            {
+              path: USER_POPULATE_INVITES_INVITEE_USER[0],
+              select: USER_POPULATE_INVITES_INVITEE_USER[1],
+            },
+          ],
+          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
         })
         .populate({
           path: USER_POPULATE_INVITES_INVITEE[0],
           select: USER_POPULATE_INVITES_INVITEE[1],
-          populate: [{
-            path: USER_POPULATE_INVITES_GAME[0],
-            select: USER_POPULATE_INVITES_GAME[1],
-          }, {
-            path: USER_POPULATE_INVITES_CREATED_BY[0],
-            select: USER_POPULATE_INVITES_CREATED_BY[1],
-          }],
+          populate: [
+            {
+              path: USER_POPULATE_INVITES_GAME[0],
+              select: USER_POPULATE_INVITES_GAME[1],
+            }, {
+              path: USER_POPULATE_INVITES_CREATED_BY[0],
+              select: USER_POPULATE_INVITES_CREATED_BY[1],
+            },
+          ],
+          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
         })
         .exec();
     }
@@ -118,21 +130,31 @@ export class UserService {
         .populate({
           path: USER_POPULATE_INVITES_INVITER[0],
           select: USER_POPULATE_INVITES_INVITER[1],
-          populate: {
-            path: USER_POPULATE_INVITES_GAME[0],
-            select: USER_POPULATE_INVITES_GAME[1],
-          },
+          populate: [
+            {
+              path: USER_POPULATE_INVITES_GAME[0],
+              select: USER_POPULATE_INVITES_GAME[1],
+            },
+            {
+              path: USER_POPULATE_INVITES_INVITEE_USER[0],
+              select: USER_POPULATE_INVITES_INVITEE_USER[1],
+            },
+          ],
+          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
         })
         .populate({
           path: USER_POPULATE_INVITES_INVITEE[0],
           select: USER_POPULATE_INVITES_INVITEE[1],
-          populate: [{
-            path: USER_POPULATE_INVITES_GAME[0],
-            select: USER_POPULATE_INVITES_GAME[1],
-          }, {
-            path: USER_POPULATE_INVITES_CREATED_BY[0],
-            select: USER_POPULATE_INVITES_CREATED_BY[1],
-          }],
+          populate: [
+            {
+              path: USER_POPULATE_INVITES_GAME[0],
+              select: USER_POPULATE_INVITES_GAME[1],
+            }, {
+              path: USER_POPULATE_INVITES_CREATED_BY[0],
+              select: USER_POPULATE_INVITES_CREATED_BY[1],
+            },
+          ],
+          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
         })
         .exec();
     }
@@ -162,21 +184,31 @@ export class UserService {
         .populate({
           path: USER_POPULATE_INVITES_INVITER[0],
           select: USER_POPULATE_INVITES_INVITER[1],
-          populate: {
-            path: USER_POPULATE_INVITES_GAME[0],
-            select: USER_POPULATE_INVITES_GAME[1],
-          },
+          populate: [
+            {
+              path: USER_POPULATE_INVITES_GAME[0],
+              select: USER_POPULATE_INVITES_GAME[1],
+            },
+            {
+              path: USER_POPULATE_INVITES_INVITEE_USER[0],
+              select: USER_POPULATE_INVITES_INVITEE_USER[1],
+            },
+          ],
+          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
         })
         .populate({
           path: USER_POPULATE_INVITES_INVITEE[0],
           select: USER_POPULATE_INVITES_INVITEE[1],
-          populate: [{
-            path: USER_POPULATE_INVITES_GAME[0],
-            select: USER_POPULATE_INVITES_GAME[1],
-          }, {
-            path: USER_POPULATE_INVITES_CREATED_BY[0],
-            select: USER_POPULATE_INVITES_CREATED_BY[1],
-          }],
+          populate: [
+            {
+              path: USER_POPULATE_INVITES_GAME[0],
+              select: USER_POPULATE_INVITES_GAME[1],
+            }, {
+              path: USER_POPULATE_INVITES_CREATED_BY[0],
+              select: USER_POPULATE_INVITES_CREATED_BY[1],
+            },
+          ],
+          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
         })
         .exec();
     }
