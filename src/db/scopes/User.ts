@@ -82,12 +82,12 @@ export const USER_POPULATE_CURRENT_WATCH: [string, string] = [
 
 export const USER_POPULATE_INVITES_INVITER: [string, string] = [
   'invitesInviter',
-  'id game',
+  'id game isClosed isAccepted isDeclined createdAt',
 ];
 
 export const USER_POPULATE_INVITES_INVITEE: [string, string] = [
   'invitesInvitee',
-  'id game',
+  'id game isClosed isAccepted isDeclined createdAt',
 ];
 
 export const USER_POPULATE_INVITES_GAME: [string, string] = [
@@ -95,7 +95,14 @@ export const USER_POPULATE_INVITES_GAME: [string, string] = [
   'id name number',
 ];
 
+export const USER_POPULATE_INVITES_INVITEE_USER: [string, string] = [
+  'invitee',
+  'id username',
+];
+
 export const USER_POPULATE_INVITES_CREATED_BY: [string, string] = [
   'createdBy',
   'id username',
 ];
+
+export const INVITES_FIELD_ORDER_BY_MONGO = 'createdAt';

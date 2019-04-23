@@ -4,8 +4,7 @@
 
 // MongoDB
 
-export const INVITE_FIELDS_MONGO =
-  'game game invitee createdBy createdAt';
+export const INVITE_FIELDS_MONGO = 'game invitee isClosed isAccepted isDeclined createdBy createdAt';
 
 const INVITE_POPULATE_USERS = 'id username';
 
