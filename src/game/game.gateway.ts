@@ -1,4 +1,5 @@
 import { UseGuards } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import {
   SubscribeMessage,
   WebSocketGateway,
@@ -14,10 +15,10 @@ import { GameService } from './game.service';
 import { UserService } from '../user/user.service';
 import { InviteService } from '../invite/invite.service';
 import { LogService } from '../log/log.service';
-import { LoggerService } from '../logger/logger.service';
 import { JwtGuard } from '../guards/jwt.guard';
 import { JwtService } from '../services/jwt.service';
-import { Game, User, Log, Invite } from '../db/entities';
+import { SocketService } from '../services/socket.service';
+import { Game, User, Invite } from '../db/entities';
 import { IFilterSettings } from './IFilterSettings.interface';
 import { IGame, IUser, IInvite } from '../db/interfaces';
 
@@ -29,15 +30,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private disconnectTimers: { [key: string]: NodeJS.Timeout } = {};
   private connectTimers: { [key: string]: NodeJS.Timeout } = {};
+  private readonly logService: LogService;
 
   constructor(
     private readonly gameService: GameService,
     private readonly userService: UserService,
     private readonly inviteService: InviteService,
-    private readonly logService: LogService,
-    private readonly logger: LoggerService,
     private readonly jwtService: JwtService,
-  ) { }
+    private readonly socketService: SocketService,
+    private readonly moduleRef: ModuleRef,
+  ) {
+    this.logService = this.moduleRef.get(LogService, { strict: false });
+  }
 
   async handleConnection(client: Socket) {
     const token = client.handshake.query.token;
@@ -70,19 +74,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    await this.logService.create({
+    const log = await this.logService.create({
       type: 'connect',
       user,
       gameId: user.openedGame.id,
     });
 
+    await this.gameService.addLog({ gameId: user.openedGame.id, logId: log.id });
+
     const game = JSON.parse(JSON.stringify(await this.gameService.findOne(user.openedGame.number)));
 
-    this.sendGameToGameUsers({ server: this.server, game });
-    this.server.emit(
-      'update-game',
-      this.gameService.parseGameForAllUsers(game),
-    );
+    this.socketService.sendGameToGameUsers({ server: this.server, game });
+    this.socketService.updateGame({ server: this.server, game });
   }
 
   async handleDisconnect(client: Socket) {
@@ -102,21 +105,20 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.disconnectTimers[user.id] = setTimeout(async () => {
 
-      await this.logService.create({
+      const log = await this.logService.create({
         type: 'disconnect',
         user,
         gameId: user.openedGame.id,
       });
 
+      await this.gameService.addLog({ gameId: user.openedGame.id, logId: log.id });
+
       client.leave(user.openedGame.id);
 
       const game = JSON.parse(JSON.stringify(await this.gameService.findOne(user.openedGame.number)));
 
-      this.sendGameToGameUsers({ server: this.server, game });
-      this.server.emit(
-        'update-game',
-        this.gameService.parseGameForAllUsers(game),
-      );
+      this.socketService.sendGameToGameUsers({ server: this.server, game });
+      this.socketService.updateGame({ server: this.server, game });
 
       delete this.disconnectTimers[user.id];
     }, 4000);
@@ -137,18 +139,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('get-opened-game')
   public async getOpenedGame(
     client: Socket & { user: User },
-  ): Promise<WsResponse<Game>> {
+  ): Promise<WsResponse<Game | IGame>> {
     if (!client.user) {
       return;
     }
 
-    if (!client.user.openedGame && !client.user.currentWatch) {
-      return;
+    if (!client.user.openedGame && !client.user.openedGameWatcher) {
+      return {
+        event: 'update-opened-game',
+        data: null,
+      };
     }
 
     const gameNumber = client.user.openedGame
       ? client.user.openedGame.number
-      : client.user.currentWatch.number;
+      : client.user.openedGameWatcher.number;
     const game = JSON.parse(
       JSON.stringify(await this.gameService.findOne(gameNumber)),
     );
@@ -157,7 +162,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     return {
       event: 'update-opened-game',
-      data: this.gameService.parseGameForUser({ game, user: client.user }),
+      data: this.socketService.parseGameForUser({ game, userId: client.user.id }),
     };
   }
 
@@ -171,23 +176,22 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       game = await this.gameService.newGame(name, client.user.id);
-    } catch (error) {
-      this.sendError({ client, message: error.response.message });
-      return;
-    }
 
-    try {
-      await this.logService.create({
+      await this.userService.addCreatedGame({ userId: client.user.id, gameId: game.id });
+
+      const log = await this.logService.create({
         type: 'create',
         user: client.user,
         gameId: game.id,
       });
+
+      await this.gameService.addLog({ gameId: game.id, logId: log.id });
     } catch (error) {
-      this.sendError({ client, message: error.response.message });
+      this.socketService.sendError({ client, message: error.response.message });
       return;
     }
 
-    this.server.emit('new-game', this.gameService.parseGameForAllUsers(game));
+    this.socketService.updateGame({ server: this.server, game });
 
     await this.joinGame(client, game.number);
 
@@ -204,30 +208,27 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       game = await this.gameService.joinGame({ user: client.user, gameNumber });
-    } catch (error) {
-      client.emit('');
-      return this.sendError({ client, message: error.response.message });
-    }
 
-    try {
-      await this.logService.create({
+      await this.userService.updateOpenAndAddCurrentGame({ userId: client.user.id, gameId: game.id });
+
+      const log = await this.logService.create({
         type: 'join',
         user: client.user,
         gameId: game.id,
       });
+
+      await this.gameService.addLog({ gameId: game.id, logId: log.id });
     } catch (error) {
-      return this.sendError({ client, message: error.response.message });
+      this.socketService.sendError({ client, message: error.response.message });
+      return;
     }
 
     client.join(game.id);
 
     game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
 
-    this.sendGameToGameUsers({ server: this.server, game });
-    this.server.emit(
-      'update-game',
-      this.gameService.parseGameForAllUsers(game),
-    );
+    this.socketService.sendGameToGameUsers({ server: this.server, game });
+    this.socketService.updateGame({ server: this.server, game });
   }
 
   @UseGuards(JwtGuard)
@@ -240,29 +241,27 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       game = await this.gameService.openGame({ user: client.user, gameNumber });
-    } catch (error) {
-      return this.sendError({ client, message: error.response.message });
-    }
 
-    try {
-      await this.logService.create({
+      await this.userService.updateOpenGame({ userId: client.user.id, gameId: game.id });
+
+      const log = await this.logService.create({
         type: 'open',
         user: client.user,
         gameId: game.id,
       });
+
+      await this.gameService.addLog({ gameId: game.id, logId: log.id });
     } catch (error) {
-      return this.sendError({ client, message: error.response.message });
+      this.socketService.sendError({ client, message: error.response.message });
+      return;
     }
 
     client.join(game.id);
 
     game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
 
-    this.sendGameToGameUsers({ server: this.server, game });
-    this.server.emit(
-      'update-game',
-      this.gameService.parseGameForAllUsers(game),
-    );
+    this.socketService.sendGameToGameUsers({ server: this.server, game });
+    this.socketService.updateGame({ server: this.server, game });
   }
 
   @UseGuards(JwtGuard)
@@ -278,29 +277,26 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         user: client.user,
         gameNumber,
       });
-    } catch (error) {
-      return this.sendError({ client, message: error.response.message });
-    }
 
-    try {
-      await this.logService.create({
+      await this.userService.updateOpenGameWatcher({ userId: client.user.id, gameId: game.id });
+
+      const log = await this.logService.create({
         type: 'watch',
         user: client.user,
         gameId: game.id,
       });
+
+      await this.gameService.addLog({ gameId: game.id, logId: log.id });
     } catch (error) {
-      return this.sendError({ client, message: error.response.message });
+      return this.socketService.sendError({ client, message: error.response.message });
     }
 
     client.join(game.id);
 
     game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
 
-    this.sendGameToGameUsers({ server: this.server, game });
-    this.server.emit(
-      'update-game',
-      this.gameService.parseGameForAllUsers(game),
-    );
+    this.socketService.sendGameToGameUsers({ server: this.server, game });
+    this.socketService.updateGame({ server: this.server, game });
   }
 
   @UseGuards(JwtGuard)
@@ -316,19 +312,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         user: client.user,
         gameNumber,
       });
-    } catch (error) {
-      this.sendError({ client, message: error.response.message });
-      return;
-    }
 
-    try {
-      await this.logService.create({
+      await this.userService.updateOpenAndRemoveCurrentGame({ userId: client.user.id, gameId: game.id });
+
+      const log = await this.logService.create({
         type: 'leave',
         user: client.user,
         gameId: game.id,
       });
+
+      await this.gameService.addLog({ gameId: game.id, logId: log.id });
     } catch (error) {
-      this.sendError({ client, message: error.response.message });
+      this.socketService.sendError({ client, message: error.response.message });
       return;
     }
 
@@ -336,11 +331,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
 
-    this.sendGameToGameUsers({ server: this.server, game });
-    this.server.emit(
-      'update-game',
-      this.gameService.parseGameForAllUsers(game),
-    );
+    this.socketService.sendGameToGameUsers({ server: this.server, game });
+    this.socketService.updateGame({ server: this.server, game });
 
     return { event: 'update-opened-game', data: null };
   }
@@ -352,8 +344,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<WsResponse<Game>> {
     let game: Game;
 
-    if (!client.user.openedGame) {
-      this.sendError({ client, message: 'You don\'t have opened game to close' });
+    if (!client.user.openedGame && !client.user.openedGameWatcher) {
+      this.socketService.sendError({ client, message: 'You don\'t have opened game to close' });
       return;
     }
 
@@ -362,19 +354,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         user: client.user,
         gameNumber: client.user.openedGame.number,
       });
-    } catch (error) {
-      this.sendError({ client, message: error.response.message });
-      return;
-    }
 
-    try {
-      await this.logService.create({
+      await this.userService.updateOpenGame({ userId: client.user.id, gameId: null });
+      await this.userService.updateOpenGameWatcher({ userId: client.user.id, gameId: null });
+
+      const log = await this.logService.create({
         type: 'close',
         user: client.user,
         gameId: game.id,
       });
+
+      await this.gameService.addLog({ gameId: game.id, logId: log.id });
     } catch (error) {
-      this.sendError({ client, message: error.response.message });
+      this.socketService.sendError({ client, message: error.response.message });
       return;
     }
 
@@ -382,11 +374,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
 
-    this.sendGameToGameUsers({ server: this.server, game });
-    this.server.emit(
-      'update-game',
-      this.gameService.parseGameForAllUsers(game),
-    );
+    this.socketService.sendGameToGameUsers({ server: this.server, game });
+    this.socketService.updateGame({ server: this.server, game });
 
     return { event: 'update-opened-game', data: null };
   }
@@ -401,15 +390,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       await this.gameService.removeGame({ user: client.user, gameNumber });
-    } catch (error) {
-      this.sendError({ client, message: error.response.message });
-      return;
-    }
-
-    try {
       await this.inviteService.closeInvites({ gameId: game.id });
     } catch (error) {
-      return this.sendError({ client, message: error.response.message });
+      this.socketService.sendError({ client, message: error.response.message });
+      return;
     }
 
     this.kickUsersFromGame({ server: this.server, game });
@@ -449,7 +433,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let game: Game;
 
     if (!client.user.openedGame) {
-      this.sendError({ client, message: 'You don\'t have opened game to toggle ready status' });
+      this.socketService.sendError({ client, message: 'You don\'t have opened game to toggle ready status' });
       return;
     }
 
@@ -458,25 +442,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         user: client.user,
         gameNumber: client.user.openedGame.number,
       });
-    } catch (error) {
-      return this.sendError({ client, message: error.response.message });
-    }
 
-    let log: Log;
-
-    try {
-      log = await this.logService.create({
+      const log = await this.logService.create({
         type: 'ready',
         user: client.user,
         gameId: game.id,
       });
+
+      await this.gameService.addLog({ gameId: game.id, logId: log.id });
     } catch (error) {
-      return this.sendError({ client, message: error.response.message });
+      return this.socketService.sendError({ client, message: error.response.message });
     }
 
-    game.logs = [log, ...game.logs];
+    game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
 
-    this.sendGameToGameUsers({ server: this.server, game });
+    this.socketService.sendGameToGameUsers({ server: this.server, game });
   }
 
   @UseGuards(JwtGuard)
@@ -494,25 +474,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         name,
         value,
       });
-    } catch (error) {
-      return this.sendError({ client, message: error.response.message });
-    }
 
-    let log: Log;
-
-    try {
-      log = await this.logService.create({
+      const log = await this.logService.create({
         type: 'update',
         user: client.user,
         gameId: game.id,
       });
+
+      await this.gameService.addLog({ gameId: game.id, logId: log.id });
     } catch (error) {
-      return this.sendError({ client, message: error.response.message });
+      return this.socketService.sendError({ client, message: error.response.message });
     }
 
-    game.logs = [log, ...game.logs];
+    game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
 
-    this.sendGameToGameUsers({ server: this.server, game });
+    this.socketService.sendGameToGameUsers({ server: this.server, game });
   }
 
   @UseGuards(JwtGuard)
@@ -522,36 +498,30 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     gameNumber: number,
   ): Promise<void> {
     let game: Game;
+    let nextPlayersIds: string[];
 
     try {
-      game = await this.gameService.startGame({ gameNumber });
-    } catch (error) {
-      return this.sendError({ client, message: error.response.message });
-    }
+      ({ game, nextPlayersIds } = await this.gameService.startGame({ gameNumber }));
 
-    try {
-      await this.logService.create({
+      await this.userService.addCurrentMoves({ usersIds: nextPlayersIds, gameId: game.id });
+
+      const log = await this.logService.create({
         type: 'start',
         user: client.user,
         gameId: game.id,
       });
-    } catch (error) {
-      return this.sendError({ client, message: error.response.message });
-    }
 
-    try {
+      await this.gameService.addLog({ gameId: game.id, logId: log.id });
+
       await this.inviteService.closeInvites({ gameId: game.id });
     } catch (error) {
-      return this.sendError({ client, message: error.response.message });
+      return this.socketService.sendError({ client, message: error.response.message });
     }
 
     game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
 
-    this.sendGameToGameUsers({ server: this.server, game });
-    this.server.emit(
-      'update-game',
-      this.gameService.parseGameForAllUsers(game),
-    );
+    this.socketService.sendGameToGameUsers({ server: this.server, game });
+    this.socketService.updateGame({ server: this.server, game });
   }
 
   @UseGuards(JwtGuard)
@@ -566,13 +536,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         currentGame => currentGame.number === gameNumber,
       )
     ) {
-      return this.sendError({
+      return this.socketService.sendError({
         client,
         message: 'You can\'t make move if you are not this game player',
       });
     }
 
-    let game: Game;
+    let game: Game | IGame;
 
     try {
       game = await this.gameService.makeMove({
@@ -580,41 +550,34 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameNumber,
         userId: client.user.id,
       });
-    } catch (error) {
-      return this.sendError({ client, message: error.response.message });
-    }
 
-    try {
-      await this.logService.create({
+      const log = await this.logService.create({
         type: 'move',
         user: client.user,
         gameId: game.id,
         text: move,
       });
-    } catch (error) {
-      return this.sendError({ client, message: error.response.message });
-    }
 
-    if (game.state === GAME_FINISHED) {
-      try {
-        await this.logService.create({
+      await this.gameService.addLog({ gameId: game.id, logId: log.id });
+
+      if (game.state === GAME_FINISHED) {
+        const finishLog = await this.logService.create({
           type: 'finish',
           user: client.user,
           gameId: game.id,
         });
-      } catch (error) {
-        return this.sendError({ client, message: error.response.message });
+
+        await this.gameService.addLog({ gameId: game.id, logId: finishLog.id });
       }
+    } catch (error) {
+      return this.socketService.sendError({ client, message: error.response.message });
     }
 
     game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
 
-    this.sendGameToGameUsers({ server: this.server, game });
+    this.socketService.sendGameToGameUsers({ server: this.server, game });
     if (game.state === GAME_FINISHED) {
-      this.server.emit(
-        'update-game',
-        this.gameService.parseGameForAllUsers(game),
-      );
+      this.socketService.updateGame({ server: this.server, game });
     }
   }
 
@@ -626,10 +589,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       invite = await this.inviteService.closeInvite({ inviteId, isAccepted: true });
     } catch (error) {
-      return this.sendError({ client, message: error.response.message });
+      return this.socketService.sendError({ client, message: error.response.message });
     }
 
     this.joinGame(client, invite.game.number);
+
+    // TODO: Send updated invite
   }
 
   @UseGuards(JwtGuard)
@@ -641,8 +606,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       invite = await this.inviteService.closeInvite({ inviteId, isDeclined: true });
     } catch (error) {
-      return this.sendError({ client, message: error.response.message });
+      return this.socketService.sendError({ client, message: error.response.message });
     }
+
+    // TODO: Send updated invite
   }
 
   private sendInvite({ server, invite }: { server: Server, invite: Invite | IInvite }): void {
@@ -683,23 +650,4 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  private sendGameToGameUsers({ server, game }: { server: Server, game: Game | IGame }): void {
-    if (!server.sockets.adapter.rooms[game.id]) {
-      return;
-    }
-
-    Object.keys(server.sockets.adapter.rooms[game.id].sockets).forEach(socketId => {
-      const socketInGame = server.sockets.connected[socketId] as Socket & { user: User };
-      const userInGame = socketInGame.user;
-
-      if (userInGame) {
-        socketInGame.emit('update-opened-game', this.gameService.parseGameForUser({ game, user: userInGame }));
-      }
-    });
-  }
-
-  private sendError({ client, message }: { client: Socket; message: string; }): void {
-    this.logger.error(message, '');
-    client.emit('error-message', { message });
-  }
 }

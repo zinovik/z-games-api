@@ -266,4 +266,93 @@ export class UserService {
 
     return this.connection.getRepository(User).save(user);
   }
+
+  public async addCreatedGame({ userId, gameId }: { userId: string, gameId: string }): Promise<void> {
+    if (IS_MONGO_USED) {
+      await this.userModel.findOneAndUpdate(
+        { _id: userId },
+        {
+          $push: {
+            createdGames: gameId,
+          },
+        },
+      );
+    }
+  }
+
+  public async updateOpenGame({ userId, gameId }: { userId: string, gameId: string | null }): Promise<void> {
+    if (IS_MONGO_USED) {
+      await this.userModel.findOneAndUpdate(
+        { _id: userId },
+        {
+          openedGame: gameId,
+        },
+      );
+    }
+  }
+
+  public async updateOpenGameWatcher({ userId, gameId }: { userId: string, gameId: string | null }): Promise<void> {
+    if (IS_MONGO_USED) {
+      await this.userModel.findOneAndUpdate(
+        { _id: userId },
+        {
+          openedGameWatcher: gameId,
+        },
+      );
+    }
+  }
+
+  public async updateOpenAndAddCurrentGame({ userId, gameId }: { userId: string, gameId: string }): Promise<void> {
+    if (IS_MONGO_USED) {
+      await this.userModel.findOneAndUpdate(
+        { _id: userId },
+        {
+          openedGame: gameId,
+          $push: {
+            currentGames: gameId,
+          },
+        },
+      );
+    }
+  }
+
+  public async updateOpenAndRemoveCurrentGame({ userId, gameId }: { userId: string, gameId: string }): Promise<void> {
+    if (IS_MONGO_USED) {
+      await this.userModel.findOneAndUpdate(
+        { _id: userId },
+        {
+          openedGame: null,
+          $pull: {
+            currentGames: gameId,
+          },
+        },
+      );
+    }
+  }
+
+  public async addLog({ userId, logId }: { userId: string, logId: string }): Promise<void> {
+    if (IS_MONGO_USED) {
+      await this.userModel.findOneAndUpdate(
+        { _id: userId },
+        {
+          $push: {
+            logs: logId,
+          },
+        },
+      );
+    }
+  }
+
+  public async addCurrentMoves({ usersIds, gameId }: { usersIds: string[], gameId: string }): Promise<void> {
+    if (IS_MONGO_USED) {
+      await this.userModel.updateMany(
+        { _id: { $in: usersIds } },
+        {
+          $push: {
+            currentMoves: gameId,
+          },
+        },
+      );
+    }
+  }
 }
