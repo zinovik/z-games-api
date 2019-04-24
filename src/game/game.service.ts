@@ -5,7 +5,7 @@ import { Model, Connection as ConnectionMongo } from 'mongoose';
 import { IBaseGameData, GAME_NOT_STARTED, GAME_STARTED, GAME_FINISHED } from 'z-games-base-game';
 
 import { User, Game } from '../db/entities';
-import { IUser, IGame, ILog } from '../db/interfaces';
+import { IUser, IGame } from '../db/interfaces';
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
 import { GamesServices, gamesNames } from '../games';
@@ -28,7 +28,6 @@ import {
   OPEN_GAME_JOIN_LOGS,
   OPEN_GAME_JOIN_LOGS_USERNAMES,
   LOGS_FIELD_ORDER_BY,
-  FIELDS_TO_REMOVE_IN_ALL_GAMES,
   ALL_GAMES_FIELDS,
   ALL_GAMES_FIELDS_MONGO,
   ALL_GAMES_POPULATE_CREATED_BY,
@@ -50,7 +49,6 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 export class GameService {
   gameModel: Model<IGame>;
   userModel: Model<IUser>;
-  logModel: Model<ILog>;
 
   constructor(
     private readonly connection: Connection,
@@ -59,7 +57,6 @@ export class GameService {
   ) {
     this.gameModel = this.connectionMongo.model('Game');
     this.userModel = this.connectionMongo.model('User');
-    this.logModel = this.connectionMongo.model('Log');
   }
 
   public async findOne(gameNumber: number): Promise<Game | IGame> {
@@ -182,15 +179,6 @@ export class GameService {
       const gameMongo = new this.gameModel(game);
       const gameMongoNew = await gameMongo.save();
 
-      await this.userModel.findOneAndUpdate(
-        { _id: userId },
-        {
-          $push: {
-            createdGames: gameMongoNew.id,
-          },
-        },
-      );
-
       return JSON.parse(JSON.stringify(gameMongoNew));
     }
 
@@ -247,16 +235,6 @@ export class GameService {
         },
       );
 
-      await this.userModel.findOneAndUpdate(
-        { _id: user.id },
-        {
-          openedGame: game.id,
-          $push: {
-            currentGames: game.id,
-          },
-        },
-      );
-
       return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
     }
 
@@ -302,13 +280,6 @@ export class GameService {
           $push: {
             playersOnline: user.id,
           },
-        },
-      );
-
-      await this.userModel.findOneAndUpdate(
-        { _id: user.id },
-        {
-          openedGame: game.id,
         },
       );
 
@@ -359,13 +330,6 @@ export class GameService {
           $push: {
             watchers: user.id,
           },
-        },
-      );
-
-      await this.userModel.findOneAndUpdate(
-        { _id: user.id },
-        {
-          currentWatch: game.id,
         },
       );
 
@@ -422,16 +386,6 @@ export class GameService {
         },
       );
 
-      await this.userModel.findOneAndUpdate(
-        { _id: user.id },
-        {
-          openedGame: null,
-          $pull: {
-            currentGames: game.id,
-          },
-        },
-      );
-
       return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
     }
 
@@ -480,14 +434,6 @@ export class GameService {
         },
       );
 
-      await this.userModel.findOneAndUpdate(
-        { _id: user.id },
-        {
-          openedGame: null,
-          currentWatch: null,
-        },
-      );
-
       return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
     }
 
@@ -533,25 +479,13 @@ export class GameService {
         { _id: { $in: playersIds } },
         {
           openedGame: null,
-          // $pull: {
-          //   currentGames: game.id,
-          //   currentMoves: game.id,
-          // },
         },
       );
 
       await this.userModel.updateMany(
         { _id: { $in: watchersIds } },
-        { currentWatch: null },
+        { openedGameWatcher: null },
       );
-
-      // await this.logModel.deleteMany(
-      //   { game: game.id },
-      // );
-
-      // await this.gameModel.findOneAndDelete(
-      //   { _id: game.id },
-      // );
 
       await this.gameModel.findOneAndUpdate(
         { _id: game.id },
@@ -639,7 +573,7 @@ export class GameService {
     gameNumber,
   }: {
     gameNumber: number;
-  }): Promise<Game> {
+  }): Promise<{ game: Game, nextPlayersIds: string[] }> {
     this.logger.info(`Start game number ${gameNumber}`);
 
     const game = await this.findOne(gameNumber);
@@ -674,25 +608,10 @@ export class GameService {
         },
       );
 
-      await this.userModel.updateMany(
-        {},
-        {
-          $pull: {
-            currentMoves: game.id,
-          },
-        },
-      );
-
-      await this.userModel.updateMany(
-        { _id: { $in: nextPlayersIds } },
-        {
-          $push: {
-            currentMoves: game.id,
-          },
-        },
-      );
-
-      return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+      return {
+        game: JSON.parse(JSON.stringify(await this.findOne(gameNumber))),
+        nextPlayersIds,
+      };
     }
 
     game.gameData = gameData;
@@ -705,7 +624,10 @@ export class GameService {
       game.nextPlayers.push(nextUser as User & IUser);
     });
 
-    return this.connection.getRepository(Game).save(game);
+    return {
+      game: await this.connection.getRepository(Game).save(game),
+      nextPlayersIds,
+    };
   }
 
   public async makeMove({
@@ -837,32 +759,17 @@ export class GameService {
     return this.connection.getRepository(Game).save(game);
   }
 
-  public parseGameForAllUsers(game: Game): Game {
-    const newGame = { ...game } as { [key: string]: any };
-
-    FIELDS_TO_REMOVE_IN_ALL_GAMES.forEach(field => {
-      if (newGame[field]) {
-        delete newGame[field];
-      }
-    });
-
-    return newGame as Game;
-  }
-
-  public parseGameForUser({ game, user }: { game: Game | IGame; user: User }): Game {
-    if (game.state === GAME_FINISHED) {
-      return {
-        ...game,
-        gameData: JSON.parse(JSON.stringify(game.gameData)),
-      } as Game;
+  public async addLog({ gameId, logId }: { gameId: string, logId: string }): Promise<void> {
+    if (IS_MONGO_USED) {
+      await this.gameModel.findOneAndUpdate(
+        { _id: gameId },
+        {
+          $push: {
+            logs: logId,
+          },
+        },
+      );
     }
-
-    const gameData = GamesServices[game.name].parseGameDataForUser({
-      gameData: game.gameData,
-      userId: user.id,
-    });
-
-    return { ...game, gameData } as Game;
   }
 
   private async getNewGameNumber(): Promise<number> {

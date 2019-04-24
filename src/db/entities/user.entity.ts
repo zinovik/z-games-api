@@ -61,7 +61,7 @@ export class User extends DefaultNamingStrategy {
 
   @ManyToOne(type => Game, game => game.watchers)
   @JoinColumn({ name: 'current_watch' })
-  public currentWatch: Game;
+  public openedGameWatcher: Game;
 
   @ManyToMany(type => Game, game => game.nextPlayers)
   public currentMoves: Game[];
