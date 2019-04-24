@@ -13,7 +13,7 @@ export interface IUser extends Document {
   avatar: string;
   openedGame: IGame;
   currentGames: IGame[];
-  currentWatch: IGame;
+  openedGameWatcher: IGame;
   currentMoves: IGame[];
   createdGames: IGame[];
   gamesPlayed: number;

@@ -4,7 +4,7 @@ import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
 
 import { User, Log } from '../db/entities';
-import { IUser, ILog, IGame } from '../db/interfaces';
+import { IUser, ILog } from '../db/interfaces';
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
 
@@ -13,8 +13,6 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 @Injectable()
 export class LogService {
   logModel: Model<ILog>;
-  gameModel: Model<IGame>;
-  userModel: Model<IUser>;
 
   constructor(
     private readonly connection: Connection,
@@ -22,8 +20,6 @@ export class LogService {
     @InjectConnection() private readonly connectionMongo: ConnectionMongo,
   ) {
     this.logModel = this.connectionMongo.model('Log');
-    this.gameModel = this.connectionMongo.model('Game');
-    this.userModel = this.connectionMongo.model('User');
   }
 
   public async create({
@@ -48,24 +44,6 @@ export class LogService {
       });
 
       const newLogMongo = await logMongo.save();
-
-      await this.gameModel.findOneAndUpdate(
-        { _id: gameId },
-        {
-          $push: {
-            logs: newLogMongo.id,
-          },
-        },
-      );
-
-      await this.userModel.findOneAndUpdate(
-        { _id: user.id },
-        {
-          $push: {
-            logs: newLogMongo.id,
-          },
-        },
-      );
 
       (newLogMongo as ILog).user = user as IUser;
 

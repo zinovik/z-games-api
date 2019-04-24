@@ -7,7 +7,7 @@ import {
 import { Server, Socket } from 'socket.io';
 
 import { InviteService } from './invite.service';
-import { LoggerService } from '../logger/logger.service';
+import { SocketService } from '../services/socket.service';
 import { JwtGuard } from '../guards/jwt.guard';
 import { User, Invite } from '../db/entities';
 import { IInvite } from '../db/interfaces';
@@ -20,7 +20,7 @@ export class InviteGateway {
 
   constructor(
     private readonly inviteService: InviteService,
-    private readonly logger: LoggerService,
+    private readonly socketService: SocketService,
   ) { }
 
   @UseGuards(JwtGuard)
@@ -37,9 +37,9 @@ export class InviteGateway {
   ): Promise<void> {
     if (
       (!client.user.currentGames || !client.user.currentGames.some(game => game.id === gameId)) &&
-      (!client.user.currentWatch || client.user.currentWatch.id !== gameId)
+      (!client.user.openedGameWatcher || client.user.openedGameWatcher.id !== gameId)
     ) {
-      return this.sendError({
+      return this.socketService.sendError({
         client,
         message: 'You can\'t invite a user if you are not this game player',
       });
@@ -54,15 +54,11 @@ export class InviteGateway {
         invitee: userId,
       });
     } catch (error) {
-      return this.sendError({ client, message: error.response.message });
+      return this.socketService.sendError({ client, message: error.response.message });
     }
 
     // TODO: Send to one user
     this.server.to(gameId).emit('new-invite', invite);
   }
 
-  private sendError({ client, message }: { client: Socket; message: string; }): void {
-    this.logger.error(message, '');
-    client.emit('error-message', { message });
-  }
 }
