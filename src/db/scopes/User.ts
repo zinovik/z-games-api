@@ -26,8 +26,8 @@ export const USER_FIELDS = [
   'openedGame.id',
   'currentGames.number',
   'currentGames.id',
-  'currentWatch.number',
-  'currentWatch.id',
+  'openedGameWatcher.number',
+  'openedGameWatcher.id',
 ];
 
 export const USER_JOIN_OPENED_GAME: [string, string] = [
@@ -41,8 +41,8 @@ export const USER_JOIN_CURRENT_GAMES: [string, string] = [
 ];
 
 export const USER_JOIN_CURRENT_WATCH: [string, string] = [
-  'user.currentWatch',
-  'currentWatch',
+  'user.openedGameWatcher',
+  'openedGameWatcher',
 ];
 
 export const USER_JOIN_INVITES_INVITER: [string, string] = [
@@ -76,7 +76,7 @@ export const USER_POPULATE_CURRENT_GAMES: [string, string] = [
 ];
 
 export const USER_POPULATE_CURRENT_WATCH: [string, string] = [
-  'currentWatch',
+  'openedGameWatcher',
   USER_POPULATE_GAMES,
 ];
 
