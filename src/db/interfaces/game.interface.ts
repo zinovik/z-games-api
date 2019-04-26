@@ -14,7 +14,7 @@ export interface IGame extends Document {
   privatePassword: string;
   playersOnline: IUser[];
   players: IUser[];
-  watchers: IUser[];
+  watchersOnline: IUser[];
   nextPlayers: IUser[];
   logs: ILog[];
   invites: IInvite[];

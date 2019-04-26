@@ -40,8 +40,8 @@ export const OPEN_GAME_FIELDS = [
   'players.avatar',
   'players.gamesPlayed',
   'players.gamesWon',
-  'watchers.username',
-  'watchers.id',
+  'watchersOnline.username',
+  'watchersOnline.id',
   'playersOnline.username',
   'playersOnline.id',
   'logs.type',
@@ -52,8 +52,8 @@ export const OPEN_GAME_FIELDS = [
 ];
 
 export const OPEN_GAME_JOIN_WATCHERS: [string, string] = [
-  'game.watchers',
-  'watchers',
+  'game.watchersOnline',
+  'watchersOnline',
 ];
 
 export const OPEN_GAME_JOIN_PLAYERS_ONLINE: [string, string] = [
@@ -71,7 +71,7 @@ export const OPEN_GAME_JOIN_LOGS_USERNAMES: [string, string] = [
 export const FIELDS_TO_REMOVE_IN_ALL_GAMES = [
   'id',
   'gameData',
-  'watchers',
+  'watchersOnline',
   'playersOnline',
   'nextPlayers',
   'logs',
@@ -104,7 +104,7 @@ export const ALL_GAMES_POPULATE_NEXT_PLAYERS: [string, string] = [
 export const OPEN_GAME_FIELDS_MONGO = `${ALL_GAMES_FIELDS_MONGO} id gameData`;
 
 export const OPEN_GAME_POPULATE_WATCHERS: [string, string] = [
-  'watchers',
+  'watchersOnline',
   GAME_POPULATE_USERS,
 ];
 
