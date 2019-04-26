@@ -1,4 +1,4 @@
-FROM node:latest
+FROM 10.15.3-jessie
 
 # Create work directory
 WORKDIR /usr/src/app
