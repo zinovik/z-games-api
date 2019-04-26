@@ -9,3 +9,4 @@ export * from './starting-game.exception';
 export * from './watching-game.exception';
 export * from './activating-user.exception';
 export * from './authorization-user.exception';
+export * from './removing-game.exception';

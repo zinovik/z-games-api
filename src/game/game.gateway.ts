@@ -9,7 +9,7 @@ import {
   WsResponse,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { GAME_FINISHED } from 'z-games-base-game';
+import { GAME_STARTED, GAME_FINISHED } from 'z-games-base-game';
 
 import { GameService } from './game.service';
 import { UserService } from '../user/user.service';
@@ -171,31 +171,33 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   public async newGame(
     client: Socket & { user: User },
     name: string,
-  ): Promise<Game> {
-    let game: Game;
+  ): Promise<string> {
+    let gameId = '';
 
     try {
-      game = await this.gameService.newGame(name, client.user.id);
+      ({ id: gameId } = await this.gameService.newGame(name, client.user.id));
 
-      await this.userService.addCreatedGame({ userId: client.user.id, gameId: game.id });
+      await this.userService.addCreatedGame({ userId: client.user.id, gameId });
 
-      const log = await this.logService.create({
+      const { id: logId } = await this.logService.create({
         type: 'create',
         user: client.user,
-        gameId: game.id,
+        gameId,
       });
 
-      await this.gameService.addLog({ gameId: game.id, logId: log.id });
-    } catch (error) {
-      this.socketService.sendError({ client, message: error.response.message });
+      await this.gameService.addLog({ gameId, logId });
+    } catch ({ response: { message } }) {
+      this.socketService.sendError({ client, message });
       return;
     }
 
-    this.socketService.updateGame({ server: this.server, game });
+    const game = JSON.parse(JSON.stringify(await this.gameService.findOneById(gameId)));
+
+    this.server.emit('new-game', game);
 
     await this.joinGame(client, game.number);
 
-    return game;
+    return game.id;
   }
 
   @UseGuards(JwtGuard)
@@ -204,28 +206,28 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client: Socket & { user: User },
     gameNumber: number,
   ): Promise<void> {
-    let game: Game;
+    let gameId = '';
 
     try {
-      game = await this.gameService.joinGame({ user: client.user, gameNumber });
+      ({ id: gameId } = await this.gameService.joinGame({ user: client.user, gameNumber }));
 
-      await this.userService.updateOpenAndAddCurrentGame({ userId: client.user.id, gameId: game.id });
+      await this.userService.updateOpenAndAddCurrentGame({ userId: client.user.id, gameId });
 
-      const log = await this.logService.create({
+      const { id: logId } = await this.logService.create({
         type: 'join',
         user: client.user,
-        gameId: game.id,
+        gameId,
       });
 
-      await this.gameService.addLog({ gameId: game.id, logId: log.id });
-    } catch (error) {
-      this.socketService.sendError({ client, message: error.response.message });
+      await this.gameService.addLog({ gameId, logId });
+    } catch ({ response: { message } }) {
+      this.socketService.sendError({ client, message });
       return;
     }
 
-    client.join(game.id);
+    client.join(gameId);
 
-    game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
+    const game = JSON.parse(JSON.stringify(await this.gameService.findOneById(gameId)));
 
     this.socketService.sendGameToGameUsers({ server: this.server, game });
     this.socketService.updateGame({ server: this.server, game });
@@ -251,8 +253,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
 
       await this.gameService.addLog({ gameId: game.id, logId: log.id });
-    } catch (error) {
-      this.socketService.sendError({ client, message: error.response.message });
+    } catch ({ response: { message } }) {
+      this.socketService.sendError({ client, message });
       return;
     }
 
@@ -287,8 +289,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
 
       await this.gameService.addLog({ gameId: game.id, logId: log.id });
-    } catch (error) {
-      return this.socketService.sendError({ client, message: error.response.message });
+    } catch ({ response: { message } }) {
+      return this.socketService.sendError({ client, message });
     }
 
     client.join(game.id);
@@ -322,8 +324,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
 
       await this.gameService.addLog({ gameId: game.id, logId: log.id });
-    } catch (error) {
-      this.socketService.sendError({ client, message: error.response.message });
+    } catch ({ response: { message } }) {
+      this.socketService.sendError({ client, message });
       return;
     }
 
@@ -365,8 +367,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
 
       await this.gameService.addLog({ gameId: game.id, logId: log.id });
-    } catch (error) {
-      this.socketService.sendError({ client, message: error.response.message });
+    } catch ({ response: { message } }) {
+      this.socketService.sendError({ client, message });
       return;
     }
 
@@ -391,8 +393,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       await this.gameService.removeGame({ user: client.user, gameNumber });
       await this.inviteService.closeInvites({ gameId: game.id });
-    } catch (error) {
-      this.socketService.sendError({ client, message: error.response.message });
+    } catch ({ response: { message } }) {
+      this.socketService.sendError({ client, message });
       return;
     }
 
@@ -411,18 +413,22 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     await this.closeGame(client);
 
-    const newGame = await this.newGame(client, game.name);
+    const gameId = await this.newGame(client, game.name);
 
     game.players.forEach(async (player: User | IUser) => {
       if (player.id === client.user.id) {
         return;
       }
 
-      const invite = await this.inviteService.create({ gameId: newGame.id, createdBy: client.user, invitee: player.id });
-      this.sendInvite({ server: this.server, invite });
+      const invite = await this.inviteService.create({ gameId, createdBy: client.user, invitee: player.id });
+      this.socketService.emitByUserId({
+        server: this.server,
+        userId: player.id,
+        event: 'new-invite',
+        data: invite,
+      });
+      client.emit('new-invite', invite);
     });
-
-    this.updateCurrentUser({ server: this.server, userId: client.user.id });
   }
 
   @UseGuards(JwtGuard)
@@ -450,8 +456,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
 
       await this.gameService.addLog({ gameId: game.id, logId: log.id });
-    } catch (error) {
-      return this.socketService.sendError({ client, message: error.response.message });
+    } catch ({ response: { message } }) {
+      return this.socketService.sendError({ client, message });
     }
 
     game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
@@ -482,8 +488,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
 
       await this.gameService.addLog({ gameId: game.id, logId: log.id });
-    } catch (error) {
-      return this.socketService.sendError({ client, message: error.response.message });
+    } catch ({ response: { message } }) {
+      return this.socketService.sendError({ client, message });
     }
 
     game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
@@ -514,14 +520,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.gameService.addLog({ gameId: game.id, logId: log.id });
 
       await this.inviteService.closeInvites({ gameId: game.id });
-    } catch (error) {
-      return this.socketService.sendError({ client, message: error.response.message });
+    } catch ({ response: { message } }) {
+      return this.socketService.sendError({ client, message });
     }
 
     game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
 
     this.socketService.sendGameToGameUsers({ server: this.server, game });
-    this.socketService.updateGame({ server: this.server, game });
+    this.socketService.updateGame({ server: this.server, game: { number: game.number, state: GAME_STARTED } as Game | IGame });
   }
 
   @UseGuards(JwtGuard)
@@ -569,8 +575,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         await this.gameService.addLog({ gameId: game.id, logId: finishLog.id });
       }
-    } catch (error) {
-      return this.socketService.sendError({ client, message: error.response.message });
+    } catch ({ response: { message } }) {
+      return this.socketService.sendError({ client, message });
     }
 
     game = JSON.parse(JSON.stringify(await this.gameService.findOne(game.number)));
@@ -588,13 +594,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       invite = await this.inviteService.closeInvite({ inviteId, isAccepted: true });
-    } catch (error) {
-      return this.socketService.sendError({ client, message: error.response.message });
+    } catch ({ response: { message } }) {
+      return this.socketService.sendError({ client, message });
     }
 
     this.joinGame(client, invite.game.number);
 
-    // TODO: Send updated invite
+    client.emit('update-invite', invite);
+    this.socketService.emitByUserId({
+      server: this.server,
+      userId: invite.createdBy.id,
+      event: 'update-invite',
+      data: invite,
+    });
   }
 
   @UseGuards(JwtGuard)
@@ -605,33 +617,16 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       invite = await this.inviteService.closeInvite({ inviteId, isDeclined: true });
-    } catch (error) {
-      return this.socketService.sendError({ client, message: error.response.message });
+    } catch ({ response: { message } }) {
+      return this.socketService.sendError({ client, message });
     }
 
-    // TODO: Send updated invite
-  }
-
-  private sendInvite({ server, invite }: { server: Server, invite: Invite | IInvite }): void {
-    Object.keys(server.sockets.sockets).forEach(async (socketId) => {
-      const socketInGame = server.sockets.connected[socketId] as Socket & { user: User };
-      const userInGame = socketInGame.user;
-
-      if (userInGame && userInGame.id === invite.invitee.id) {
-        socketInGame.emit('new-invite', invite);
-      }
-    });
-  }
-
-  private updateCurrentUser({ server, userId }: { server: Server, userId: string }): void {
-    Object.keys(server.sockets.sockets).forEach(async (socketId) => {
-      const socketInGame = server.sockets.connected[socketId] as Socket & { user: User };
-      const userInGame = socketInGame.user;
-
-      if (userInGame && userInGame.id === userId) {
-        const user = await this.userService.findOneByUserId(userId);
-        socketInGame.emit('update-current-user', user);
-      }
+    client.emit('update-invite', invite);
+    this.socketService.emitByUserId({
+      server: this.server,
+      userId: invite.createdBy.id,
+      event: 'update-invite',
+      data: invite,
     });
   }
 
