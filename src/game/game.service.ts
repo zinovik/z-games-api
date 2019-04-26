@@ -17,6 +17,7 @@ import {
   ClosingGameException,
   StartingGameException,
   MakingMoveException,
+  RemovingGameException,
 } from '../exceptions';
 import {
   OPEN_GAME_FIELDS,
@@ -98,6 +99,45 @@ export class GameService {
       .getOne();
   }
 
+  public async findOneById(id: string): Promise<Game | IGame> {
+    this.logger.info(`Find one game id ${id}`);
+
+    if (IS_MONGO_USED) {
+      return this.gameModel
+        .findOne({ _id: id }, OPEN_GAME_FIELDS_MONGO)
+        .populate(...ALL_GAMES_POPULATE_CREATED_BY)
+        .populate(...ALL_GAMES_POPULATE_PLAYERS)
+        .populate(...ALL_GAMES_POPULATE_NEXT_PLAYERS)
+        .populate(...OPEN_GAME_POPULATE_WATCHERS)
+        .populate(...OPEN_GAME_POPULATE_PLAYERS_ONLINE)
+        .populate(...OPEN_GAME_POPULATE_NEXT_PLAYERS)
+        .populate({
+          path: OPEN_GAME_POPULATE_LOGS[0],
+          select: OPEN_GAME_POPULATE_LOGS[1],
+          populate: {
+            path: OPEN_GAME_POPULATE_LOGS_USERNAMES[0],
+            select: OPEN_GAME_POPULATE_LOGS_USERNAMES[1],
+          },
+          options: { sort: { [LOGS_FIELD_ORDER_BY_MONGO]: -1 } },
+        })
+        .exec();
+    }
+
+    return this.connection
+      .getRepository(Game)
+      .createQueryBuilder('game')
+      .select(OPEN_GAME_FIELDS)
+      .leftJoin(...ALL_GAMES_JOIN_PLAYERS)
+      .leftJoin(...ALL_GAMES_JOIN_NEXT_PLAYERS)
+      .leftJoin(...OPEN_GAME_JOIN_WATCHERS)
+      .leftJoin(...OPEN_GAME_JOIN_PLAYERS_ONLINE)
+      .leftJoin(...OPEN_GAME_JOIN_LOGS)
+      .leftJoin(...OPEN_GAME_JOIN_LOGS_USERNAMES)
+      .where({ id })
+      .orderBy({ [LOGS_FIELD_ORDER_BY]: 'DESC' })
+      .getOne();
+  }
+
   public async getAllGames(filterSettings?: IFilterSettings, isRemoved?: boolean, userId?: string): Promise<Game[]> {
     this.logger.info('Get all games');
 
@@ -145,8 +185,8 @@ export class GameService {
       );
     }
 
-    // TODO: Filter in SQL DB
-    // TODO: isRemoved in SQL DB
+    // TODO: SQL Filter
+    // TODO: SQL isRemoved field
 
     return await this.connection
       .getRepository(Game)
@@ -182,7 +222,7 @@ export class GameService {
       return JSON.parse(JSON.stringify(gameMongoNew));
     }
 
-    // TODO: CreatedBy SQL
+    // TODO: SQL CreatedBy field
 
     return await this.connection.getRepository(Game).save(game);
   }
@@ -319,7 +359,7 @@ export class GameService {
       throw new WatchingGameException('Can\'t watch joining game');
     }
 
-    if (game.watchers.some((watcher: User | IUser) => watcher.id === user.id)) {
+    if (game.watchersOnline.some((watcher: User | IUser) => watcher.id === user.id)) {
       throw new WatchingGameException('Can\'t watch game twice. Try to refresh the page');
     }
 
@@ -328,7 +368,7 @@ export class GameService {
         { _id: game.id },
         {
           $push: {
-            watchers: user.id,
+            watchersOnline: user.id,
           },
         },
       );
@@ -341,7 +381,7 @@ export class GameService {
     newUser.id = user.id;
     newUser.username = user.username;
 
-    game.watchers.push(newUser as User & IUser);
+    game.watchersOnline.push(newUser as User & IUser);
 
     return await this.connection.getRepository(Game).save(game);
   }
@@ -413,7 +453,7 @@ export class GameService {
     }
 
     const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
-    const isUserInWatchers = game.watchers.some(
+    const isUserInWatchers = game.watchersOnline.some(
       (player: User | IUser) => player.id === user.id,
     );
 
@@ -428,7 +468,7 @@ export class GameService {
         { _id: game.id },
         {
           $pull: {
-            watchers: user.id,
+            watchersOnline: user.id,
             playersOnline: user.id,
           },
         },
@@ -438,7 +478,7 @@ export class GameService {
     }
 
     if (isUserInWatchers) {
-      game.watchers = (game.watchers as Array<User | IUser>).filter(watcher => watcher.id !== user.id) as User[] | IUser[];
+      game.watchersOnline = (game.watchersOnline as Array<User | IUser>).filter(watcher => watcher.id !== user.id) as User[] | IUser[];
     }
 
     if (isUserInPlayers) {
@@ -460,20 +500,20 @@ export class GameService {
     const game = await this.findOne(gameNumber);
 
     if (!game) {
-      throw new ClosingGameException(`There is no game number ${gameNumber}`); // TODO: RemovingGameException
+      throw new RemovingGameException(`There is no game number ${gameNumber}`);
     }
 
     const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
 
-    if (!isUserInPlayers) { // TODO: RemovingGameException
-      throw new ClosingGameException(
+    if (!isUserInPlayers) {
+      throw new RemovingGameException(
         'Can\'t remove game without joining',
       );
     }
 
     if (IS_MONGO_USED) {
       const playersIds: string[] = (game.players as IUser[]).map(player => player.id);
-      const watchersIds: string[] = (game.watchers as IUser[]).map(watcher => watcher.id);
+      const watchersIds: string[] = (game.watchersOnline as IUser[]).map(watcher => watcher.id);
 
       await this.userModel.updateMany(
         { _id: { $in: playersIds } },
@@ -495,7 +535,7 @@ export class GameService {
       return true;
     }
 
-    // TODO Remove game for SQL Database
+    // TODO: SQL Remove Game
 
     if (isUserInPlayers) {
       game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];

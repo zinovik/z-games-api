@@ -1,6 +1,6 @@
 // PostgreSQL
 
-// TODO: SQL
+// TODO: SQL Invite Scopes
 
 // MongoDB
 
