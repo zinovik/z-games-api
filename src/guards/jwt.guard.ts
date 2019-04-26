@@ -22,6 +22,8 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
 
     if (!token) {
       this.logger.info('No token provided');
+      client.emit('update-current-user', null);
+      client.emit('update-opened-game', null);
       return false;
     }
 
@@ -29,6 +31,8 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
 
     if (!userId) {
       this.logger.info('No user id in token');
+      client.emit('update-current-user', null);
+      client.emit('update-opened-game', null);
       return false;
     }
 
@@ -36,16 +40,15 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
 
     if (!user) {
       this.logger.info('No user with token username');
+      client.emit('update-current-user', null);
+      client.emit('update-opened-game', null);
       return false;
     }
 
     const newToken = this.jwtService.generateToken({ id: userId }, '7 days');
 
-    context
-      .switchToWs()
-      .getClient()
-      .emit('new-token', newToken);
-    context.switchToWs().getClient().user = user;
+    client.emit('new-token', newToken);
+    client.user = user;
 
     return true;
   }
