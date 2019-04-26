@@ -58,8 +58,8 @@ export class LogGateway {
 
       await this.gameService.addLog({ gameId, logId: log.id });
       await this.userService.addLog({ userId: client.user.id, logId: log.id });
-    } catch (error) {
-      return this.socketService.sendError({ client, message: error.response.message });
+    } catch ({ response: { message } }) {
+      return this.socketService.sendError({ client, message });
     }
 
     this.server.to(gameId).emit('new-log', log);

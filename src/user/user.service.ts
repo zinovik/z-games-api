@@ -56,7 +56,7 @@ export class UserService {
         .exec();
     }
 
-    // TODO Add sorting
+    // TODO: SQL Sorting
     return this.connection
       .getRepository(User)
       .createQueryBuilder('user')

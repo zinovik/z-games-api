@@ -44,7 +44,7 @@ export class InviteService {
         .exec();
     }
 
-    // TODO: SQL
+    // TODO: SQL Find One Invite
   }
 
   public async create({
@@ -97,7 +97,7 @@ export class InviteService {
       return JSON.parse(JSON.stringify(await this.findOne(newInviteMongo.id)));
     }
 
-    // TODO: Invites SQL
+    // TODO: SQL Invites
     // const newUser = new User();
     // newUser.id = createdBy.id;
     // newUser.username = user.username;
