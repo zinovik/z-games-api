@@ -18,7 +18,7 @@ The project consists of two main parts and several games modules:
 # Where #
 
 There are two environments where you can check current versions:
-1. Development (dev branch) (https://z-games-dev.herokuapp.com)
+1. Development (dev branch) (https://z-games-dev.netlify.com)
 2. Production (master branch) (https://z-games.club)
 
 # How #
