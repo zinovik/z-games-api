@@ -24,7 +24,7 @@ export class InviteGateway {
   ) { }
 
   @UseGuards(JwtGuard)
-  @SubscribeMessage('invite')
+  @SubscribeMessage('new-invite')
   public async invite(
     client: Socket & { user: User },
     {
@@ -57,13 +57,13 @@ export class InviteGateway {
       return this.socketService.sendError({ client, message });
     }
 
-    client.emit('new-invite', invite);
     this.socketService.emitByUserId({
       server: this.server,
-      userId: invite.createdBy.id,
+      userId,
       event: 'new-invite',
       data: invite,
     });
+    client.emit('new-invite', invite);
   }
 
 }
