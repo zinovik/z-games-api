@@ -238,6 +238,12 @@ export class GameService {
 
     const game = await this.findOne(gameNumber);
 
+    // if (user.openedGame || user.openedGameWatcher) {
+    //   const openedGameNumber = (user.openedGame && user.openedGame.number)
+    //     || (user.openedGameWatcher && user.openedGameWatcher.number);
+    //   throw new JoiningGameException(`You are already in game number ${openedGameNumber}. Try to refresh the page`);
+    // }
+
     if (!game) {
       throw new JoiningGameException(`There is no game number ${gameNumber}`);
     }
@@ -300,6 +306,12 @@ export class GameService {
     this.logger.info(`Open game number ${gameNumber}`);
 
     const game = await this.findOne(gameNumber);
+
+    if (user.openedGame || user.openedGameWatcher) {
+      const openedGameNumber = (user.openedGame && user.openedGame.number)
+        || (user.openedGameWatcher && user.openedGameWatcher.number);
+      throw new OpeningGameException(`You are already in game number ${openedGameNumber}. Try to refresh the page`);
+    }
 
     if (!game) {
       throw new OpeningGameException(`There is no game number ${gameNumber}`);
@@ -443,7 +455,7 @@ export class GameService {
   }: {
     user: User;
     gameNumber: number;
-  }): Promise<Game> {
+  }): Promise<void> {
     this.logger.info(`Close game number ${gameNumber}`);
 
     const game = await this.findOne(gameNumber);
@@ -474,7 +486,7 @@ export class GameService {
         },
       );
 
-      return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+      return;
     }
 
     if (isUserInWatchers) {
@@ -485,7 +497,82 @@ export class GameService {
       game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
     }
 
-    return await this.connection.getRepository(Game).save(game);
+    await this.connection.getRepository(Game).save(game);
+  }
+
+  public async connectGame({
+    user,
+    gameNumber,
+  }: {
+    user: User | IUser;
+    gameNumber: number;
+  }): Promise<void> {
+    this.logger.info(`Connect game number ${gameNumber}`);
+
+    if (IS_MONGO_USED) {
+      await this.gameModel.findOneAndUpdate(
+        { number: gameNumber },
+        {
+          $push: {
+            playersOnline: user.id,
+          },
+        },
+      );
+
+      return;
+    }
+
+    const game = await this.findOne(gameNumber);
+
+    const newUser = new User();
+
+    newUser.id = user.id;
+    newUser.username = user.username;
+
+    game.playersOnline.push(newUser as User & IUser);
+
+    await this.connection.getRepository(Game).save(game);
+  }
+
+  public async disconnectGame({
+    user,
+    gameNumber,
+  }: {
+    user: User | IUser;
+    gameNumber: number;
+  }): Promise<void> {
+    this.logger.info(`Disconnect game number ${gameNumber}`);
+
+    const game = await this.findOne(gameNumber);
+
+    const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
+    const isUserInWatchers = game.watchersOnline.some(
+      (player: User | IUser) => player.id === user.id,
+    );
+
+    if (IS_MONGO_USED) {
+      await this.gameModel.findOneAndUpdate(
+        { _id: game.id },
+        {
+          $pull: {
+            watchersOnline: user.id,
+            playersOnline: user.id,
+          },
+        },
+      );
+
+      return;
+    }
+
+    if (isUserInWatchers) {
+      game.watchersOnline = (game.watchersOnline as Array<User | IUser>).filter(watcher => watcher.id !== user.id) as User[] | IUser[];
+    }
+
+    if (isUserInPlayers) {
+      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
+    }
+
+    await this.connection.getRepository(Game).save(game);
   }
 
   public async removeGame({
@@ -494,7 +581,7 @@ export class GameService {
   }: {
     user: User;
     gameNumber: number;
-  }): Promise<boolean> {
+  }): Promise<void> {
     this.logger.info(`Remove game number ${gameNumber}`);
 
     const game = await this.findOne(gameNumber);
@@ -532,7 +619,7 @@ export class GameService {
         { isRemoved: true },
       );
 
-      return true;
+      return;
     }
 
     // TODO: SQL Remove Game
@@ -540,8 +627,6 @@ export class GameService {
     if (isUserInPlayers) {
       game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
     }
-
-    return false;
   }
 
   public async toggleReady({
