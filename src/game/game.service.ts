@@ -60,45 +60,6 @@ export class GameService {
     this.userModel = this.connectionMongo.model('User');
   }
 
-  public async findOne(gameNumber: number): Promise<Game | IGame> {
-    this.logger.info(`Find one game number ${gameNumber}`);
-
-    if (IS_MONGO_USED) {
-      return this.gameModel
-        .findOne({ number: gameNumber }, OPEN_GAME_FIELDS_MONGO)
-        .populate(...ALL_GAMES_POPULATE_CREATED_BY)
-        .populate(...ALL_GAMES_POPULATE_PLAYERS)
-        .populate(...ALL_GAMES_POPULATE_NEXT_PLAYERS)
-        .populate(...OPEN_GAME_POPULATE_WATCHERS)
-        .populate(...OPEN_GAME_POPULATE_PLAYERS_ONLINE)
-        .populate(...OPEN_GAME_POPULATE_NEXT_PLAYERS)
-        .populate({
-          path: OPEN_GAME_POPULATE_LOGS[0],
-          select: OPEN_GAME_POPULATE_LOGS[1],
-          populate: {
-            path: OPEN_GAME_POPULATE_LOGS_USERNAMES[0],
-            select: OPEN_GAME_POPULATE_LOGS_USERNAMES[1],
-          },
-          options: { sort: { [LOGS_FIELD_ORDER_BY_MONGO]: -1 } },
-        })
-        .exec();
-    }
-
-    return this.connection
-      .getRepository(Game)
-      .createQueryBuilder('game')
-      .select(OPEN_GAME_FIELDS)
-      .leftJoin(...ALL_GAMES_JOIN_PLAYERS)
-      .leftJoin(...ALL_GAMES_JOIN_NEXT_PLAYERS)
-      .leftJoin(...OPEN_GAME_JOIN_WATCHERS)
-      .leftJoin(...OPEN_GAME_JOIN_PLAYERS_ONLINE)
-      .leftJoin(...OPEN_GAME_JOIN_LOGS)
-      .leftJoin(...OPEN_GAME_JOIN_LOGS_USERNAMES)
-      .where({ number: gameNumber })
-      .orderBy({ [LOGS_FIELD_ORDER_BY]: 'DESC' })
-      .getOne();
-  }
-
   public async findOneById(id: string): Promise<Game | IGame> {
     this.logger.info(`Find one game id ${id}`);
 
@@ -229,31 +190,29 @@ export class GameService {
 
   public async joinGame({
     user,
-    gameNumber,
+    gameId,
   }: {
-    user: User;
-    gameNumber: number;
-  }): Promise<Game> {
-    this.logger.info(`Join game number ${gameNumber}`);
+    user: User | IUser;
+    gameId: string;
+  }): Promise<void> {
+    this.logger.info(`Join game ${gameId}`);
 
-    const game = await this.findOne(gameNumber);
+    const game = await this.findOneById(gameId);
 
-    // if (user.openedGame || user.openedGameWatcher) {
-    //   const openedGameNumber = (user.openedGame && user.openedGame.number)
-    //     || (user.openedGameWatcher && user.openedGameWatcher.number);
-    //   throw new JoiningGameException(`You are already in game number ${openedGameNumber}. Try to refresh the page`);
-    // }
+    if (user.openedGame || user.openedGameWatcher) {
+      throw new JoiningGameException(`You are already have other game opened. Try to refresh the page`);
+    }
 
     if (!game) {
-      throw new JoiningGameException(`There is no game number ${gameNumber}`);
+      throw new JoiningGameException(`There is no game number ${game.number}. Try to refresh the page`);
     }
 
     if (game.state) {
-      throw new JoiningGameException('Can\'t join started or finished game');
+      throw new JoiningGameException('Can\'t join started or finished game. Try to refresh the page');
     }
 
     if (game.players.length >= game.playersMax) {
-      throw new JoiningGameException('Can\'t join game with maximum players inside');
+      throw new JoiningGameException('Can\'t join game with maximum players inside. Try to refresh the page');
     }
 
     if (game.players.some((player: User | IUser) => player.id === user.id)) {
@@ -281,7 +240,7 @@ export class GameService {
         },
       );
 
-      return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+      return;
     }
 
     const newUser = new User();
@@ -293,19 +252,19 @@ export class GameService {
 
     game.gameData = gameData;
 
-    return await this.connection.getRepository(Game).save(game);
+    await this.connection.getRepository(Game).save(game);
   }
 
   public async openGame({
     user,
-    gameNumber,
+    gameId,
   }: {
     user: User;
-    gameNumber: number;
-  }): Promise<Game> {
-    this.logger.info(`Open game number ${gameNumber}`);
+    gameId: string;
+  }): Promise<void> {
+    this.logger.info(`Open game ${gameId}`);
 
-    const game = await this.findOne(gameNumber);
+    const game = await this.findOneById(gameId);
 
     if (user.openedGame || user.openedGameWatcher) {
       const openedGameNumber = (user.openedGame && user.openedGame.number)
@@ -314,7 +273,7 @@ export class GameService {
     }
 
     if (!game) {
-      throw new OpeningGameException(`There is no game number ${gameNumber}`);
+      throw new OpeningGameException(`There is no game ${gameId}`);
     }
 
     if (!game.players.some((player: User | IUser) => player.id === user.id)) {
@@ -335,7 +294,7 @@ export class GameService {
         },
       );
 
-      return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+      return;
     }
 
     const newUser = new User();
@@ -345,30 +304,30 @@ export class GameService {
 
     game.playersOnline.push(newUser as User & IUser);
 
-    return await this.connection.getRepository(Game).save(game);
+    await this.connection.getRepository(Game).save(game);
   }
 
   public async watchGame({
     user,
-    gameNumber,
+    gameId,
   }: {
     user: User;
-    gameNumber: number;
+    gameId: string;
   }): Promise<Game> {
-    this.logger.info(`Watch game number ${gameNumber}`);
+    this.logger.info(`Watch game ${gameId}`);
 
-    const game = await this.findOne(gameNumber);
+    const game = await this.findOneById(gameId);
 
     if (!game) {
-      throw new WatchingGameException(`There is no game number ${gameNumber}`);
+      throw new WatchingGameException(`There is no game ${gameId}`);
     }
 
     if (!game.state) {
-      throw new WatchingGameException('Can\'t watch not started game');
+      throw new WatchingGameException('Can\'t watch not started game. Try to refresh the page');
     }
 
     if (game.players.some((player: User | IUser) => player.id === user.id)) {
-      throw new WatchingGameException('Can\'t watch joining game');
+      throw new WatchingGameException('Can\'t watch joining game. Try to refresh the page');
     }
 
     if (game.watchersOnline.some((watcher: User | IUser) => watcher.id === user.id)) {
@@ -385,7 +344,7 @@ export class GameService {
         },
       );
 
-      return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+      return JSON.parse(JSON.stringify(await this.findOneById(gameId)));
     }
 
     const newUser = new User();
@@ -400,25 +359,25 @@ export class GameService {
 
   public async leaveGame({
     user,
-    gameNumber,
+    gameId,
   }: {
     user: User;
-    gameNumber: number;
-  }): Promise<Game> {
-    this.logger.info(`Leave game number ${gameNumber}`);
+    gameId: string;
+  }): Promise<void> {
+    this.logger.info(`Leave game ${gameId}`);
 
-    const game = await this.findOne(gameNumber);
+    const game = await this.findOneById(gameId);
 
     if (!game) {
-      throw new LeavingGameException(`There is no game number ${gameNumber}`);
+      throw new LeavingGameException(`There is no game ${gameId}`);
     }
 
     if (game.state === GAME_STARTED) {
-      throw new LeavingGameException('Can\'t leave started and not finished game');
+      throw new LeavingGameException('Can\'t leave started and not finished game. Try to refresh the page');
     }
 
     if (!game.players.some((player: User | IUser) => player.id === user.id)) {
-      throw new LeavingGameException('Can\'t leave game without joining');
+      throw new LeavingGameException('Can\'t leave game without joining. Try to refresh the page');
     }
 
     const gameData = GamesServices[game.name].removePlayer({
@@ -438,7 +397,7 @@ export class GameService {
         },
       );
 
-      return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+      return;
     }
 
     game.players = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
@@ -446,22 +405,22 @@ export class GameService {
 
     game.gameData = gameData;
 
-    return await this.connection.getRepository(Game).save(game);
+    await this.connection.getRepository(Game).save(game);
   }
 
   public async closeGame({
     user,
-    gameNumber,
+    gameId,
   }: {
     user: User;
-    gameNumber: number;
+    gameId: string;
   }): Promise<void> {
-    this.logger.info(`Close game number ${gameNumber}`);
+    this.logger.info(`Close game ${gameId}`);
 
-    const game = await this.findOne(gameNumber);
+    const game = await this.findOneById(gameId);
 
     if (!game) {
-      throw new ClosingGameException(`There is no game number ${gameNumber}`);
+      throw new ClosingGameException(`There is no game ${gameId}`);
     }
 
     const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
@@ -502,16 +461,16 @@ export class GameService {
 
   public async connectGame({
     user,
-    gameNumber,
+    gameId,
   }: {
     user: User | IUser;
-    gameNumber: number;
+    gameId: string;
   }): Promise<void> {
-    this.logger.info(`Connect game number ${gameNumber}`);
+    this.logger.info(`Connect game ${gameId}`);
 
     if (IS_MONGO_USED) {
       await this.gameModel.findOneAndUpdate(
-        { number: gameNumber },
+        { _id: gameId },
         {
           $push: {
             playersOnline: user.id,
@@ -522,7 +481,7 @@ export class GameService {
       return;
     }
 
-    const game = await this.findOne(gameNumber);
+    const game = await this.findOneById(gameId);
 
     const newUser = new User();
 
@@ -536,14 +495,14 @@ export class GameService {
 
   public async disconnectGame({
     user,
-    gameNumber,
+    gameId,
   }: {
     user: User | IUser;
-    gameNumber: number;
+    gameId: string;
   }): Promise<void> {
-    this.logger.info(`Disconnect game number ${gameNumber}`);
+    this.logger.info(`Disconnect game ${gameId}`);
 
-    const game = await this.findOne(gameNumber);
+    const game = await this.findOneById(gameId);
 
     const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
     const isUserInWatchers = game.watchersOnline.some(
@@ -576,47 +535,34 @@ export class GameService {
   }
 
   public async removeGame({
-    user,
-    gameNumber,
+    userId,
+    gameId,
   }: {
-    user: User;
-    gameNumber: number;
+    userId: string;
+    gameId: string;
   }): Promise<void> {
-    this.logger.info(`Remove game number ${gameNumber}`);
+    this.logger.info(`Remove game ${gameId}`);
 
-    const game = await this.findOne(gameNumber);
+    const game = await this.findOneById(gameId);
 
     if (!game) {
-      throw new RemovingGameException(`There is no game number ${gameNumber}`);
+      throw new RemovingGameException(`There is no game ${gameId}`);
     }
 
-    const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
+    const isUserInPlayers = game.players.some((player: User | IUser) => player.id === userId);
 
     if (!isUserInPlayers) {
-      throw new RemovingGameException(
-        'Can\'t remove game without joining',
-      );
+      throw new RemovingGameException('Can\'t remove game without joining');
     }
 
     if (IS_MONGO_USED) {
-      const playersIds: string[] = (game.players as IUser[]).map(player => player.id);
-      const watchersIds: string[] = (game.watchersOnline as IUser[]).map(watcher => watcher.id);
-
-      await this.userModel.updateMany(
-        { _id: { $in: playersIds } },
-        {
-          openedGame: null,
-        },
-      );
-
-      await this.userModel.updateMany(
-        { _id: { $in: watchersIds } },
-        { openedGameWatcher: null },
-      );
-
       await this.gameModel.findOneAndUpdate(
-        { _id: game.id },
-        { isRemoved: true },
+        { _id: gameId },
+        {
+          isRemoved: true,
+          playersOnline: [],
+          watchersOnline: [],
+        },
       );
 
       return;
@@ -625,20 +571,20 @@ export class GameService {
     // TODO: SQL Remove Game
 
     if (isUserInPlayers) {
-      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
+      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== userId) as User[] | IUser[];
     }
   }
 
   public async toggleReady({
     user,
-    gameNumber,
+    gameId,
   }: {
     user: User;
-    gameNumber: number;
-  }): Promise<Game> {
-    this.logger.info(`Toggle ready game number ${gameNumber}`);
+    gameId: string;
+  }): Promise<void> {
+    this.logger.info(`Toggle ready game ${gameId}`);
 
-    const game = await this.findOne(gameNumber);
+    const game = await this.findOneById(gameId);
 
     const gameData = GamesServices[game.name].toggleReady({
       gameData: game.gameData,
@@ -651,28 +597,26 @@ export class GameService {
         { gameData },
       );
 
-      return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+      return;
     }
 
     game.gameData = gameData;
 
-    return await this.connection.getRepository(Game).save(game);
+    await this.connection.getRepository(Game).save(game);
   }
 
   public async updateOption({
-    user,
-    gameNumber,
+    gameId,
     name,
     value,
   }: {
-    user: User;
-    gameNumber: number;
+    gameId: string;
     name: string,
     value: string,
-  }): Promise<Game> {
-    this.logger.info(`Update option game number ${gameNumber}`);
+  }): Promise<void> {
+    this.logger.info(`Update option game ${gameId}`);
 
-    const game = await this.findOne(gameNumber);
+    const game = await this.findOneById(gameId);
 
     const gameData = GamesServices[game.name].updateOption({
       gameData: game.gameData,
@@ -682,41 +626,41 @@ export class GameService {
 
     if (IS_MONGO_USED) {
       await this.gameModel.findOneAndUpdate(
-        { _id: game.id },
+        { _id: gameId },
         { gameData },
       );
 
-      return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+      return;
     }
 
     game.gameData = gameData;
 
-    return await this.connection.getRepository(Game).save(game);
+    await this.connection.getRepository(Game).save(game);
   }
 
   public async startGame({
-    gameNumber,
+    gameId,
   }: {
-    gameNumber: number;
-  }): Promise<{ game: Game, nextPlayersIds: string[] }> {
-    this.logger.info(`Start game number ${gameNumber}`);
+    gameId: string;
+  }): Promise<string[]> {
+    this.logger.info(`Start game ${gameId}`);
 
-    const game = await this.findOne(gameNumber);
+    const game = await this.findOneById(gameId);
 
     if (game.players.length < game.playersMin) {
-      throw new StartingGameException('Not enough players');
+      throw new StartingGameException('Not enough players. Try to refresh the page');
     }
 
     if (game.players.length > game.playersMax) {
-      throw new StartingGameException('Too many players');
+      throw new StartingGameException('Too many players. Try to refresh the page');
     }
 
     if (!GamesServices[game.name].checkReady(game.gameData)) {
-      throw new StartingGameException('Not all players are ready');
+      throw new StartingGameException('Not all players are ready. Try to refresh the page');
     }
 
     if (game.state !== GAME_NOT_STARTED) {
-      throw new StartingGameException('You can\'t start started game');
+      throw new StartingGameException('You can\'t start started game. Try to refresh the page');
     }
 
     const { gameData, nextPlayersIds } = GamesServices[game.name].startGame(
@@ -733,10 +677,7 @@ export class GameService {
         },
       );
 
-      return {
-        game: JSON.parse(JSON.stringify(await this.findOne(gameNumber))),
-        nextPlayersIds,
-      };
+      return nextPlayersIds;
     }
 
     game.gameData = gameData;
@@ -749,27 +690,26 @@ export class GameService {
       game.nextPlayers.push(nextUser as User & IUser);
     });
 
-    return {
-      game: await this.connection.getRepository(Game).save(game),
-      nextPlayersIds,
-    };
+    await this.connection.getRepository(Game).save(game);
+
+    return nextPlayersIds;
   }
 
   public async makeMove({
     move,
-    gameNumber,
+    gameId,
     userId,
   }: {
     move: string;
-    gameNumber: number;
+    gameId: string;
     userId: string;
-  }): Promise<Game> {
-    this.logger.info(`Make move game number ${gameNumber}`);
+  }): Promise<{ state: number }> {
+    this.logger.info(`Make move game ${gameId}`);
 
-    const game = await this.findOne(gameNumber);
+    const game = await this.findOneById(gameId);
 
     if (!game.nextPlayers.some((nextPlayer: User | IUser) => nextPlayer.id === userId)) {
-      throw new MakingMoveException('It\'s not your turn to move');
+      throw new MakingMoveException('It\'s not your turn to move. Try to refresh the page');
     }
 
     const { gameData, nextPlayersIds } = GamesServices[game.name].makeMove({
@@ -806,7 +746,7 @@ export class GameService {
           },
         );
 
-        return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+        return { state: GAME_STARTED };
       }
 
       game.gameData = gameData;
@@ -861,7 +801,7 @@ export class GameService {
           },
         );
 
-        return JSON.parse(JSON.stringify(await this.findOne(gameNumber)));
+        return { state: GAME_FINISHED };
       }
 
       game.players.forEach((player: User | IUser) => {
@@ -881,7 +821,8 @@ export class GameService {
       game.gameData = gameData;
     }
 
-    return this.connection.getRepository(Game).save(game);
+    await this.connection.getRepository(Game).save(game);
+    return { state: game.state };
   }
 
   public async addLog({ gameId, logId }: { gameId: string, logId: string }): Promise<void> {
