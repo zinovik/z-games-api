@@ -118,7 +118,7 @@ export class UserService {
       .getOne();
   }
 
-  public findOneByUserId(userId: string): Promise<User | IUser> {
+  public findOneById(userId: string): Promise<User | IUser> {
     this.logger.info(`Find one user by user id: ${userId}`);
 
     if (IS_MONGO_USED) {
@@ -280,10 +280,10 @@ export class UserService {
     }
   }
 
-  public async updateOpenGame({ userId, gameId }: { userId: string, gameId: string | null }): Promise<void> {
+  public async updateOpenGame({ usersIds, gameId }: { usersIds: string[], gameId: string | null }): Promise<void> {
     if (IS_MONGO_USED) {
-      await this.userModel.findOneAndUpdate(
-        { _id: userId },
+      await this.userModel.updateMany(
+        { _id: { $in: usersIds } },
         {
           openedGame: gameId,
         },
@@ -291,10 +291,10 @@ export class UserService {
     }
   }
 
-  public async updateOpenGameWatcher({ userId, gameId }: { userId: string, gameId: string | null }): Promise<void> {
+  public async updateOpenGameWatcher({ usersIds, gameId }: { usersIds: string[], gameId: string | null }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.userModel.findOneAndUpdate(
-        { _id: userId },
+        { _id: { $in: usersIds } },
         {
           openedGameWatcher: gameId,
         },

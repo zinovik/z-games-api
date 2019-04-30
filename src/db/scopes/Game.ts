@@ -69,7 +69,6 @@ export const OPEN_GAME_JOIN_LOGS_USERNAMES: [string, string] = [
 ];
 
 export const FIELDS_TO_REMOVE_IN_ALL_GAMES = [
-  'id',
   'gameData',
   'watchersOnline',
   'playersOnline',

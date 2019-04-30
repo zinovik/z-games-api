@@ -46,8 +46,8 @@ export class UserController {
   }
 
   @Get(':userId')
-  findOneByUserId(@Param('userId') userId: string): Promise<User | IUser> {
-    return this.userService.findOneByUserId(userId);
+  findOneById(@Param('userId') userId: string): Promise<User | IUser> {
+    return this.userService.findOneById(userId);
   }
 
   @Post('register')
@@ -99,7 +99,7 @@ export class UserController {
   ) {
     const userId = this.jwtService.getUserIdByToken(activationToken);
 
-    const user = await this.userService.findOneByUserId(userId);
+    const user = await this.userService.findOneById(userId);
 
     if (!user) {
       throw new ActivationUserException('Invalid link!');
