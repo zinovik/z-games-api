@@ -50,7 +50,7 @@ export class InviteGateway {
     try {
       invite = await this.inviteService.create({
         gameId,
-        createdBy: client.user,
+        createdBy: client.user.id,
         invitee: userId,
       });
     } catch ({ response: { message } }) {

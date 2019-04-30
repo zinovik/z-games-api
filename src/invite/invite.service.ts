@@ -53,15 +53,15 @@ export class InviteService {
     invitee,
   }: {
     gameId: string;
-    createdBy: User;
+    createdBy: string;
     invitee: string;
   }): Promise<Invite> {
-    this.logger.info(`Create an invite by ${createdBy.username}`);
+    this.logger.info(`Create an invite by ${createdBy}`);
 
     if (IS_MONGO_USED) {
       const inviteMongo = new this.inviteModel({
         game: gameId,
-        createdBy: createdBy.id,
+        createdBy,
         invitee,
       });
 
@@ -77,7 +77,7 @@ export class InviteService {
       );
 
       await this.userModel.findOneAndUpdate(
-        { _id: createdBy.id },
+        { _id: createdBy },
         {
           $push: {
             invitesInviter: newInviteMongo.id,
@@ -99,7 +99,7 @@ export class InviteService {
 
     // TODO: SQL Invites
     // const newUser = new User();
-    // newUser.id = createdBy.id;
+    // newUser.id = createdBy;
     // newUser.username = user.username;
 
     const invite = new Invite();
