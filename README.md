@@ -206,7 +206,7 @@ or/and
 
 ```bash
 cd z-games
-yarn dev
+yarn start:dev
 ```
 That's it!
 Check front-end here: [http://localhost:3000](http://localhost:3000)!
@@ -215,6 +215,10 @@ Check back-end here: [http://localhost:4000](http://localhost:4000)!
 
 
 P.S. If you want to change the separate game - clone it's repository! You can work with it using [npm link](https://docs.npmjs.com/cli/link.html) command.
+
+# Contributing #
+
+Please contribute using [Github Flow](https://guides.github.com/introduction/flow/). Create a branch, add commits, and [open a pull request](https://github.com/zinovik/z-games-api/compare).
 
 # Help #
 
