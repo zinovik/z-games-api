@@ -3,6 +3,7 @@ import { Document } from 'mongoose';
 import { IGame, ILog, IInvite } from './';
 
 export interface IUser extends Document {
+  id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -18,7 +19,7 @@ export interface IUser extends Document {
   createdGames: IGame[];
   gamesPlayed: number;
   gamesWon: number;
-  logs: ILog[];
+  createdLogs: ILog[];
   invitesInviter: IInvite[];
   invitesInvitee: IInvite[];
   createdAt: Date;
