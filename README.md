@@ -218,7 +218,7 @@ P.S. If you want to change the separate game - clone it's repository! You can wo
 
 # Contributing #
 
-Please contribute using [Github Flow](https://guides.github.com/introduction/flow/). Create a branch, add commits, and [open a pull request](https://github.com/zinovik/z-games-api/compare).
+Please contribute using [Github Flow](https://guides.github.com/introduction/flow). Create a branch, add commits, and [open a pull request](https://github.com/zinovik/z-games-api/compare).
 
 # Help #
 

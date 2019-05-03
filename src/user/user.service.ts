@@ -336,7 +336,7 @@ export class UserService {
         { _id: userId },
         {
           $push: {
-            logs: logId,
+            createdLogs: logId,
           },
         },
       );
