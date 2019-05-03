@@ -22,6 +22,20 @@ export class LogService {
     this.logModel = this.connectionMongo.model('Log');
   }
 
+  // public async findOne(logId: string): Promise<Log | ILog> {
+  //   this.logger.info(`Find one log id ${logId}`);
+
+  //   if (IS_MONGO_USED) {
+  //     return this.logModel
+  //       .findOne({ _id: logId }, LOG_FIELDS_MONGO)
+  //       .populate(...LOG_POPULATE_GAME)
+  //       .populate(...LOG_POPULATE_CREATED_BY)
+  //       .exec();
+  //   }
+
+  //   // TODO: SQL Find One Log
+  // }
+
   public async create({
     type,
     user,
@@ -39,13 +53,13 @@ export class LogService {
       const logMongo = new this.logModel({
         type,
         text,
-        user: user.id,
+        createdBy: user.id,
         game: gameId,
       });
 
       const newLogMongo = await logMongo.save();
 
-      (newLogMongo as ILog).user = user as IUser;
+      (newLogMongo as ILog).createdBy = user as IUser;
 
       return newLogMongo as any;
     }
@@ -56,7 +70,7 @@ export class LogService {
 
     const log = new Log();
     log.type = type;
-    log.user = newUser;
+    log.createdBy = newUser;
     log.gameId = gameId;
     log.text = text;
 

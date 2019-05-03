@@ -30,7 +30,7 @@ export const userSchema = new Schema(
     currentMoves: [{ type: Schema.Types.ObjectId, ref: 'Game' }],
     gamesPlayed: { type: Number, required: true, default: 0 },
     gamesWon: { type: Number, required: true, default: 0 },
-    logs: [{ type: Schema.Types.ObjectId, ref: 'Log' }],
+    createdLogs: [{ type: Schema.Types.ObjectId, ref: 'Log' }],
     invitesInviter: [{ type: Schema.Types.ObjectId, ref: 'Invite' }],
     invitesInvitee: [{ type: Schema.Types.ObjectId, ref: 'Invite' }],
     createdGames: [{ type: Schema.Types.ObjectId, ref: 'Game' }],
