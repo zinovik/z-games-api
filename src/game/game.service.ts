@@ -99,12 +99,12 @@ export class GameService {
       .getOne();
   }
 
-  public async getAllGames(filterSettings?: IFilterSettings, isRemoved?: boolean, userId?: string): Promise<Game[]> {
+  public async getAllGames(filterSettings: IFilterSettings = {} as IFilterSettings, isRemoved?: boolean, userId?: string): Promise<Game[]> {
     this.logger.info('Get all games');
 
     const isEmptyFilter = !filterSettings || !Object.keys(filterSettings).length;
 
-    const { isNotStarted, isStarted, isFinished, isWithMe, isWithoutMe, isMyMove, isNotMyMove, isGames, limit, offset } = filterSettings || {} as any;
+    const { isNotStarted, isStarted, isFinished, isWithMe, isWithoutMe, isMyMove, isNotMyMove, isGames, limit, offset } = filterSettings;
 
     const stateFilter: number[] = [];
 
@@ -159,7 +159,7 @@ export class GameService {
       .getMany();
   }
 
-  public async newGame(name: string, userId: string): Promise<Game> {
+  public async newGame({ name, isPrivate, userId }: { name: string, isPrivate: boolean, userId: string }): Promise<Game> {
     this.logger.info(`New ${name} game`);
 
     const { playersMax, playersMin, gameData } = GamesServices[name].getNewGame();
@@ -170,6 +170,7 @@ export class GameService {
     game.playersMax = playersMax;
     game.playersMin = playersMin;
     game.players = [];
+    game.isPrivate = isPrivate;
     game.gameData = gameData;
 
     if (IS_MONGO_USED) {
@@ -191,9 +192,13 @@ export class GameService {
   public async joinGame({
     user,
     gameId,
+    isJoinByInvite,
+    isNewGameJoin,
   }: {
     user: User | IUser;
     gameId: string;
+    isJoinByInvite?: boolean,
+    isNewGameJoin?: boolean,
   }): Promise<void> {
     this.logger.info(`Join game ${gameId}`);
 
@@ -205,6 +210,10 @@ export class GameService {
 
     if (!game) {
       throw new JoiningGameException(`There is no game number ${game.number}. Try to refresh the page`);
+    }
+
+    if (game.isPrivate && !isJoinByInvite && !isNewGameJoin && user.id !== game.createdBy.id) {
+      throw new JoiningGameException('This game is private. You can only join by invite');
     }
 
     if (game.state) {

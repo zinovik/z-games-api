@@ -48,7 +48,7 @@ export const OPEN_GAME_FIELDS = [
   'logs.text',
   'logs.createdAt',
   'logs.id',
-  'user.username',
+  'createdBy.username',
 ];
 
 export const OPEN_GAME_JOIN_WATCHERS: [string, string] = [
@@ -64,8 +64,8 @@ export const OPEN_GAME_JOIN_PLAYERS_ONLINE: [string, string] = [
 export const OPEN_GAME_JOIN_LOGS: [string, string] = ['game.logs', 'logs'];
 
 export const OPEN_GAME_JOIN_LOGS_USERNAMES: [string, string] = [
-  'logs.user',
-  'user',
+  'logs.createdBy',
+  'createdBy',
 ];
 
 export const FIELDS_TO_REMOVE_IN_ALL_GAMES = [
@@ -123,7 +123,7 @@ export const OPEN_GAME_POPULATE_LOGS: [string, string] = [
 ];
 
 export const OPEN_GAME_POPULATE_LOGS_USERNAMES: [string, string] = [
-  'user',
+  'createdBy',
   GAME_POPULATE_USERS,
 ];
 
