@@ -82,8 +82,8 @@ export class User extends DefaultNamingStrategy {
   @UpdateDateColumn({ name: 'updated_at' })
   public updatedAt: Date;
 
-  @OneToMany(type => Log, log => log.user)
-  public logs: Log[];
+  @OneToMany(type => Log, log => log.createdBy)
+  public createdLogs: Log[];
 
   @OneToMany(type => Invite, invite => invite.createdBy)
   public invitesInviter: Invite[];

@@ -174,12 +174,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('new-game')
   public async newGame(
     client: Socket & { user: User },
-    name: string,
+    { name, isPrivate }: { name: string, isPrivate: boolean },
   ): Promise<string> {
     let gameId = '';
 
     try {
-      ({ id: gameId } = await this.gameService.newGame(name, client.user.id));
+      ({ id: gameId } = await this.gameService.newGame({ name, isPrivate, userId: client.user.id }));
 
       await this.userService.addCreatedGame({ userId: client.user.id, gameId });
 
@@ -199,7 +199,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.server.emit('new-game', game);
 
-    await this.joinGame(client, game.id);
+    await this.joinGame(client, game.id, { isNewGameJoin: true });
 
     return game.id;
   }
@@ -209,11 +209,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   public async joinGame(
     client: Socket & { user: User },
     gameId: string,
+    { isJoinByInvite, isNewGameJoin }: { isJoinByInvite?: boolean, isNewGameJoin?: boolean } = {},
   ): Promise<void> {
     try {
       await this.gameService.joinGame({
         user: await this.userService.findOneById(client.user.id),
         gameId,
+        isJoinByInvite,
+        isNewGameJoin,
       });
 
       await this.userService.updateOpenAndAddCurrentGame({ userId: client.user.id, gameId });
@@ -412,10 +415,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client: Socket & { user: User },
     gameId: string,
   ): Promise<void> {
-    const { name, players } = await this.gameService.findOneById(gameId);
+    const { name, players, isPrivate } = await this.gameService.findOneById(gameId);
 
     await this.closeGame(client);
-    const newGameId = await this.newGame(client, name);
+    const newGameId = await this.newGame(client, { name, isPrivate });
 
     players.forEach(async (player: User | IUser) => {
       if (player.id === client.user.id) {
@@ -596,7 +599,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.closeGame(client);
     }
 
-    await this.joinGame(client, invite.game.id);
+    await this.joinGame(client, invite.game.id, { isJoinByInvite: true });
 
     client.emit('update-invite', invite);
     this.socketService.emitByUserId({

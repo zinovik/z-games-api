@@ -43,9 +43,9 @@ export class Log extends DefaultNamingStrategy {
   public game: Game;
 
   @IsNotEmpty()
-  @ManyToOne(type => User, user => user.logs)
+  @ManyToOne(type => User, user => user.createdLogs)
   @JoinColumn({ name: 'user_id' })
-  public user: User;
+  public createdBy: User;
 
   @BeforeInsert()
   public beforeInsert(): void {
