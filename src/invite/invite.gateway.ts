@@ -57,6 +57,7 @@ export class InviteGateway {
       return this.socketService.sendError({ client, message });
     }
 
+    // TODO: Add email notification if the user is offline
     this.socketService.emitByUserId({
       server: this.server,
       userId,
