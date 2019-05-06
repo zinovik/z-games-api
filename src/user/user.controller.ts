@@ -95,7 +95,7 @@ export class UserController {
   @Post('activate')
   async activate(
     @Req() { body: { token: activationToken } }: Request & { body: { token: string } },
-    @Res() res: Response & { send: ({ token }: { token: string }) => null },
+    @Res() res: Response & { send: (parameters: { token: string }) => null },
   ) {
     const userId = this.jwtService.getUserIdByToken(activationToken);
 
@@ -124,7 +124,7 @@ export class UserController {
   @Post('authorize')
   async authorize(
     @Req() { body: { username, password } }: Request & { body: { username: string, password: string } },
-    @Res() res: Response & { send: ({ token }: { token: string }) => null },
+    @Res() res: Response & { send: (parameters: { token: string }) => null },
   ) {
     const user = await this.userService.findOneByUsername(username);
 
@@ -156,6 +156,8 @@ export class UserController {
     // const user = await this.userService.updateAvatar(req.user.email, file && file.secure_url);
     // res.send(user);
   }
+
+  // TODO: Add update username
 
   @Get('authorize/google')
   @UseGuards(GoogleGuard)
@@ -197,5 +199,21 @@ export class UserController {
     const token = this.jwtService.generateToken({ id }, '7 days');
 
     res.redirect(`${this.CLIENT_URL}/${token}`);
+  }
+
+  @Get('get-users/:username')
+  async getUsers(
+    @Param() { username }: { username: string },
+    @Res() res: Response & { send: (users: User[] | IUser[]) => null },
+  ) {
+    // TODO: Add guard
+
+    if (!username || username.length < 4) {
+      throw new Error('Invalid username!'); // TODO
+    }
+
+    const users = await this.userService.findManyByUsername(username);
+
+    res.send(users);
   }
 }
