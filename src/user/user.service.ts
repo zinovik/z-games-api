@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Connection } from 'typeorm';
+import { Connection, Like } from 'typeorm';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
 
@@ -224,6 +224,61 @@ export class UserService {
       .leftJoin(...USER_JOIN_INVITES_INVITEE)
       .where({ username })
       .getOne();
+  }
+
+  public findManyByUsername(username: string): Promise<User[] | IUser[]> {
+    this.logger.info(`Find users by username: ${username}`);
+
+    if (IS_MONGO_USED) {
+      return this.userModel
+        .find({ username: new RegExp(`.*${username}.*`, 'i') }, USER_FIELDS_MONGO)
+        .populate(...USER_POPULATE_OPENED_GAME)
+        .populate(...USER_POPULATE_CURRENT_GAMES)
+        .populate(...USER_POPULATE_CURRENT_WATCH)
+        .populate({
+          path: USER_POPULATE_INVITES_INVITER[0],
+          select: USER_POPULATE_INVITES_INVITER[1],
+          populate: [
+            {
+              path: USER_POPULATE_INVITES_GAME[0],
+              select: USER_POPULATE_INVITES_GAME[1],
+            },
+            {
+              path: USER_POPULATE_INVITES_INVITEE_USER[0],
+              select: USER_POPULATE_INVITES_INVITEE_USER[1],
+            },
+          ],
+          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
+        })
+        .populate({
+          path: USER_POPULATE_INVITES_INVITEE[0],
+          select: USER_POPULATE_INVITES_INVITEE[1],
+          populate: [
+            {
+              path: USER_POPULATE_INVITES_GAME[0],
+              select: USER_POPULATE_INVITES_GAME[1],
+            }, {
+              path: USER_POPULATE_INVITES_CREATED_BY[0],
+              select: USER_POPULATE_INVITES_CREATED_BY[1],
+            },
+          ],
+          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
+        })
+        .limit(5)
+        .exec();
+    }
+
+    return this.connection
+      .getRepository(User)
+      .createQueryBuilder('user')
+      .select(USER_FIELDS)
+      .leftJoin(...USER_JOIN_OPENED_GAME)
+      .leftJoin(...USER_JOIN_CURRENT_GAMES)
+      .leftJoin(...USER_JOIN_CURRENT_WATCH)
+      .leftJoin(...USER_JOIN_INVITES_INVITER)
+      .leftJoin(...USER_JOIN_INVITES_INVITEE)
+      .where({ username: Like(`%${username}%`) })
+      .getMany();
   }
 
   public async create({
