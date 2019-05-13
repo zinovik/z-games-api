@@ -59,6 +59,9 @@ export class User extends DefaultNamingStrategy {
   @ManyToMany(type => Game, game => game.players)
   public currentGames: Game[];
 
+  @ManyToMany(type => User, user => user.friends)
+  public friends: User[];
+
   @ManyToOne(type => Game, game => game.watchersOnline)
   @JoinColumn({ name: 'current_watch' })
   public openedGameWatcher: Game;
@@ -81,6 +84,9 @@ export class User extends DefaultNamingStrategy {
   @IsNotEmpty()
   @UpdateDateColumn({ name: 'updated_at' })
   public updatedAt: Date;
+
+  @UpdateDateColumn({ name: 'last_login_at' })
+  public lastLoginAt: Date;
 
   @OneToMany(type => Log, log => log.createdBy)
   public createdLogs: Log[];
