@@ -24,6 +24,7 @@ export const userSchema = new Schema(
     isConfirmed: Boolean,
     provider: String,
     avatar: String,
+    lastLoginAt: Date,
     openedGame: { type: Schema.Types.ObjectId, ref: 'Game' },
     currentGames: [{ type: Schema.Types.ObjectId, ref: 'Game' }],
     openedGameWatcher: { type: Schema.Types.ObjectId, ref: 'Game' },
@@ -34,6 +35,7 @@ export const userSchema = new Schema(
     invitesInviter: [{ type: Schema.Types.ObjectId, ref: 'Invite' }],
     invitesInvitee: [{ type: Schema.Types.ObjectId, ref: 'Invite' }],
     createdGames: [{ type: Schema.Types.ObjectId, ref: 'Game' }],
+    friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   }, {
     toJSON: { transform },
     toObject: { transform },
