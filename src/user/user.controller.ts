@@ -208,7 +208,7 @@ export class UserController {
   ) {
     // TODO: Add guard
 
-    if (!username || username.length < 4) {
+    if (!username) {
       throw new Error('Invalid username!'); // TODO
     }
 
