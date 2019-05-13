@@ -24,4 +24,6 @@ export interface IUser extends Document {
   invitesInvitee: IInvite[];
   createdAt: Date;
   updatedAt: Date;
+  lastLoginAt: Date;
+  friends: IUser[];
 }
