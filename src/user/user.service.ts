@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Connection, Like } from 'typeorm';
 import { InjectConnection } from '@nestjs/mongoose';
-import { Model, Connection as ConnectionMongo } from 'mongoose';
+import { DocumentQuery, Model, Connection as ConnectionMongo } from 'mongoose';
 
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
@@ -68,40 +68,7 @@ export class UserService {
     this.logger.info(`Find one user by email: ${email}`);
 
     if (IS_MONGO_USED) {
-      return this.userModel
-        .findOne({ email }, USER_FIELDS_MONGO)
-        .populate(...USER_POPULATE_OPENED_GAME)
-        .populate(...USER_POPULATE_CURRENT_GAMES)
-        .populate(...USER_POPULATE_CURRENT_WATCH)
-        .populate({
-          path: USER_POPULATE_INVITES_INVITER[0],
-          select: USER_POPULATE_INVITES_INVITER[1],
-          populate: [
-            {
-              path: USER_POPULATE_INVITES_GAME[0],
-              select: USER_POPULATE_INVITES_GAME[1],
-            },
-            {
-              path: USER_POPULATE_INVITES_INVITEE_USER[0],
-              select: USER_POPULATE_INVITES_INVITEE_USER[1],
-            },
-          ],
-          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
-        })
-        .populate({
-          path: USER_POPULATE_INVITES_INVITEE[0],
-          select: USER_POPULATE_INVITES_INVITEE[1],
-          populate: [
-            {
-              path: USER_POPULATE_INVITES_GAME[0],
-              select: USER_POPULATE_INVITES_GAME[1],
-            }, {
-              path: USER_POPULATE_INVITES_CREATED_BY[0],
-              select: USER_POPULATE_INVITES_CREATED_BY[1],
-            },
-          ],
-          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
-        })
+      return this.populateQuery(this.userModel.findOne({ email }, USER_FIELDS_MONGO))
         .exec();
     }
 
@@ -122,40 +89,7 @@ export class UserService {
     this.logger.info(`Find one user by user id: ${userId}`);
 
     if (IS_MONGO_USED) {
-      return this.userModel
-        .findOne({ _id: userId }, USER_FIELDS_MONGO)
-        .populate(...USER_POPULATE_OPENED_GAME)
-        .populate(...USER_POPULATE_CURRENT_GAMES)
-        .populate(...USER_POPULATE_CURRENT_WATCH)
-        .populate({
-          path: USER_POPULATE_INVITES_INVITER[0],
-          select: USER_POPULATE_INVITES_INVITER[1],
-          populate: [
-            {
-              path: USER_POPULATE_INVITES_GAME[0],
-              select: USER_POPULATE_INVITES_GAME[1],
-            },
-            {
-              path: USER_POPULATE_INVITES_INVITEE_USER[0],
-              select: USER_POPULATE_INVITES_INVITEE_USER[1],
-            },
-          ],
-          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
-        })
-        .populate({
-          path: USER_POPULATE_INVITES_INVITEE[0],
-          select: USER_POPULATE_INVITES_INVITEE[1],
-          populate: [
-            {
-              path: USER_POPULATE_INVITES_GAME[0],
-              select: USER_POPULATE_INVITES_GAME[1],
-            }, {
-              path: USER_POPULATE_INVITES_CREATED_BY[0],
-              select: USER_POPULATE_INVITES_CREATED_BY[1],
-            },
-          ],
-          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
-        })
+      return this.populateQuery(this.userModel.findOne({ _id: userId }, USER_FIELDS_MONGO))
         .exec();
     }
 
@@ -176,40 +110,7 @@ export class UserService {
     this.logger.info(`Find one user by username: ${username}`);
 
     if (IS_MONGO_USED) {
-      return this.userModel
-        .findOne({ username }, USER_FIELDS_MONGO)
-        .populate(...USER_POPULATE_OPENED_GAME)
-        .populate(...USER_POPULATE_CURRENT_GAMES)
-        .populate(...USER_POPULATE_CURRENT_WATCH)
-        .populate({
-          path: USER_POPULATE_INVITES_INVITER[0],
-          select: USER_POPULATE_INVITES_INVITER[1],
-          populate: [
-            {
-              path: USER_POPULATE_INVITES_GAME[0],
-              select: USER_POPULATE_INVITES_GAME[1],
-            },
-            {
-              path: USER_POPULATE_INVITES_INVITEE_USER[0],
-              select: USER_POPULATE_INVITES_INVITEE_USER[1],
-            },
-          ],
-          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
-        })
-        .populate({
-          path: USER_POPULATE_INVITES_INVITEE[0],
-          select: USER_POPULATE_INVITES_INVITEE[1],
-          populate: [
-            {
-              path: USER_POPULATE_INVITES_GAME[0],
-              select: USER_POPULATE_INVITES_GAME[1],
-            }, {
-              path: USER_POPULATE_INVITES_CREATED_BY[0],
-              select: USER_POPULATE_INVITES_CREATED_BY[1],
-            },
-          ],
-          options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
-        })
+      return this.populateQuery(this.userModel.findOne({ username }, USER_FIELDS_MONGO))
         .exec();
     }
 
@@ -230,6 +131,9 @@ export class UserService {
     this.logger.info(`Find users by username: ${username}`);
 
     if (IS_MONGO_USED) {
+      // return this.populateQuery(this.userModel.find({ username: new RegExp(`.*${username}.*`, 'i') }, USER_FIELDS_MONGO))
+      //   .limit(5)
+      //   .exec();
       return this.userModel
         .find({ username: new RegExp(`.*${username}.*`, 'i') }, USER_FIELDS_MONGO)
         .populate(...USER_POPULATE_OPENED_GAME)
@@ -335,6 +239,19 @@ export class UserService {
     }
   }
 
+  public async update({ userId, username }: { userId: string, username: string }): Promise<void> {
+    if (IS_MONGO_USED) {
+      await this.userModel.updateOne(
+        { _id: userId },
+        {
+          username,
+        },
+      );
+    }
+
+    // TODO: SQL update username
+  }
+
   public async updateOpenGame({ usersIds, gameId }: { usersIds: string[], gameId: string | null }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.userModel.updateMany(
@@ -409,5 +326,41 @@ export class UserService {
         },
       );
     }
+  }
+
+  private populateQuery(query: DocumentQuery<IUser, IUser, {}>):
+    DocumentQuery<IUser, IUser, {}> {
+    return query.populate(...USER_POPULATE_OPENED_GAME)
+      .populate(...USER_POPULATE_CURRENT_GAMES)
+      .populate(...USER_POPULATE_CURRENT_WATCH)
+      .populate({
+        path: USER_POPULATE_INVITES_INVITER[0],
+        select: USER_POPULATE_INVITES_INVITER[1],
+        populate: [
+          {
+            path: USER_POPULATE_INVITES_GAME[0],
+            select: USER_POPULATE_INVITES_GAME[1],
+          },
+          {
+            path: USER_POPULATE_INVITES_INVITEE_USER[0],
+            select: USER_POPULATE_INVITES_INVITEE_USER[1],
+          },
+        ],
+        options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
+      })
+      .populate({
+        path: USER_POPULATE_INVITES_INVITEE[0],
+        select: USER_POPULATE_INVITES_INVITEE[1],
+        populate: [
+          {
+            path: USER_POPULATE_INVITES_GAME[0],
+            select: USER_POPULATE_INVITES_GAME[1],
+          }, {
+            path: USER_POPULATE_INVITES_CREATED_BY[0],
+            select: USER_POPULATE_INVITES_CREATED_BY[1],
+          },
+        ],
+        options: { sort: { [INVITES_FIELD_ORDER_BY_MONGO]: -1 } },
+      });
   }
 }
