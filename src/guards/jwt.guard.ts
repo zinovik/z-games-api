@@ -17,8 +17,13 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
     const client = context.switchToWs().getClient();
-    const token = client.handshake.query.token;
+
+    const tokenHttp = request.headers && request.headers.authorization && request.headers.authorization.split('Bearer ')[1];
+    const tokenWebSocket = client.handshake && client.handshake.query.token;
+
+    const token = tokenHttp || tokenWebSocket;
 
     if (!token) {
       this.logger.info('No token provided');
@@ -49,6 +54,7 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
 
     client.emit('new-token', newToken);
     client.user = user;
+    request.user = user;
 
     return true;
   }
