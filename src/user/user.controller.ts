@@ -9,12 +9,13 @@ import {
   // UseInterceptors,
   UploadedFile,
   Request,
-  Response,
+  HttpCode,
 } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
 
 import { GoogleGuard } from '../guards/google.guard';
+import { JwtGuard } from '../guards/jwt.guard';
 import { UserService } from './user.service';
 import { JwtService } from '../services/jwt.service';
 import { ConfigService } from '../config/config.service';
@@ -45,16 +46,36 @@ export class UserController {
     return this.userService.getAllUsers();
   }
 
-  @Get(':userId')
+  @Get('id/:userId')
   findOneById(@Param('userId') userId: string): Promise<User | IUser> {
-    return this.userService.findOneById(userId);
+    if (!userId) {
+      return null;
+    }
+
+    try {
+      return this.userService.findOneById(userId);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  @Get('username/:username')
+  findOneByUsername(@Param('username') username: string): Promise<User | IUser> {
+    if (!username) {
+      return null;
+    }
+
+    try {
+      return this.userService.findOneByUsername(username);
+    } catch (error) {
+      return null;
+    }
   }
 
   @Post('register')
   async register(
     @Req() { body: { username, password, email } }: Request & { body: { username: string, password: string, email: string } },
-    @Res() res: Response & { send: (user: User | IUser) => null },
-  ) {
+  ): Promise<User | IUser> {
     if (!password || !email || !username) {
       throw new CreatingUserException('All fields are are required!');
     }
@@ -89,14 +110,13 @@ export class UserController {
       throw new CreatingUserException('Error sending email, please contact administration to support');
     }
 
-    res.send(user);
+    return user;
   }
 
   @Post('activate')
   async activate(
     @Req() { body: { token: activationToken } }: Request & { body: { token: string } },
-    @Res() res: Response & { send: (parameters: { token: string }) => null },
-  ) {
+  ): Promise<{ token: string }> {
     const userId = this.jwtService.getUserIdByToken(activationToken);
 
     const user = await this.userService.findOneById(userId);
@@ -118,14 +138,13 @@ export class UserController {
 
     const token = this.jwtService.generateToken({ id: user.id }, '7 days');
 
-    res.send({ token });
+    return { token };
   }
 
   @Post('authorize')
   async authorize(
     @Req() { body: { username, password } }: Request & { body: { username: string, password: string } },
-    @Res() res: Response & { send: (parameters: { token: string }) => null },
-  ) {
+  ): Promise<{ token: string }> {
     const user = await this.userService.findOneByUsername(username);
 
     if (!user) {
@@ -142,19 +161,27 @@ export class UserController {
 
     const token = this.jwtService.generateToken({ id: user.id }, '7 days');
 
-    res.send({ token });
+    return { token };
+  }
+
+  @Post('update')
+  @HttpCode(200)
+  @UseGuards(JwtGuard)
+  async update(
+    @Req() { body: { username }, user }: Request & { body: { username: string }, user: IUser | User },
+  ): Promise<void> {
+    this.userService.update({ userId: user.id, username });
   }
 
   @Post('avatar')
-  // @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard)
   // @UseInterceptors(FileUploadInterceptor)
   async updateAvatar(
     @UploadedFile() file: any,
     @Req() req: Request,
-    @Res() res: Response,
   ) {
     // const user = await this.userService.updateAvatar(req.user.email, file && file.secure_url);
-    // res.send(user);
+    // return user;
   }
 
   // TODO: Add update username
@@ -201,19 +228,17 @@ export class UserController {
     res.redirect(`${this.CLIENT_URL}/${token}`);
   }
 
-  @Get('get-users/:username')
+  @Get('find/:username')
+  @UseGuards(JwtGuard)
   async getUsers(
     @Param() { username }: { username: string },
-    @Res() res: Response & { send: (users: User[] | IUser[]) => null },
-  ) {
-    // TODO: Add guard
-
+  ): Promise<User[] | IUser[]> {
     if (!username) {
-      throw new Error('Invalid username!'); // TODO
+      return [] as User[] | IUser[];
     }
 
     const users = await this.userService.findManyByUsername(username);
 
-    res.send(users);
+    return users;
   }
 }
