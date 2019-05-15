@@ -49,7 +49,6 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 @Injectable()
 export class GameService {
   gameModel: Model<IGame>;
-  userModel: Model<IUser>;
 
   constructor(
     private readonly connection: Connection,
@@ -57,7 +56,6 @@ export class GameService {
     @InjectConnection() private readonly connectionMongo: ConnectionMongo,
   ) {
     this.gameModel = this.connectionMongo.model('Game');
-    this.userModel = this.connectionMongo.model('User');
   }
 
   public async findOneById(id: string): Promise<Game | IGame> {
@@ -712,7 +710,7 @@ export class GameService {
     move: string;
     gameId: string;
     userId: string;
-  }): Promise<{ state: number }> {
+  }): Promise<{ nextPlayersIds: string[], playersIds: string[], playerWonId: string, gameNumber: number }> {
     this.logger.info(`Make move game ${gameId}`);
 
     const game = await this.findOneById(gameId);
@@ -728,6 +726,8 @@ export class GameService {
     });
 
     if (nextPlayersIds.length) {
+      // If the game is not finished
+
       if (IS_MONGO_USED) {
         await this.gameModel.findOneAndUpdate(
           { _id: game.id },
@@ -737,61 +737,25 @@ export class GameService {
           },
         );
 
-        await this.userModel.updateMany(
-          {},
-          {
-            $pull: {
-              currentMoves: game.id,
-            },
-          },
-        );
-
-        await this.userModel.updateMany(
-          { _id: { $in: nextPlayersIds } },
-          {
-            $push: {
-              currentMoves: game.id,
-            },
-          },
-        );
-
-        return { state: GAME_STARTED };
+        return { nextPlayersIds, playersIds: [], playerWonId: '', gameNumber: game.number };
       }
 
       game.gameData = gameData;
 
       game.nextPlayers = [];
+
       nextPlayersIds.forEach(nextPlayerId => {
         const nextUser = new User();
         nextUser.id = nextPlayerId;
         game.nextPlayers.push(nextUser as User & IUser);
       });
+
     } else {
+      // Else if the game is finished
+
       const gameDataParsed: IBaseGameData = JSON.parse(gameData);
 
       if (IS_MONGO_USED) {
-        const playersIds: string[] = (game.players as Array<User | IUser>).map((player: User | IUser) => player.id);
-
-        await this.userModel.updateMany(
-          { _id: { $in: playersIds } },
-          {
-            $inc: {
-              gamesPlayed: 1,
-            },
-          },
-        );
-
-        const playerWonId = gameDataParsed.players.find(gamePlayer => gamePlayer.place === 1).id;
-
-        await this.userModel.findOneAndUpdate(
-          { _id: playerWonId },
-          {
-            $inc: {
-              gamesWon: 1,
-            },
-          },
-        );
-
         await this.gameModel.findOneAndUpdate(
           { _id: game.id },
           {
@@ -801,16 +765,10 @@ export class GameService {
           },
         );
 
-        await this.userModel.updateMany(
-          {},
-          {
-            $pull: {
-              currentMoves: game.id,
-            },
-          },
-        );
+        const playersIds: string[] = (game.players as Array<User | IUser>).map((player: User | IUser) => player.id);
+        const playerWonId = gameDataParsed.players.find(gamePlayer => gamePlayer.place === 1).id;
 
-        return { state: GAME_FINISHED };
+        return { nextPlayersIds: [], playersIds, playerWonId, gameNumber: game.number };
       }
 
       game.players.forEach((player: User | IUser) => {
@@ -831,7 +789,7 @@ export class GameService {
     }
 
     await this.connection.getRepository(Game).save(game);
-    return { state: game.state };
+    return { nextPlayersIds, playersIds: [], playerWonId: '', gameNumber: game.number };
   }
 
   public async addLog({ gameId, logId }: { gameId: string, logId: string }): Promise<void> {
