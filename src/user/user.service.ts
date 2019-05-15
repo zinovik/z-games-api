@@ -315,6 +315,60 @@ export class UserService {
     }
   }
 
+  public async updateGamesPlayed({ playersIds }: { playersIds: string[] }): Promise<void> {
+    if (IS_MONGO_USED) {
+      await this.userModel.updateMany(
+        { _id: { $in: playersIds } },
+        {
+          $inc: {
+            gamesPlayed: 1,
+          },
+        },
+      );
+    }
+  }
+
+  public async updateGamesWon({ playerWonId }: { playerWonId: string }): Promise<void> {
+    if (IS_MONGO_USED) {
+      await this.userModel.findOneAndUpdate(
+        { _id: playerWonId },
+        {
+          $inc: {
+            gamesWon: 1,
+          },
+        },
+      );
+    }
+  }
+
+  public async updateCurrentMoves({ usersIds, gameId }: { usersIds: string[], gameId: string }): Promise<void> {
+    if (IS_MONGO_USED) {
+
+      // Clear the game current moves for all the users
+      await this.userModel.updateMany(
+        {},
+        {
+          $pull: {
+            currentMoves: gameId,
+          },
+        },
+      );
+
+      // Add current move for the users with usersIds
+      if (usersIds.length) {
+        await this.userModel.updateMany(
+          { _id: { $in: usersIds } },
+          {
+            $push: {
+              currentMoves: gameId,
+            },
+          },
+        );
+      }
+
+    }
+  }
+
   public async addCurrentMoves({ usersIds, gameId }: { usersIds: string[], gameId: string }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.userModel.updateMany(
