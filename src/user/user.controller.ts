@@ -33,9 +33,9 @@ export class UserController {
   userModel: Model<IUser>;
 
   constructor(
-    private userService: UserService,
-    private jwtService: JwtService,
-    private emailService: EmailService,
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
     @InjectConnection() private readonly connectionMongo: ConnectionMongo,
   ) {
     this.userModel = this.connectionMongo.model('User');
@@ -183,8 +183,6 @@ export class UserController {
     // const user = await this.userService.updateAvatar(req.user.email, file && file.secure_url);
     // return user;
   }
-
-  // TODO: Add update username
 
   @Get('authorize/google')
   @UseGuards(GoogleGuard)
