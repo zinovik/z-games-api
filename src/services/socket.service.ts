@@ -21,6 +21,15 @@ export class SocketService {
     server.emit('update-game', this.parseGameForAllUsers(game));
   }
 
+  public isUserOnline({ server, userId }: { server: Server, userId: string }) {
+    const sockets = server.sockets.connected;
+
+    return Object.keys(sockets).some(currentSocketId => {
+      const currentSocket = sockets[currentSocketId] as Socket & { user: User };
+      return currentSocket.user && currentSocket.user.id === userId;
+    });
+  }
+
   public emitByUserId({ server, userId, event, data }: { server: Server, userId: string, event: string, data: any }): void {
     const sockets = server.sockets.connected;
 

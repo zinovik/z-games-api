@@ -8,6 +8,8 @@ import { Server, Socket } from 'socket.io';
 
 import { InviteService } from './invite.service';
 import { SocketService } from '../services/socket.service';
+import { UserService } from '../user/user.service';
+import { EmailService } from '../services/email.service';
 import { JwtGuard } from '../guards/jwt.guard';
 import { User, Invite } from '../db/entities';
 import { IInvite } from '../db/interfaces';
@@ -21,6 +23,8 @@ export class InviteGateway {
   constructor(
     private readonly inviteService: InviteService,
     private readonly socketService: SocketService,
+    private readonly userService: UserService,
+    private readonly emailService: EmailService,
   ) { }
 
   @UseGuards(JwtGuard)
@@ -57,14 +61,20 @@ export class InviteGateway {
       return this.socketService.sendError({ client, message });
     }
 
-    // TODO: Add email notification if the user is offline
-    this.socketService.emitByUserId({
-      server: this.server,
-      userId,
-      event: 'new-invite',
-      data: invite,
-    });
     client.emit('new-invite', invite);
+
+    if (this.socketService.isUserOnline({ server: this.server, userId })) {
+      this.socketService.emitByUserId({
+        server: this.server,
+        userId,
+        event: 'new-invite',
+        data: invite,
+      });
+    } else {
+      const { email } = await this.userService.findOneById(userId);
+      await this.emailService.sendInviteMail({ gameNumber: invite.game.number, email });
+    }
+
   }
 
 }
