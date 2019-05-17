@@ -1,36 +1,42 @@
-// // import * as uuid from 'uuid';
-// import { FileInterceptor } from '@nestjs/platform-express';
-// // import * as cloudinary from 'cloudinary';
-// // import * as cloudinaryStorage from 'multer-storage-cloudinary';
+import * as uuid from 'uuid';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ExecutionContext, CallHandler } from '@nestjs/common';
+// import * as cloudinary from 'cloudinary';
+// import * as cloudinaryStorage from 'multer-storage-cloudinary';
 
-// import { InvalidFileError } from '../exceptions';
+/* tslint:disable */
+const cloudinary = require('cloudinary');
+const multerCloudinaryStorage = require('multer-storage-cloudinary');
+/* tslint:enable */
 
-// const localOptions = {
-//   // storage: cloudinaryStorage({
-//   //   cloudinary,
-//   //   folder: 'avatars',
-//   //   allowedFormats: ['jpg', 'png', 'gif'],
-//   //   filename: (req: Request, file: File, callback: any) => callback(undefined, uuid.v1()),
-//   // }),
-// };
+import { InvalidFileException } from '../exceptions';
 
-// export class FileUploadInterceptor extends FileInterceptor('file', localOptions) {
+const localOptions = {
+  storage: multerCloudinaryStorage({
+    cloudinary,
+    folder: 'z-games-avatars',
+    allowedFormats: ['jpg', 'png', 'gif'],
+    filename: (req: Request, file: File, callback: any) => callback(undefined, uuid.v1()),
+  }),
+};
 
-//   constructor() {
-//     super();
+export class FileUploadInterceptor extends FileInterceptor('file', localOptions) {
 
-//     // cloudinary.config({
-//     //   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-//     //   api_key: process.env.CLOUDINARY_API_KEY,
-//     //   api_secret: process.env.CLOUDINARY_API_SECRET,
-//     // });
-//   }
+  constructor() {
+    super();
 
-//   async intercept(...args: any) {
-//     try {
-//       return await super.intercept(...args);
-//     } catch (error) {
-//       throw new InvalidFileError(error.message);
-//     }
-//   }
-// }
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+  }
+
+  async intercept(context: ExecutionContext, next: CallHandler<any>) {
+    try {
+      return await super.intercept(context, next);
+    } catch (error) {
+      throw new InvalidFileException(error.message);
+    }
+  }
+}
