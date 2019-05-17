@@ -6,7 +6,7 @@ import {
   Req,
   Res,
   Param,
-  // UseInterceptors,
+  UseInterceptors,
   UploadedFile,
   Request,
   HttpCode,
@@ -22,7 +22,7 @@ import { ConfigService } from '../config/config.service';
 import { CreatingUserException, ActivationUserException, AuthorizationUserException } from '../exceptions';
 import { User } from '../db/entities';
 import { IUser } from '../db/interfaces';
-// import { FileUploadInterceptor } from '../interceptors/file-interceptor';
+import { FileUploadInterceptor } from '../interceptors/file-interceptor';
 import { IGoogleProfile } from './google-profile.interface';
 import { EmailService } from '../services/email.service';
 import { CryptService } from '../services/crypt.service';
@@ -174,14 +174,14 @@ export class UserController {
   }
 
   @Post('avatar')
-  @UseGuards(JwtGuard)
-  // @UseInterceptors(FileUploadInterceptor)
+  // @UseGuards(JwtGuard)
+  @UseInterceptors(FileUploadInterceptor)
   async updateAvatar(
     @UploadedFile() file: any,
     @Req() req: Request,
-  ) {
+  ): Promise<string> {
     // const user = await this.userService.updateAvatar(req.user.email, file && file.secure_url);
-    // return user;
+    return file && file.secure_url;
   }
 
   @Get('authorize/google')
