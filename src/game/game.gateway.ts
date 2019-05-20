@@ -437,7 +437,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const invite = await this.inviteService.create({ gameId: newGameId, createdBy: client.user.id, invitee: player.id });
 
-      // TODO: Call invite method?
       client.emit('new-invite', invite);
 
       if (this.socketService.isUserOnline({ server: this.server, userId: player.id })) {

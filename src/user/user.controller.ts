@@ -15,17 +15,17 @@ import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
 
 import { GoogleGuard } from '../guards/google.guard';
+import { LocalGuard } from '../guards/local.guard';
 import { JwtGuard } from '../guards/jwt.guard';
 import { UserService } from './user.service';
 import { JwtService } from '../services/jwt.service';
 import { ConfigService } from '../config/config.service';
-import { CreatingUserException, ActivationUserException, AuthorizationUserException } from '../exceptions';
+import { CreatingUserException, ActivationUserException } from '../exceptions';
 import { User } from '../db/entities';
 import { IUser } from '../db/interfaces';
 import { FileUploadInterceptor } from '../interceptors/file-interceptor';
 import { IGoogleProfile } from './google-profile.interface';
 import { EmailService } from '../services/email.service';
-import { CryptService } from '../services/crypt.service';
 
 @Controller('users')
 export class UserController {
@@ -142,23 +142,8 @@ export class UserController {
   }
 
   @Post('authorize')
-  async authorize(
-    @Req() { body: { username, password } }: Request & { body: { username: string, password: string } },
-  ): Promise<{ token: string }> {
-    const user = await this.userService.findOneByUsername(username);
-
-    if (!user) {
-      throw new AuthorizationUserException('Invalid username!');
-    }
-
-    if (!await CryptService.comparePassword(password, user.password)) {
-      throw new AuthorizationUserException('Invalid password!');
-    }
-
-    if (!user.isConfirmed) {
-      throw new AuthorizationUserException('User is not activated! Check email to activate user');
-    }
-
+  @UseGuards(LocalGuard)
+  async authorize(@Req() { user }: { user: User | IUser }): Promise<{ token: string }> {
     const token = this.jwtService.generateToken({ id: user.id }, '7 days');
 
     return { token };

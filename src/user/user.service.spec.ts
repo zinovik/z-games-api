@@ -7,6 +7,7 @@ import { LoggerModule } from '../logger/logger.module';
 import { UserGateway } from './user.gateway';
 import { UserService } from './user.service';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { LocalStrategy } from './strategies/local.strategy';
 
 describe('UserService', () => {
   let service: UserService;
@@ -14,7 +15,7 @@ describe('UserService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule, ServicesModule, DbModule, LoggerModule],
-      providers: [UserGateway, UserService, GoogleStrategy],
+      providers: [UserGateway, UserService, GoogleStrategy, LocalStrategy],
     }).compile();
 
     service = module.get<UserService>(UserService);
