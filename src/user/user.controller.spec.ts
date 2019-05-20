@@ -7,6 +7,7 @@ import { LoggerModule } from '../logger/logger.module';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { LocalStrategy } from './strategies/local.strategy';
 
 describe('User Controller', () => {
   let controller: UserController;
@@ -15,7 +16,7 @@ describe('User Controller', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule, ServicesModule, DbModule, LoggerModule],
       controllers: [UserController],
-      providers: [UserService, GoogleStrategy],
+      providers: [UserService, GoogleStrategy, LocalStrategy],
       exports: [UserService],
     }).compile();
 
