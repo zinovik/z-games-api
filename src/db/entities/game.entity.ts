@@ -83,7 +83,7 @@ export class Game extends DefaultNamingStrategy {
   public updatedAt: Date;
 
   @ManyToOne(type => User, user => user.createdGames)
-  @JoinColumn({ name: 'opened_game' })
+  @JoinColumn({ name: 'created_by' })
   public createdBy: User;
 
   @OneToMany(type => Log, log => log.game)
