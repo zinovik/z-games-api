@@ -5,6 +5,7 @@ export const ALL_USER_FIELDS = [
   'user.username',
   'user.avatar',
   'user.createdAt',
+  'user.previousVisitAt',
   'user.gamesPlayed',
   'user.gamesWon',
 ];
@@ -18,6 +19,7 @@ export const USER_FIELDS = [
   'user.firstName',
   'user.lastName',
   'user.createdAt',
+  'user.previousVisitAt',
   'user.updatedAt',
   'user.isConfirmed',
   'user.gamesPlayed',
@@ -58,10 +60,11 @@ export const USER_JOIN_INVITES_INVITEE: [string, string] = [
 // MongoDB
 
 export const ALL_USER_FIELDS_MONGO =
-  'id username avatar createdAt gamesPlayed gamesWon';
+  'id username avatar createdAt previousVisitAt gamesPlayed gamesWon';
 
 export const USER_FIELDS_MONGO =
-  'id username password avatar email firstName lastName createdAt updatedAt isConfirmed gamesPlayed gamesWon invitesInviter invitesInvitee';
+  'id username password avatar email firstName lastName createdAt previousVisitAt'
+  + ' updatedAt isConfirmed gamesPlayed gamesWon invitesInviter invitesInvitee';
 
 const USER_POPULATE_GAMES = 'id name number';
 

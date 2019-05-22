@@ -29,6 +29,7 @@ export const gameSchema = new Schema(
     logs: [{ type: Schema.Types.ObjectId, ref: 'Log' }],
     invites: [{ type: Schema.Types.ObjectId, ref: 'Invite' }],
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    previousMoveAt: { type: Date },
   }, {
     toJSON: { transform },
     toObject: { transform },
