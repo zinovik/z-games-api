@@ -78,6 +78,10 @@ export class User extends DefaultNamingStrategy {
   public gamesWon: number;
 
   @IsNotEmpty()
+  @Column({ name: 'games_timeout' })
+  public gamesTimeout: number;
+
+  @IsNotEmpty()
   @CreateDateColumn({ name: 'created_at' })
   public createdAt: Date;
 
@@ -85,8 +89,8 @@ export class User extends DefaultNamingStrategy {
   @UpdateDateColumn({ name: 'updated_at' })
   public updatedAt: Date;
 
-  @UpdateDateColumn({ name: 'last_login_at' })
-  public lastLoginAt: Date;
+  @UpdateDateColumn({ name: 'previous_visit_at' })
+  public previousVisitAt: Date;
 
   @OneToMany(type => Log, log => log.createdBy)
   public createdLogs: Log[];
@@ -114,5 +118,6 @@ export class User extends DefaultNamingStrategy {
 
     this.gamesPlayed = 0;
     this.gamesWon = 0;
+    this.gamesTimeout = 0;
   }
 }
