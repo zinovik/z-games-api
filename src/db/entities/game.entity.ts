@@ -86,6 +86,9 @@ export class Game extends DefaultNamingStrategy {
   @JoinColumn({ name: 'created_by' })
   public createdBy: User;
 
+  @JoinTable({ name: 'previous_move_at' })
+  public previousMoveAt: Date;
+
   @OneToMany(type => Log, log => log.game)
   public logs: Log[];
 

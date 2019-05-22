@@ -22,4 +22,5 @@ export interface IGame extends Document {
   createdAt: Date;
   updatedAt: Date;
   createdBy: IUser;
+  previousMoveAt: Date;
 }

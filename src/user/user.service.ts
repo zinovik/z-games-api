@@ -239,17 +239,24 @@ export class UserService {
     }
   }
 
-  public async update({ userId, username }: { userId: string, username: string }): Promise<void> {
+  public async update({ userId, username }: { userId: string, username?: string }): Promise<void> {
+    const updateFields = {} as IUser;
+
+    if (username) {
+      updateFields.username = username;
+    }
+
     if (IS_MONGO_USED) {
       await this.userModel.updateOne(
         { _id: userId },
         {
-          username,
+          ...updateFields,
+          previousVisitAt: new Date(),
         },
       );
     }
 
-    // TODO: SQL update username
+    // TODO: SQL update
   }
 
   public async updateOpenGame({ usersIds, gameId }: { usersIds: string[], gameId: string | null }): Promise<void> {
