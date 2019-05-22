@@ -19,11 +19,12 @@ export interface IUser extends Document {
   createdGames: IGame[];
   gamesPlayed: number;
   gamesWon: number;
+  gamesTimeout: number;
   createdLogs: ILog[];
   invitesInviter: IInvite[];
   invitesInvitee: IInvite[];
   createdAt: Date;
   updatedAt: Date;
-  lastLoginAt: Date;
+  previousVisitAt: Date;
   friends: IUser[];
 }

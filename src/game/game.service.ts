@@ -681,6 +681,7 @@ export class GameService {
           gameData,
           state: GAME_STARTED,
           nextPlayers: nextPlayersIds,
+          previousMoveAt: new Date(),
         },
       );
 
@@ -690,6 +691,7 @@ export class GameService {
     game.gameData = gameData;
     game.state = GAME_STARTED;
     game.nextPlayers = [];
+    game.previousMoveAt = new Date();
 
     nextPlayersIds.forEach(nextPlayerId => {
       const nextUser = new User();
@@ -715,6 +717,8 @@ export class GameService {
 
     const game = await this.findOneById(gameId);
 
+    // TODO: Check max move time
+
     if (!game.nextPlayers.some((nextPlayer: User | IUser) => nextPlayer.id === userId)) {
       throw new MakingMoveException('It\'s not your turn to move. Try to refresh the page');
     }
@@ -734,6 +738,7 @@ export class GameService {
           {
             gameData,
             nextPlayers: nextPlayersIds,
+            previousMoveAt: new Date(), // TODO: Variant with simultaneous moves (6 nimmt!)
           },
         );
 
@@ -743,6 +748,7 @@ export class GameService {
       game.gameData = gameData;
 
       game.nextPlayers = [];
+      game.previousMoveAt = new Date();
 
       nextPlayersIds.forEach(nextPlayerId => {
         const nextUser = new User();
@@ -762,6 +768,7 @@ export class GameService {
             gameData,
             state: GAME_FINISHED,
             nextPlayers: nextPlayersIds,
+            previousMoveAt: new Date(),
           },
         );
 
@@ -786,6 +793,7 @@ export class GameService {
 
       game.state = GAME_FINISHED;
       game.gameData = gameData;
+      game.previousMoveAt = new Date();
     }
 
     await this.connection.getRepository(Game).save(game);

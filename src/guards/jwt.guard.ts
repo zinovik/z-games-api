@@ -41,7 +41,7 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
       return false;
     }
 
-    const user = await this.userService.findOneById(userId);
+    let user = await this.userService.findOneById(userId);
 
     if (!user) {
       this.logger.info('No user with token username');
@@ -49,6 +49,10 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
       client.emit('update-opened-game', null);
       return false;
     }
+
+    await this.userService.update({ userId });
+
+    user = await this.userService.findOneById(userId);
 
     const newToken = this.jwtService.generateToken({ id: userId }, '7 days');
 
