@@ -1,8 +1,9 @@
+import * as moment from 'moment';
 import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
-import { IBaseGameData, GAME_NOT_STARTED, GAME_STARTED, GAME_FINISHED } from 'z-games-base-game';
+import { IBaseGameData, GAME_NOT_STARTED, GAME_STARTED, GAME_FINISHED, BaseGame } from 'z-games-base-game';
 
 import { User, Game } from '../db/entities';
 import { IUser, IGame } from '../db/interfaces';
@@ -21,7 +22,6 @@ import {
 } from '../exceptions';
 import {
   OPEN_GAME_FIELDS,
-  ALL_GAMES_JOIN_CREATED_BY,
   ALL_GAMES_JOIN_PLAYERS,
   ALL_GAMES_JOIN_NEXT_PLAYERS,
   OPEN_GAME_JOIN_WATCHERS,
@@ -704,6 +704,36 @@ export class GameService {
     return nextPlayersIds;
   }
 
+  private async checkTimeout(game: Game | IGame): Promise<boolean> {
+    const { previousMoveAt } = game;
+
+    const gameDataParsed: any = JSON.parse(game.gameData);
+    const { options } = gameDataParsed;
+
+    const maxTimeOption = options.find((option: any) => option.name === 'Max Time');
+    const maxTime = (BaseGame.getMaxTimeVariants() as any)[maxTimeOption!.value];
+
+    const now = moment(new Date());
+    const end = moment(previousMoveAt).add(maxTime + 3000);
+
+    if (now > end) {
+      if (IS_MONGO_USED) {
+        await this.gameModel.findOneAndUpdate(
+          { _id: game.id },
+          {
+            isMoveTimeout: true,
+          },
+        );
+      }
+
+      // TODO: SQL
+
+      return true;
+    }
+
+    return false;
+  }
+
   public async makeMove({
     move,
     gameId,
@@ -717,10 +747,12 @@ export class GameService {
 
     const game = await this.findOneById(gameId);
 
-    // TODO: Check max move time
-
     if (!game.nextPlayers.some((nextPlayer: User | IUser) => nextPlayer.id === userId)) {
       throw new MakingMoveException('It\'s not your turn to move. Try to refresh the page');
+    }
+
+    if (await this.checkTimeout(game)) {
+      throw new MakingMoveException('Your move time is over!');
     }
 
     const { gameData, nextPlayersIds } = GamesServices[game.name].makeMove({
