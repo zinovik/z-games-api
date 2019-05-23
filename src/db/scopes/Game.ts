@@ -7,6 +7,7 @@ export const ALL_GAMES_FIELDS = [
   'game.playersMax',
   'game.playersMin',
   'game.isPrivate',
+  'game.isMoveTimeout',
   'game.createdAt',
   'game.updatedAt',
   'game.createdBy',
@@ -82,7 +83,7 @@ export const LOGS_FIELD_ORDER_BY = 'logs.createdAt';
 // MongoDB
 
 export const ALL_GAMES_FIELDS_MONGO =
-  'number name state playersMax playersMin isPrivate createdAt updatedAt createdBy previousMoveAt';
+  'number name state playersMax playersMin isPrivate isMoveTimeout createdAt updatedAt createdBy previousMoveAt';
 
 const GAME_POPULATE_USERS = 'id username';
 
