@@ -550,15 +550,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @UseGuards(JwtGuard)
-  @SubscribeMessage('check-timeout')
-  public async checkTimeout(
-    client: Socket & { user: User },
-  ): Promise<void> {
-    // TODO
-    return null;
-  }
-
-  @UseGuards(JwtGuard)
   @SubscribeMessage('make-move')
   public async move(
     client: Socket & { user: User },

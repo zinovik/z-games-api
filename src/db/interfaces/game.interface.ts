@@ -11,6 +11,7 @@ export interface IGame extends Document {
   playersMin: number;
   gameData: string;
   isPrivate: boolean;
+  isMoveTimeout: boolean;
   isRemoved: boolean;
   privatePassword: string;
   playersOnline: IUser[];
