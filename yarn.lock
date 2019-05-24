@@ -4037,6 +4037,17 @@ mongodb-core@3.2.5:
   optionalDependencies:
     saslprep "^1.0.0"
 
+mongodb-core@3.2.6:
+  version "3.2.6"
+  resolved "https://registry.yarnpkg.com/mongodb-core/-/mongodb-core-3.2.6.tgz#5522b721a744720a27a07b29177d10fe849ad20e"
+  integrity sha512-i+XRVjur9D0ywGF7cFebOUnALnbvMHajdNhhl3TQuopW6QDE655G8CpPeERbqSqfa3rOKEUo08lENDIiBIuAvQ==
+  dependencies:
+    bson "^1.1.1"
+    require_optional "^1.0.1"
+    safe-buffer "^5.1.2"
+  optionalDependencies:
+    saslprep "^1.0.0"
+
 mongodb-memory-server-core@5.1.2:
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/mongodb-memory-server-core/-/mongodb-memory-server-core-5.1.2.tgz#a64d8c8d2223509d6de139aa923960c9107a30ae"
@@ -4066,12 +4077,20 @@ mongodb-memory-server@^5.1.2:
   dependencies:
     mongodb-memory-server-core "5.1.2"
 
-mongodb@3.2.5, mongodb@>=3.0.0:
+mongodb@3.2.5:
   version "3.2.5"
   resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-3.2.5.tgz#36d9850e4f5eb40e4bc551bf3bd91f601d4824c4"
   integrity sha512-VEu2nsfFMwWA6q6JVnlJ2kNVwjluU4op2J/YiG1LeI14t9HotLXbg8w3I794BvezC4ZCZ/wBTTdby01txalwwQ==
   dependencies:
     mongodb-core "3.2.5"
+    safe-buffer "^5.1.2"
+
+mongodb@>=3.0.0:
+  version "3.2.6"
+  resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-3.2.6.tgz#bfd23bc0ae6cc57443cd256aec24aa4dc2b99f2f"
+  integrity sha512-qnHc4tjEkHKemuzBq9R7ycYnhFE0Dlpt6+n6suoZp2DcDdqviQ+teloJU24fsOw/PLmr75yGk4mRx/YabjDQEQ==
+  dependencies:
+    mongodb-core "3.2.6"
     safe-buffer "^5.1.2"
 
 mongoose-legacy-pluralize@1.0.2:
@@ -4265,10 +4284,10 @@ node-pre-gyp@0.12.0, node-pre-gyp@^0.12.0:
     semver "^5.3.0"
     tar "^4"
 
-nodemailer@^6.1.1:
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-6.1.1.tgz#09e88ef4b3646f01089c5d84d007b872141fb575"
-  integrity sha512-/x5MRIh56VyuuhLfcz+DL2SlBARpZpgQIf2A4Ao4hMb69MHSgDIMPwYmFwesGT1lkRDZ0eBSoym5+JoIZ3N+cQ==
+nodemailer@^6.2.1:
+  version "6.2.1"
+  resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-6.2.1.tgz#20d773925eb8f7a06166a0b62c751dc8290429f3"
+  integrity sha512-TagB7iuIi9uyNgHExo8lUDq3VK5/B0BpbkcjIgNvxbtVrjNqq0DwAOTuzALPVkK76kMhTSzIgHqg8X1uklVs6g==
 
 nodemon@^1.19.0:
   version "1.19.0"
@@ -6639,10 +6658,10 @@ z-games-no-thanks@^0.0.16:
   dependencies:
     z-games-base-game "0.0.20"
 
-z-games-perudo@^0.0.15:
-  version "0.0.15"
-  resolved "https://registry.yarnpkg.com/z-games-perudo/-/z-games-perudo-0.0.15.tgz#cb154b90e03540fc2cf61f855d9fffc089f085a7"
-  integrity sha512-gi31to1SlNF5IHJSVJdCoyM6AUEqdPHyChXLsaswxBNOXWiYhA1233z/h+O3C90OCEy5EHtDhYDd9heLKIt2mw==
+z-games-perudo@^0.0.16:
+  version "0.0.16"
+  resolved "https://registry.yarnpkg.com/z-games-perudo/-/z-games-perudo-0.0.16.tgz#b39a81cf339489f3651be8a43fc5fbf609320a6e"
+  integrity sha512-6F0kBgo7G2xlfY7j700xpAxjS0PbgX40FojnoUVINidaqHYn7cqTCsDqeilzxrYDlFOKsEjSkoZWrpSLTCZyyw==
   dependencies:
     z-games-base-game "0.0.20"
 
