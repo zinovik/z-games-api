@@ -74,7 +74,7 @@
     "mongoose": "^5.5.11",
     "mongoose-unique-validator": "^2.0.3",
     "multer-storage-cloudinary": "^2.2.1",
-    "nodemailer": "^6.1.1",
+    "nodemailer": "^6.2.1",
     "passport": "^0.4.0",
     "passport-google-oauth": "^2.0.0",
     "passport-jwt": "^4.0.0",
@@ -91,7 +91,7 @@
     "z-games-base-game": "^0.0.20",
     "z-games-lost-cities": "^0.0.18",
     "z-games-no-thanks": "^0.0.16",
-    "z-games-perudo": "^0.0.15",
+    "z-games-perudo": "^0.0.16",
     "z-games-six-nimmt": "^0.0.21"
   },
   "devDependencies": {
