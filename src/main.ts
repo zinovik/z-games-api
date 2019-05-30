@@ -13,4 +13,10 @@ bootstrap();
 
 // Prevent Heroku Node App From Sleeping
 const BASE_URL = process.env.BASE_URL || 'https://z-games-api.herokuapp.com';
-setInterval(async () => await axios.get(BASE_URL), 15 * 60 * 1000); // every 15 minutes
+setInterval(async () => {
+  try {
+    await axios.get(BASE_URL);
+  } catch (error) {
+    //
+  }
+}, 15 * 60 * 1000); // every 15 minutes
