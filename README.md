@@ -235,6 +235,57 @@ Thank you, [Richard Caseres](https://github.com/richardbmx), for the amazing Log
 5. React
 6. Redux
 
+# Services #
+
+1. namecheap.com
+2. heroku.com
+3. netlify.com
+4. mongodb.com
+5. sendgrid.com
+6. developers.google.com
+7. firebase.google.com
+
+# Scheme #
+
+```bash
+              USER
+      z-games.club (NameCheap)
+                |
+                |
+                |
+        Front-end (Netlify) <------------------------------------------------------------------- |
+   [        Components         ]                                                                 |
+   [            |              ]                                                                 |
+   [        Containers <---- | ]                                                                 |
+   [            |            | ]                                                                 |
+   [ | ----> Actions         | ]                                                                 |
+   [ |          |            | ]                                                                 |
+   [ |       Reducers        | ]                                                                 |
+   [ |          |            | ]                                                                 |
+   [ |        Store -------> | ]                                                                 |
+   [ |          |              ]                                                                 |
+   [ | <----- Services         ] ----- Back-end (Heroku)                                         |
+                              |      [ Gateway/Controller ]                                      |
+                              |      [         |          ]                                      |
+                              |      [      Service       ]                                      |
+                              |      [         |          ]                                      |
+                              |      [      Services      ] ----> DataBase (Mongo)               |
+                              |                |            ----> Emails (SendGrid)              |
+                              |                |            ----> Authorization (Google)         |
+                              |                |            ----> Notifications (Firebase) ----> |
+                              |                |
+                              - Modules (NPM) -
+(z-games-no-thanks, z-games-perudo, z-games-lost-cities, z-games-six-nimmt, ...)
+                                    GAMES
+```
+
+# Database objects #
+
+1. Game
+2. User
+3. Log
+4. Invite
+
 # License #
 
 [Apache License 2.0](/LICENSE)
