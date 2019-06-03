@@ -15,7 +15,7 @@ bootstrap();
 const BASE_URL = process.env.BASE_URL || 'https://z-games-api.herokuapp.com';
 setInterval(async () => {
   try {
-    await axios.get(BASE_URL);
+    await axios.get('https://z-games-api.herokuapp.com');
   } catch (error) {
     //
   }
