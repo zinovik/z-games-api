@@ -12,11 +12,12 @@ async function bootstrap() {
 bootstrap();
 
 // Prevent Heroku Node App From Sleeping
-const BASE_URL = process.env.BASE_URL || 'https://z-games-api.herokuapp.com';
-setInterval(async () => {
-  try {
-    await axios.get('https://z-games-api.herokuapp.com');
-  } catch (error) {
-    //
-  }
-}, 15 * 60 * 1000); // every 15 minutes
+if (!process.env.DEV) {
+  setInterval(async () => {
+    try {
+      await axios.get('https://z-games-api.herokuapp.com');
+    } catch (error) {
+      //
+    }
+  }, 15 * 60 * 1000); // every 15 minutes
+}
