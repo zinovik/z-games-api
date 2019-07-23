@@ -33,11 +33,9 @@ Please, select the option that suits you best:
 5. Run only front-end part with [docker](https://docker.com).
 6. Working without [docker](https://docker.com).
 
-NB: If you want to use [docker (and docker-compose)](https://docker.com) please install it, else install [node.js with npm](https://nodejs.org) then install [yarn](https://yarnpkg.com) with this command:
+NB: If you want to use [docker (and docker-compose)](https://docker.com) please install it, else install [node.js with npm](https://nodejs.org).
 
-```bash
-npm install yarn --global
-```
+
 
 Let's start!
 
@@ -58,7 +56,7 @@ git clone https://github.com/zinovik/z-games
 
 ```bash
 cd z-games
-docker-compose up --build
+docker-compose up
 ```
 
 That's it!
@@ -81,7 +79,7 @@ git clone https://github.com/zinovik/z-games-api
 
 ```bash
 cd z-games-api
-docker-compose up --build
+docker-compose up
 ```
 
 That's it!
@@ -102,7 +100,7 @@ git clone https://github.com/zinovik/z-games-api
 ```bash
 cd z-games-api
 cd database_postgresql
-docker-compose up --build
+docker-compose up
 ```
 
 or
@@ -110,7 +108,7 @@ or
 ```bash
 cd z-games-api
 cd database_mongodb
-docker-compose up --build
+docker-compose up
 ```
 
 That's it!
@@ -183,7 +181,7 @@ git clone https://github.com/zinovik/z-games
 
 ```bash
 cd z-games-api
-yarn
+npm install
 cd ..
 ```
 
@@ -191,7 +189,7 @@ or/and
 
 ```bash
 cd z-games
-yarn
+npm install
 cd ..
 ```
 
@@ -199,14 +197,14 @@ cd ..
 
 ```bash
 cd z-games-api
-yarn start:dev
+npm run start:dev
 ```
 
 or/and
 
 ```bash
 cd z-games
-yarn start:dev
+npm run start:dev
 ```
 That's it!
 Check front-end here: [http://localhost:3000](http://localhost:3000)!
