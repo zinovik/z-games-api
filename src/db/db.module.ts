@@ -5,5 +5,6 @@ import { Mongoose } from './mongoose.module';
 
 @Module({
   imports: [TypeOrmModule.forRoot(), Mongoose],
+  exports: [TypeOrmModule.forRoot(), Mongoose],
 })
 export class DbModule {}
