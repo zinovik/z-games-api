@@ -10,18 +10,18 @@ import { FIELDS_TO_REMOVE_IN_ALL_GAMES } from '../db/scopes/Game';
 
 @Injectable()
 export class SocketService {
-  constructor(private logger: LoggerService) { }
+  constructor(private logger: LoggerService) {}
 
-  public sendError({ client, message }: { client: Socket; message: string; }): void {
+  public sendError({ client, message }: { client: Socket; message: string }): void {
     this.logger.error(message, '');
     client.emit('error-message', { message });
   }
 
-  public updateGame({ server, game }: { server: Server, game: Game | IGame }) {
+  public updateGame({ server, game }: { server: Server; game: Game | IGame }) {
     server.emit('update-game', this.parseGameForAllUsers(game));
   }
 
-  public isUserOnline({ server, userId }: { server: Server, userId: string }) {
+  public isUserOnline({ server, userId }: { server: Server; userId: string }) {
     const sockets = server.sockets.connected;
 
     return Object.keys(sockets).some(currentSocketId => {
@@ -30,7 +30,7 @@ export class SocketService {
     });
   }
 
-  public emitByUserId({ server, userId, event, data }: { server: Server, userId: string, event: string, data: any }): void {
+  public emitByUserId({ server, userId, event, data }: { server: Server; userId: string; event: string; data: any }): void {
     const sockets = server.sockets.connected;
 
     const socketId = Object.keys(sockets).find(currentSocketId => {
@@ -45,13 +45,15 @@ export class SocketService {
     sockets[socketId].emit(event, data);
   }
 
-  public sendGameToGameUsers({ server, game }: { server: Server, game: Game | IGame }): void {
+  public sendGameToGameUsers({ server, game }: { server: Server; game: Game | IGame }): void {
     if (!server.sockets.adapter.rooms[game.id]) {
       return;
     }
 
     Object.keys(server.sockets.adapter.rooms[game.id].sockets).forEach(socketId => {
-      const socketInGame = server.sockets.connected[socketId] as Socket & { user: User };
+      const socketInGame = server.sockets.connected[socketId] as Socket & {
+        user: User;
+      };
       const userInGame = socketInGame.user;
 
       if (userInGame) {

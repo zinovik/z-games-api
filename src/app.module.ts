@@ -11,15 +11,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 @Module({
-  imports: [
-    UserModule,
-    GameModule,
-    LogModule,
-    ConfigModule,
-    ServicesModule,
-    DbModule,
-    LoggerModule,
-  ],
+  imports: [UserModule, GameModule, LogModule, ConfigModule, ServicesModule, DbModule, LoggerModule],
   controllers: [AppController],
   providers: [AppService],
 })

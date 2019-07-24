@@ -15,10 +15,7 @@ export class TypeOrmModule implements OnModuleDestroy {
           return {};
         }
 
-        const dbUrl = url.parse(
-          ConfigService.get().DATABASE_URL ||
-            'postgres://postgres:dbpass123@localhost:9432/z-games',
-        );
+        const dbUrl = url.parse(ConfigService.get().DATABASE_URL || 'postgres://postgres:dbpass123@localhost:9432/z-games');
 
         return createConnection({
           type: 'postgres',

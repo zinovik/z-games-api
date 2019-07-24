@@ -1,9 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import {
-  SubscribeMessage,
-  WebSocketGateway,
-  WebSocketServer,
-} from '@nestjs/websockets';
+import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
 import { InviteService } from './invite.service';
@@ -16,7 +12,6 @@ import { IInvite } from '../db/interfaces';
 
 @WebSocketGateway()
 export class InviteGateway {
-
   @WebSocketServer()
   server: Server;
 
@@ -25,7 +20,7 @@ export class InviteGateway {
     private readonly socketService: SocketService,
     private readonly userService: UserService,
     private readonly emailService: EmailService,
-  ) { }
+  ) {}
 
   @UseGuards(JwtGuard)
   @SubscribeMessage('new-invite')
@@ -45,7 +40,7 @@ export class InviteGateway {
     ) {
       return this.socketService.sendError({
         client,
-        message: 'You can\'t invite a user if you are not this game player',
+        message: "You can't invite a user if you are not this game player",
       });
     }
 
@@ -72,9 +67,10 @@ export class InviteGateway {
       });
     } else {
       const { email } = await this.userService.findOneById(userId);
-      await this.emailService.sendInviteMail({ gameNumber: invite.game.number, email });
+      await this.emailService.sendInviteMail({
+        gameNumber: invite.game.number,
+        email,
+      });
     }
-
   }
-
 }

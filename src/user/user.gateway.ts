@@ -1,9 +1,4 @@
-import {
-  SubscribeMessage,
-  WebSocketGateway,
-  WsResponse,
-  WebSocketServer,
-} from '@nestjs/websockets';
+import { SubscribeMessage, WebSocketGateway, WsResponse, WebSocketServer } from '@nestjs/websockets';
 import { UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 
@@ -12,7 +7,6 @@ import { User } from '../db/entities';
 
 @WebSocketGateway()
 export class UserGateway {
-
   @WebSocketServer()
   server: Server;
 
@@ -26,9 +20,7 @@ export class UserGateway {
 
   @UseGuards(JwtGuard)
   @SubscribeMessage('get-current-user')
-  public getCurrentUser(
-    client: Socket & { user: User },
-  ): WsResponse<User> {
+  public getCurrentUser(client: Socket & { user: User }): WsResponse<User> {
     return { event: 'update-current-user', data: client.user };
   }
 
@@ -48,9 +40,11 @@ export class UserGateway {
     this.server.emit('update-users-online', this.getUsersOnlineFromSockets(this.server.sockets.connected));
   }
 
-  private getUsersOnlineFromSockets(sockets: { [key: string]: Socket }): {
-    users: User[],
-    usersCount: number,
+  private getUsersOnlineFromSockets(sockets: {
+    [key: string]: Socket;
+  }): {
+    users: User[];
+    usersCount: number;
   } {
     const users: User[] = [];
 
@@ -67,5 +61,4 @@ export class UserGateway {
       usersCount: Object.keys(sockets).length,
     };
   }
-
 }

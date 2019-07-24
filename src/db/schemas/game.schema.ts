@@ -1,11 +1,7 @@
 import { Schema } from 'mongoose';
 import * as uniqueValidator from 'mongoose-unique-validator';
 
-const transform = (
-  doc: object,
-  ret: { id: string; _id: string; __v: string },
-  options: object,
-) => {
+const transform = (doc: object, ret: { id: string; _id: string; __v: string }, options: object) => {
   ret.id = ret._id;
   delete ret._id;
   delete ret.__v;
@@ -31,7 +27,8 @@ export const gameSchema = new Schema(
     invites: [{ type: Schema.Types.ObjectId, ref: 'Invite' }],
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     previousMoveAt: { type: Date },
-  }, {
+  },
+  {
     toJSON: { transform },
     toObject: { transform },
     timestamps: true,
