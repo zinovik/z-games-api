@@ -15,15 +15,7 @@ describe('GameService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule,
-        DbModule,
-        ServicesModule,
-        LoggerModule,
-        UserModule,
-        LogModule,
-        InviteModule,
-      ],
+      imports: [ConfigModule, DbModule, ServicesModule, LoggerModule, UserModule, LogModule, InviteModule],
       providers: [GameGateway, GameService],
     }).compile();
 

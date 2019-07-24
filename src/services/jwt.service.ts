@@ -11,16 +11,12 @@ export class JwtService {
 
   constructor(private logger: LoggerService) {}
 
-  public generateToken = (
-    payload: IJwtToken,
-    expIn: string,
-    alg = 'HS256',
-  ): string => {
+  public generateToken = (payload: IJwtToken, expIn: string, alg = 'HS256'): string => {
     return jwt.sign(payload, this.JWT_SECRET, {
       algorithm: alg,
       expiresIn: expIn,
     });
-  }
+  };
 
   public getUserIdByToken = (token: string): string => {
     let jwtDecoded: IJwtToken;
@@ -35,5 +31,5 @@ export class JwtService {
     this.logger.info(`Token successfully decoded: ${jwtDecoded.id}`);
 
     return jwtDecoded.id;
-  }
+  };
 }

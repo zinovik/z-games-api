@@ -21,7 +21,6 @@ const localOptions = {
 };
 
 export class FileUploadInterceptor extends FileInterceptor('file', localOptions) {
-
   constructor() {
     super();
 

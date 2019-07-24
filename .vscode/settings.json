@@ -1,14 +1,16 @@
 {
   "editor.tabSize": 2,
+  "eslint.autoFixOnSave": true,
+  "editor.formatOnSave": true,
+  "files.insertFinalNewline": true,
   "importSorter.importStringConfiguration.tabSize": 2,
-  "cSpell.words": [
-    "perudo",
-    "nimmt"
-  ],
+  "cSpell.words": ["perudo", "nimmt"],
   "mongoRunner": {
-    "connections": [{
-      "name": "connection",
-      "url": "mongodb://root:dbpass123@localhost:29017/admin"
-    }]
+    "connections": [
+      {
+        "name": "connection",
+        "url": "mongodb://root:dbpass123@localhost:29017/admin"
+      }
+    ]
   }
 }

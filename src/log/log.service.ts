@@ -36,17 +36,7 @@ export class LogService {
   //   // TODO: SQL Find One Log
   // }
 
-  public async create({
-    type,
-    user,
-    gameId,
-    text,
-  }: {
-    type: string;
-    user: User | IUser;
-    gameId: string;
-    text?: string;
-  }): Promise<Log> {
+  public async create({ type, user, gameId, text }: { type: string; user: User | IUser; gameId: string; text?: string }): Promise<Log> {
     this.logger.info(`Create a log type ${type} by ${user.username}`);
 
     if (IS_MONGO_USED) {
