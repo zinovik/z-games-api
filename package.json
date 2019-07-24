@@ -16,8 +16,8 @@
   "homepage": "https://github.com/zinovik/z-games-api#readme",
   "author": "Max Zinovik <zinovik@gmail.com>",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "format": "prettier --write \"src/**/*.ts\"",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "format": "prettier --write \"src/**/*.ts*\" \"test*/**/*.ts*\"",
     "start": "ts-node -r tsconfig-paths/register src/main.ts",
     "start:dev": "nodemon",
     "start:debug": "nodemon --config nodemon-debug.json",
@@ -70,7 +70,7 @@
     "cors": "^2.8.5",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.24.0",
-    "mongodb-memory-server": "^5.1.5",
+    "mongodb-memory-server": "^5.1.8",
     "mongoose": "^5.6.6",
     "mongoose-unique-validator": "^2.0.3",
     "multer-storage-cloudinary": "^2.2.1",
@@ -88,11 +88,11 @@
     "tsconfig-paths": "^3.8.0",
     "typeorm": "^0.2.18",
     "typescript": "^3.5.3",
-    "z-games-base-game": "^0.0.20",
-    "z-games-lost-cities": "^0.0.18",
-    "z-games-no-thanks": "^0.0.16",
-    "z-games-perudo": "^0.0.16",
-    "z-games-six-nimmt": "^0.0.22"
+    "z-games-base-game": "^0.0.21",
+    "z-games-lost-cities": "^0.0.19",
+    "z-games-no-thanks": "^0.0.17",
+    "z-games-perudo": "^0.0.17",
+    "z-games-six-nimmt": "^0.0.23"
   },
   "devDependencies": {
     "jest": "^24.8.0",

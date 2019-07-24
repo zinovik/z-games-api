@@ -1,11 +1,3 @@
-.vscode
 node_modules
-test
-.editorconfig
-.env.example
-.gitignore
-.travis.yml
-appveyor.yml
-icon.png
-LICENSE
-README.md
+build
+dist

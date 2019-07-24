@@ -10,9 +10,7 @@ import { IUser } from '../../db/interfaces';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    private readonly userService: UserService,
-  ) {
+  constructor(private readonly userService: UserService) {
     super({
       usernameField: 'username',
       passwordField: 'password',
@@ -27,7 +25,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       throw new AuthorizationUserException('Invalid username!');
     }
 
-    if (!await CryptService.comparePassword(password, user.password)) {
+    if (!(await CryptService.comparePassword(password, user.password))) {
       throw new AuthorizationUserException('Invalid password!');
     }
 

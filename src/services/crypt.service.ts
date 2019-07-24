@@ -8,7 +8,6 @@ export class CryptService {
   private static readonly SALT_OR_ROUNDS = ConfigService.get().SALT_OR_ROUNDS;
 
   public static hashPassword(password: string): Promise<string> {
-
     return new Promise((resolve, reject) => {
       bcrypt.hash(password, this.SALT_OR_ROUNDS || 10, (err, hash) => {
         if (err) {
@@ -18,14 +17,9 @@ export class CryptService {
         resolve(hash);
       });
     });
-
   }
 
-  public static comparePassword(
-    password: string,
-    hashPassword: string,
-  ): Promise<boolean> {
-
+  public static comparePassword(password: string, hashPassword: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
       bcrypt.compare(password, hashPassword, (err, res) => {
         if (err) {
@@ -35,7 +29,5 @@ export class CryptService {
         resolve(res === true);
       });
     });
-
   }
-
 }
