@@ -4,11 +4,7 @@ import * as uniqueValidator from 'mongoose-unique-validator';
 import { CryptService } from './../../services/crypt.service';
 import { IUser } from '../interfaces/user.interface';
 
-const transform = (
-  doc: object,
-  ret: { id: string; _id: string; __v: string },
-  options: object,
-) => {
+const transform = (doc: object, ret: { id: string; _id: string; __v: string }, options: object) => {
   ret.id = ret._id;
   delete ret._id;
   delete ret.__v;
@@ -37,7 +33,8 @@ export const userSchema = new Schema(
     invitesInvitee: [{ type: Schema.Types.ObjectId, ref: 'Invite' }],
     createdGames: [{ type: Schema.Types.ObjectId, ref: 'Game' }],
     friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-  }, {
+  },
+  {
     toJSON: { transform },
     toObject: { transform },
     timestamps: true,

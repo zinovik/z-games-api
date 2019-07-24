@@ -8,11 +8,7 @@ import { User } from '../db/entities/user.entity';
 
 @Injectable()
 export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
-  constructor(
-    private jwtService: JwtService,
-    private userService: UserService,
-    private logger: LoggerService,
-  ) {
+  constructor(private jwtService: JwtService, private userService: UserService, private logger: LoggerService) {
     super();
   }
 

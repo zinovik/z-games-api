@@ -1,10 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import {
-  SubscribeMessage,
-  WebSocketGateway,
-  WebSocketServer,
-} from '@nestjs/websockets';
+import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
 import { SocketService } from '../services/socket.service';
@@ -17,7 +13,6 @@ import { ILog } from '../db/interfaces';
 
 @WebSocketGateway()
 export class LogGateway {
-
   @WebSocketServer()
   server: Server;
 
@@ -34,14 +29,14 @@ export class LogGateway {
 
   @UseGuards(JwtGuard)
   @SubscribeMessage('message')
-  public async message(client: Socket & { user: User }, { gameId, message }: { gameId: string; message: string; }): Promise<void> {
+  public async message(client: Socket & { user: User }, { gameId, message }: { gameId: string; message: string }): Promise<void> {
     if (
       (!client.user.currentGames || !client.user.currentGames.some(game => game.id === gameId)) &&
       (!client.user.openedGameWatcher || client.user.openedGameWatcher.id !== gameId)
     ) {
       this.socketService.sendError({
         client,
-        message: 'You can\'t send a message if you are not this game player',
+        message: "You can't send a message if you are not this game player",
       });
       return;
     }
@@ -64,5 +59,4 @@ export class LogGateway {
 
     this.server.to(gameId).emit('new-log', log);
   }
-
 }

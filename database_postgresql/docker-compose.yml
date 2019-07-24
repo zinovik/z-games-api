@@ -1,9 +1,8 @@
-version: '3'
+version: '3.4'
 
 services:
   database_postgresql:
     image: postgres:latest
-    restart: always
     ports:
       - 9432:5432
     environment:
