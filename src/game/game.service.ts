@@ -134,8 +134,10 @@ export class GameService {
             .populate(...ALL_GAMES_POPULATE_CREATED_BY)
             .populate(...ALL_GAMES_POPULATE_PLAYERS)
             .populate(...ALL_GAMES_POPULATE_NEXT_PLAYERS)
-            .where('state').in(stateFilter)
-            .where('name').in(gameNameFilter)
+            .where('state')
+            .in(stateFilter)
+            .where('name')
+            .in(gameNameFilter)
             .limit(limit)
             .skip(offset)
             .sort({ number: -1 })
@@ -157,7 +159,7 @@ export class GameService {
       .getMany();
   }
 
-  public async newGame({ name, isPrivate, userId }: { name: string, isPrivate: boolean, userId: string }): Promise<Game> {
+  public async newGame({ name, isPrivate, userId }: { name: string; isPrivate: boolean; userId: string }): Promise<Game> {
     this.logger.info(`New ${name} game`);
 
     const { playersMax, playersMin, gameData } = GamesServices[name].getNewGame();
@@ -195,8 +197,8 @@ export class GameService {
   }: {
     user: User | IUser;
     gameId: string;
-    isJoinByInvite?: boolean,
-    isNewGameJoin?: boolean,
+    isJoinByInvite?: boolean;
+    isNewGameJoin?: boolean;
   }): Promise<void> {
     this.logger.info(`Join game ${gameId}`);
 
@@ -215,19 +217,19 @@ export class GameService {
     }
 
     if (game.state) {
-      throw new JoiningGameException('Can\'t join started or finished game. Try to refresh the page');
+      throw new JoiningGameException("Can't join started or finished game. Try to refresh the page");
     }
 
     if (game.players.length >= game.playersMax) {
-      throw new JoiningGameException('Can\'t join game with maximum players inside. Try to refresh the page');
+      throw new JoiningGameException("Can't join game with maximum players inside. Try to refresh the page");
     }
 
     if (game.players.some((player: User | IUser) => player.id === user.id)) {
-      throw new JoiningGameException('Can\'t join game twice. Try to refresh the page');
+      throw new JoiningGameException("Can't join game twice. Try to refresh the page");
     }
 
     if (game.playersOnline.some((playerOnline: User | IUser) => playerOnline.id === user.id)) {
-      throw new JoiningGameException('Can\'t join opened game');
+      throw new JoiningGameException("Can't join opened game");
     }
 
     const gameData = GamesServices[game.name].addPlayer({
@@ -262,20 +264,13 @@ export class GameService {
     await this.connection.getRepository(Game).save(game);
   }
 
-  public async openGame({
-    user,
-    gameId,
-  }: {
-    user: User;
-    gameId: string;
-  }): Promise<void> {
+  public async openGame({ user, gameId }: { user: User; gameId: string }): Promise<void> {
     this.logger.info(`Open game ${gameId}`);
 
     const game = await this.findOneById(gameId);
 
     if (user.openedGame || user.openedGameWatcher) {
-      const openedGameNumber = (user.openedGame && user.openedGame.number)
-        || (user.openedGameWatcher && user.openedGameWatcher.number);
+      const openedGameNumber = (user.openedGame && user.openedGame.number) || (user.openedGameWatcher && user.openedGameWatcher.number);
       throw new OpeningGameException(`You are already in game number ${openedGameNumber}. Try to refresh the page`);
     }
 
@@ -284,11 +279,11 @@ export class GameService {
     }
 
     if (!game.players.some((player: User | IUser) => player.id === user.id)) {
-      throw new OpeningGameException('Can\'t open game without joining');
+      throw new OpeningGameException("Can't open game without joining");
     }
 
     if (game.playersOnline.some((playerOnline: User | IUser) => playerOnline.id === user.id)) {
-      throw new OpeningGameException('Can\'t open game twice. Try to refresh the page');
+      throw new OpeningGameException("Can't open game twice. Try to refresh the page");
     }
 
     if (IS_MONGO_USED) {
@@ -314,13 +309,7 @@ export class GameService {
     await this.connection.getRepository(Game).save(game);
   }
 
-  public async watchGame({
-    user,
-    gameId,
-  }: {
-    user: User;
-    gameId: string;
-  }): Promise<Game> {
+  public async watchGame({ user, gameId }: { user: User; gameId: string }): Promise<Game> {
     this.logger.info(`Watch game ${gameId}`);
 
     const game = await this.findOneById(gameId);
@@ -330,15 +319,15 @@ export class GameService {
     }
 
     if (!game.state) {
-      throw new WatchingGameException('Can\'t watch not started game. Try to refresh the page');
+      throw new WatchingGameException("Can't watch not started game. Try to refresh the page");
     }
 
     if (game.players.some((player: User | IUser) => player.id === user.id)) {
-      throw new WatchingGameException('Can\'t watch joining game. Try to refresh the page');
+      throw new WatchingGameException("Can't watch joining game. Try to refresh the page");
     }
 
     if (game.watchersOnline.some((watcher: User | IUser) => watcher.id === user.id)) {
-      throw new WatchingGameException('Can\'t watch game twice. Try to refresh the page');
+      throw new WatchingGameException("Can't watch game twice. Try to refresh the page");
     }
 
     if (IS_MONGO_USED) {
@@ -364,13 +353,7 @@ export class GameService {
     return await this.connection.getRepository(Game).save(game);
   }
 
-  public async leaveGame({
-    user,
-    gameId,
-  }: {
-    user: User;
-    gameId: string;
-  }): Promise<void> {
+  public async leaveGame({ user, gameId }: { user: User; gameId: string }): Promise<void> {
     this.logger.info(`Leave game ${gameId}`);
 
     const game = await this.findOneById(gameId);
@@ -380,11 +363,11 @@ export class GameService {
     }
 
     if (game.state === GAME_STARTED) {
-      throw new LeavingGameException('Can\'t leave started and not finished game. Try to refresh the page');
+      throw new LeavingGameException("Can't leave started and not finished game. Try to refresh the page");
     }
 
     if (!game.players.some((player: User | IUser) => player.id === user.id)) {
-      throw new LeavingGameException('Can\'t leave game without joining. Try to refresh the page');
+      throw new LeavingGameException("Can't leave game without joining. Try to refresh the page");
     }
 
     const gameData = GamesServices[game.name].removePlayer({
@@ -415,13 +398,7 @@ export class GameService {
     await this.connection.getRepository(Game).save(game);
   }
 
-  public async closeGame({
-    user,
-    gameId,
-  }: {
-    user: User;
-    gameId: string;
-  }): Promise<void> {
+  public async closeGame({ user, gameId }: { user: User; gameId: string }): Promise<void> {
     this.logger.info(`Close game ${gameId}`);
 
     const game = await this.findOneById(gameId);
@@ -431,14 +408,10 @@ export class GameService {
     }
 
     const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
-    const isUserInWatchers = game.watchersOnline.some(
-      (player: User | IUser) => player.id === user.id,
-    );
+    const isUserInWatchers = game.watchersOnline.some((player: User | IUser) => player.id === user.id);
 
     if (!isUserInPlayers && !isUserInWatchers) {
-      throw new ClosingGameException(
-        'Can\'t close game without joining or watching',
-      );
+      throw new ClosingGameException("Can't close game without joining or watching");
     }
 
     if (IS_MONGO_USED) {
@@ -466,13 +439,7 @@ export class GameService {
     await this.connection.getRepository(Game).save(game);
   }
 
-  public async connectGame({
-    user,
-    gameId,
-  }: {
-    user: User | IUser;
-    gameId: string;
-  }): Promise<void> {
+  public async connectGame({ user, gameId }: { user: User | IUser; gameId: string }): Promise<void> {
     this.logger.info(`Connect game ${gameId}`);
 
     if (IS_MONGO_USED) {
@@ -500,21 +467,13 @@ export class GameService {
     await this.connection.getRepository(Game).save(game);
   }
 
-  public async disconnectGame({
-    user,
-    gameId,
-  }: {
-    user: User | IUser;
-    gameId: string;
-  }): Promise<void> {
+  public async disconnectGame({ user, gameId }: { user: User | IUser; gameId: string }): Promise<void> {
     this.logger.info(`Disconnect game ${gameId}`);
 
     const game = await this.findOneById(gameId);
 
     const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
-    const isUserInWatchers = game.watchersOnline.some(
-      (player: User | IUser) => player.id === user.id,
-    );
+    const isUserInWatchers = game.watchersOnline.some((player: User | IUser) => player.id === user.id);
 
     if (IS_MONGO_USED) {
       await this.gameModel.findOneAndUpdate(
@@ -541,13 +500,7 @@ export class GameService {
     await this.connection.getRepository(Game).save(game);
   }
 
-  public async removeGame({
-    userId,
-    gameId,
-  }: {
-    userId: string;
-    gameId: string;
-  }): Promise<void> {
+  public async removeGame({ userId, gameId }: { userId: string; gameId: string }): Promise<void> {
     this.logger.info(`Remove game ${gameId}`);
 
     const game = await this.findOneById(gameId);
@@ -559,7 +512,7 @@ export class GameService {
     const isUserInPlayers = game.players.some((player: User | IUser) => player.id === userId);
 
     if (!isUserInPlayers) {
-      throw new RemovingGameException('Can\'t remove game without joining');
+      throw new RemovingGameException("Can't remove game without joining");
     }
 
     if (IS_MONGO_USED) {
@@ -582,13 +535,7 @@ export class GameService {
     }
   }
 
-  public async toggleReady({
-    user,
-    gameId,
-  }: {
-    user: User;
-    gameId: string;
-  }): Promise<void> {
+  public async toggleReady({ user, gameId }: { user: User; gameId: string }): Promise<void> {
     this.logger.info(`Toggle ready game ${gameId}`);
 
     const game = await this.findOneById(gameId);
@@ -599,10 +546,7 @@ export class GameService {
     });
 
     if (IS_MONGO_USED) {
-      await this.gameModel.findOneAndUpdate(
-        { _id: game.id },
-        { gameData },
-      );
+      await this.gameModel.findOneAndUpdate({ _id: game.id }, { gameData });
 
       return;
     }
@@ -612,15 +556,7 @@ export class GameService {
     await this.connection.getRepository(Game).save(game);
   }
 
-  public async updateOption({
-    gameId,
-    name,
-    value,
-  }: {
-    gameId: string;
-    name: string,
-    value: string,
-  }): Promise<void> {
+  public async updateOption({ gameId, name, value }: { gameId: string; name: string; value: string }): Promise<void> {
     this.logger.info(`Update option game ${gameId}`);
 
     const game = await this.findOneById(gameId);
@@ -632,10 +568,7 @@ export class GameService {
     });
 
     if (IS_MONGO_USED) {
-      await this.gameModel.findOneAndUpdate(
-        { _id: gameId },
-        { gameData },
-      );
+      await this.gameModel.findOneAndUpdate({ _id: gameId }, { gameData });
 
       return;
     }
@@ -645,11 +578,7 @@ export class GameService {
     await this.connection.getRepository(Game).save(game);
   }
 
-  public async startGame({
-    gameId,
-  }: {
-    gameId: string;
-  }): Promise<string[]> {
+  public async startGame({ gameId }: { gameId: string }): Promise<string[]> {
     this.logger.info(`Start game ${gameId}`);
 
     const game = await this.findOneById(gameId);
@@ -667,12 +596,10 @@ export class GameService {
     }
 
     if (game.state !== GAME_NOT_STARTED) {
-      throw new StartingGameException('You can\'t start started game. Try to refresh the page');
+      throw new StartingGameException("You can't start started game. Try to refresh the page");
     }
 
-    const { gameData, nextPlayersIds } = GamesServices[game.name].startGame(
-      game.gameData,
-    );
+    const { gameData, nextPlayersIds } = GamesServices[game.name].startGame(game.gameData);
 
     if (IS_MONGO_USED) {
       await this.gameModel.findOneAndUpdate(
@@ -742,13 +669,18 @@ export class GameService {
     move: string;
     gameId: string;
     userId: string;
-  }): Promise<{ nextPlayersIds: string[], playersIds: string[], playerWonId: string, gameNumber: number }> {
+  }): Promise<{
+    nextPlayersIds: string[];
+    playersIds: string[];
+    playerWonId: string;
+    gameNumber: number;
+  }> {
     this.logger.info(`Make move game ${gameId}`);
 
     const game = await this.findOneById(gameId);
 
     if (!game.nextPlayers.some((nextPlayer: User | IUser) => nextPlayer.id === userId)) {
-      throw new MakingMoveException('It\'s not your turn to move. Try to refresh the page');
+      throw new MakingMoveException("It's not your turn to move. Try to refresh the page");
     }
 
     if (await this.checkTimeout(game)) {
@@ -774,7 +706,12 @@ export class GameService {
           },
         );
 
-        return { nextPlayersIds, playersIds: [], playerWonId: '', gameNumber: game.number };
+        return {
+          nextPlayersIds,
+          playersIds: [],
+          playerWonId: '',
+          gameNumber: game.number,
+        };
       }
 
       game.gameData = gameData;
@@ -787,7 +724,6 @@ export class GameService {
         nextUser.id = nextPlayerId;
         game.nextPlayers.push(nextUser as User & IUser);
       });
-
     } else {
       // Else if the game is finished
 
@@ -807,7 +743,12 @@ export class GameService {
         const playersIds: string[] = (game.players as Array<User | IUser>).map((player: User | IUser) => player.id);
         const playerWonId = gameDataParsed.players.find(gamePlayer => gamePlayer.place === 1).id;
 
-        return { nextPlayersIds: [], playersIds, playerWonId, gameNumber: game.number };
+        return {
+          nextPlayersIds: [],
+          playersIds,
+          playerWonId,
+          gameNumber: game.number,
+        };
       }
 
       game.players.forEach((player: User | IUser) => {
@@ -829,10 +770,15 @@ export class GameService {
     }
 
     await this.connection.getRepository(Game).save(game);
-    return { nextPlayersIds, playersIds: [], playerWonId: '', gameNumber: game.number };
+    return {
+      nextPlayersIds,
+      playersIds: [],
+      playerWonId: '',
+      gameNumber: game.number,
+    };
   }
 
-  public async addLog({ gameId, logId }: { gameId: string, logId: string }): Promise<void> {
+  public async addLog({ gameId, logId }: { gameId: string; logId: string }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.gameModel.findOneAndUpdate(
         { _id: gameId },
@@ -848,9 +794,7 @@ export class GameService {
   private async getNewGameNumber(): Promise<number> {
     const allGames = await this.getAllGames({} as IFilterSettings, true);
 
-    const allGamesSorted = allGames.sort(
-      (game1, game2) => game2.number - game1.number,
-    );
+    const allGamesSorted = allGames.sort((game1, game2) => game2.number - game1.number);
 
     if (allGamesSorted.length) {
       return allGamesSorted[0].number + 1;

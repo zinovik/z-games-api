@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { forwardRef} from '@nestjs/common';
+import { forwardRef } from '@nestjs/common';
 
 import { ConfigModule } from '../config/config.module';
 import { ServicesModule } from '../services/services.module';
@@ -13,15 +13,7 @@ import { GameService } from './game.service';
 import { InviteModule } from '../invite/invite.module';
 
 @Module({
-  imports: [
-    ConfigModule,
-    ServicesModule,
-    DbModule,
-    LoggerModule,
-    UserModule,
-    InviteModule,
-    forwardRef(() => LogModule),
-  ],
+  imports: [ConfigModule, ServicesModule, DbModule, LoggerModule, UserModule, InviteModule, forwardRef(() => LogModule)],
   controllers: [GameController],
   providers: [GameGateway, GameService],
 })

@@ -1,15 +1,6 @@
 import * as uuid from 'uuid';
 import { IsNotEmpty } from 'class-validator';
-import {
-  BeforeInsert,
-  Column,
-  CreateDateColumn,
-  DefaultNamingStrategy,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryColumn,
-} from 'typeorm';
+import { BeforeInsert, Column, CreateDateColumn, DefaultNamingStrategy, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 import { User, Game } from '../../db/entities';
 

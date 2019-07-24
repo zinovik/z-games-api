@@ -32,7 +32,6 @@ const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
 @Injectable()
 export class UserService {
-
   userModel: Model<IUser>;
 
   constructor(
@@ -68,8 +67,7 @@ export class UserService {
     this.logger.info(`Find one user by email: ${email}`);
 
     if (IS_MONGO_USED) {
-      return this.populateQuery(this.userModel.findOne({ email }, USER_FIELDS_MONGO))
-        .exec();
+      return this.populateQuery(this.userModel.findOne({ email }, USER_FIELDS_MONGO)).exec();
     }
 
     return this.connection
@@ -89,8 +87,7 @@ export class UserService {
     this.logger.info(`Find one user by user id: ${userId}`);
 
     if (IS_MONGO_USED) {
-      return this.populateQuery(this.userModel.findOne({ _id: userId }, USER_FIELDS_MONGO))
-        .exec();
+      return this.populateQuery(this.userModel.findOne({ _id: userId }, USER_FIELDS_MONGO)).exec();
     }
 
     return this.connection
@@ -110,8 +107,7 @@ export class UserService {
     this.logger.info(`Find one user by username: ${username}`);
 
     if (IS_MONGO_USED) {
-      return this.populateQuery(this.userModel.findOne({ username }, USER_FIELDS_MONGO))
-        .exec();
+      return this.populateQuery(this.userModel.findOne({ username }, USER_FIELDS_MONGO)).exec();
     }
 
     return this.connection
@@ -161,7 +157,8 @@ export class UserService {
             {
               path: USER_POPULATE_INVITES_GAME[0],
               select: USER_POPULATE_INVITES_GAME[1],
-            }, {
+            },
+            {
               path: USER_POPULATE_INVITES_CREATED_BY[0],
               select: USER_POPULATE_INVITES_CREATED_BY[1],
             },
@@ -226,7 +223,7 @@ export class UserService {
     return this.connection.getRepository(User).save(user);
   }
 
-  public async addCreatedGame({ userId, gameId }: { userId: string, gameId: string }): Promise<void> {
+  public async addCreatedGame({ userId, gameId }: { userId: string; gameId: string }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.userModel.findOneAndUpdate(
         { _id: userId },
@@ -239,7 +236,7 @@ export class UserService {
     }
   }
 
-  public async update({ userId, username }: { userId: string, username?: string }): Promise<void> {
+  public async update({ userId, username }: { userId: string; username?: string }): Promise<void> {
     const updateFields = {} as IUser;
 
     if (username) {
@@ -259,7 +256,7 @@ export class UserService {
     // TODO: SQL update
   }
 
-  public async updateOpenGame({ usersIds, gameId }: { usersIds: string[], gameId: string | null }): Promise<void> {
+  public async updateOpenGame({ usersIds, gameId }: { usersIds: string[]; gameId: string | null }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.userModel.updateMany(
         { _id: { $in: usersIds } },
@@ -270,7 +267,7 @@ export class UserService {
     }
   }
 
-  public async updateOpenGameWatcher({ usersIds, gameId }: { usersIds: string[], gameId: string | null }): Promise<void> {
+  public async updateOpenGameWatcher({ usersIds, gameId }: { usersIds: string[]; gameId: string | null }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.userModel.findOneAndUpdate(
         { _id: { $in: usersIds } },
@@ -281,7 +278,7 @@ export class UserService {
     }
   }
 
-  public async updateOpenAndAddCurrentGame({ userId, gameId }: { userId: string, gameId: string }): Promise<void> {
+  public async updateOpenAndAddCurrentGame({ userId, gameId }: { userId: string; gameId: string }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.userModel.findOneAndUpdate(
         { _id: userId },
@@ -295,7 +292,7 @@ export class UserService {
     }
   }
 
-  public async updateOpenAndRemoveCurrentGame({ userId, gameId }: { userId: string, gameId: string }): Promise<void> {
+  public async updateOpenAndRemoveCurrentGame({ userId, gameId }: { userId: string; gameId: string }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.userModel.findOneAndUpdate(
         { _id: userId },
@@ -309,7 +306,7 @@ export class UserService {
     }
   }
 
-  public async addLog({ userId, logId }: { userId: string, logId: string }): Promise<void> {
+  public async addLog({ userId, logId }: { userId: string; logId: string }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.userModel.findOneAndUpdate(
         { _id: userId },
@@ -348,9 +345,8 @@ export class UserService {
     }
   }
 
-  public async updateCurrentMoves({ usersIds, gameId }: { usersIds: string[], gameId: string }): Promise<void> {
+  public async updateCurrentMoves({ usersIds, gameId }: { usersIds: string[]; gameId: string }): Promise<void> {
     if (IS_MONGO_USED) {
-
       // Clear the game current moves for all the users
       await this.userModel.updateMany(
         {},
@@ -372,11 +368,10 @@ export class UserService {
           },
         );
       }
-
     }
   }
 
-  public async addCurrentMoves({ usersIds, gameId }: { usersIds: string[], gameId: string }): Promise<void> {
+  public async addCurrentMoves({ usersIds, gameId }: { usersIds: string[]; gameId: string }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.userModel.updateMany(
         { _id: { $in: usersIds } },
@@ -389,9 +384,9 @@ export class UserService {
     }
   }
 
-  private populateQuery(query: DocumentQuery<IUser, IUser, {}>):
-    DocumentQuery<IUser, IUser, {}> {
-    return query.populate(...USER_POPULATE_OPENED_GAME)
+  private populateQuery(query: DocumentQuery<IUser, IUser, {}>): DocumentQuery<IUser, IUser, {}> {
+    return query
+      .populate(...USER_POPULATE_OPENED_GAME)
       .populate(...USER_POPULATE_CURRENT_GAMES)
       .populate(...USER_POPULATE_CURRENT_WATCH)
       .populate({
@@ -416,7 +411,8 @@ export class UserService {
           {
             path: USER_POPULATE_INVITES_GAME[0],
             select: USER_POPULATE_INVITES_GAME[1],
-          }, {
+          },
+          {
             path: USER_POPULATE_INVITES_CREATED_BY[0],
             select: USER_POPULATE_INVITES_CREATED_BY[1],
           },

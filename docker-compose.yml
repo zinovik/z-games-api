@@ -1,9 +1,8 @@
-version: '3'
+version: '3.4'
 
 services:
   database_postgresql:
     image: postgres:latest
-    restart: always
     ports:
       - 9432:5432
     environment:
@@ -13,7 +12,6 @@ services:
 
   database_mongodb:
     image: mongo:latest
-    restart: always
     ports:
       - 29017:27017
     environment:
@@ -23,10 +21,10 @@ services:
   api:
     build: .
     volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules/
-    expose:
-      - "4000"
+      - .:/app
+      - /app/node_modules/
+    ports:
+      - 4000:4000
     depends_on:
       - database_postgresql
       - database_mongodb
