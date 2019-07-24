@@ -1,16 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  UseGuards,
-  Req,
-  Res,
-  Param,
-  UseInterceptors,
-  UploadedFile,
-  Request,
-  HttpCode,
-} from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Req, Res, Param, UseInterceptors, UploadedFile, Request, HttpCode } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
 
@@ -73,9 +61,12 @@ export class UserController {
   }
 
   @Post('register')
-  async register(
-    @Req() { body: { username, password, email } }: Request & { body: { username: string, password: string, email: string } },
-  ): Promise<User | IUser> {
+  async register(@Req()
+  {
+    body: { username, password, email },
+  }: Request & {
+    body: { username: string; password: string; email: string };
+  }): Promise<User | IUser> {
     if (!password || !email || !username) {
       throw new CreatingUserException('All fields are are required!');
     }
@@ -105,7 +96,10 @@ export class UserController {
     }
 
     try {
-      await this.emailService.sendRegistrationMail({ id: user.id, email: user.email });
+      await this.emailService.sendRegistrationMail({
+        id: user.id,
+        email: user.email,
+      });
     } catch (error) {
       throw new CreatingUserException('Error sending email, please contact administration to support');
     }
@@ -114,9 +108,10 @@ export class UserController {
   }
 
   @Post('activate')
-  async activate(
-    @Req() { body: { token: activationToken } }: Request & { body: { token: string } },
-  ): Promise<{ token: string }> {
+  async activate(@Req()
+  {
+    body: { token: activationToken },
+  }: Request & { body: { token: string } }): Promise<{ token: string }> {
     const userId = this.jwtService.getUserIdByToken(activationToken);
 
     const user = await this.userService.findOneById(userId);
@@ -143,7 +138,9 @@ export class UserController {
 
   @Post('authorize')
   @UseGuards(LocalGuard)
-  async authorize(@Req() { user }: { user: User | IUser }): Promise<{ token: string }> {
+  async authorize(@Req() { user }: { user: User | IUser }): Promise<{
+    token: string;
+  }> {
     const token = this.jwtService.generateToken({ id: user.id }, '7 days');
 
     return { token };
@@ -152,19 +149,18 @@ export class UserController {
   @Post('update')
   @HttpCode(200)
   @UseGuards(JwtGuard)
-  async update(
-    @Req() { body: { username }, user }: Request & { body: { username: string }, user: IUser | User },
-  ): Promise<void> {
+  async update(@Req()
+  {
+    body: { username },
+    user,
+  }: Request & { body: { username: string }; user: IUser | User }): Promise<void> {
     this.userService.update({ userId: user.id, username });
   }
 
   @Post('avatar')
   // @UseGuards(JwtGuard)
   @UseInterceptors(FileUploadInterceptor)
-  async updateAvatar(
-    @UploadedFile() file: any,
-    @Req() req: Request,
-  ): Promise<string> {
+  async updateAvatar(@UploadedFile() file: any, @Req() req: Request): Promise<string> {
     // const user = await this.userService.updateAvatar(req.user.email, file && file.secure_url);
     return file && file.secure_url;
   }
@@ -177,13 +173,8 @@ export class UserController {
 
   @Get('authorize/google/callback')
   @UseGuards(GoogleGuard)
-  async googleAuthCallback(
-    @Req() req: { user: IGoogleProfile },
-    @Res() res: Response & { redirect: (url: string) => void },
-  ) {
-    const user = await this.userService.findOneByEmail(
-      req.user.emails[0].value,
-    );
+  async googleAuthCallback(@Req() req: { user: IGoogleProfile }, @Res() res: Response & { redirect: (url: string) => void }) {
+    const user = await this.userService.findOneByEmail(req.user.emails[0].value);
 
     let id: string;
 
@@ -213,9 +204,7 @@ export class UserController {
 
   @Get('find/:username')
   @UseGuards(JwtGuard)
-  async getUsers(
-    @Param() { username }: { username: string },
-  ): Promise<User[] | IUser[]> {
+  async getUsers(@Param() { username }: { username: string }): Promise<User[] | IUser[]> {
     if (!username) {
       return [] as User[] | IUser[];
     }

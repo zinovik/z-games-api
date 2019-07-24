@@ -23,7 +23,6 @@ import { CryptService } from '../../services/crypt.service';
 @Unique(['email'])
 @Unique(['username'])
 export class User extends DefaultNamingStrategy {
-
   @PrimaryColumn('uuid')
   public id: string;
 

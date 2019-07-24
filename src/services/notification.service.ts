@@ -13,20 +13,16 @@ export interface IFirebaseResult {
   canonical_ids: number;
   results: [
     {
-      message_id: string,
+      message_id: string;
     },
   ];
 }
 
 @Injectable()
 export class NotificationService {
+  constructor(private logger: LoggerService) {}
 
-  constructor(
-    private logger: LoggerService,
-  ) {
-  }
-
-  public async sendNotification({ title, message, userToken }: { title: string, message: string, userToken: string }): Promise<IFirebaseResult> {
+  public async sendNotification({ title, message, userToken }: { title: string; message: string; userToken: string }): Promise<IFirebaseResult> {
     this.logger.info('Sending Notification');
 
     const data = {
@@ -42,11 +38,10 @@ export class NotificationService {
     const { data: response } = await axios.post(URL, data, {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `key=${ConfigService.get().FIREBASE_SERVER_KEY}`,
+        Authorization: `key=${ConfigService.get().FIREBASE_SERVER_KEY}`,
       },
     });
 
     return response;
   }
-
 }

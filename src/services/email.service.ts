@@ -14,21 +14,17 @@ export interface ISendGridResult {
   messageSize: number;
   response: string;
   envelope: {
-    from: string,
-    to: string[],
+    from: string;
+    to: string[];
   };
   messageId: string;
 }
 
 @Injectable()
 export class EmailService {
-
   private server: any;
 
-  constructor(
-    private jwtService: JwtService,
-    private logger: LoggerService,
-  ) {
+  constructor(private jwtService: JwtService, private logger: LoggerService) {
     this.server = nodemailer.createTransport({
       service: 'SendGrid',
       auth: {
@@ -38,7 +34,7 @@ export class EmailService {
     });
   }
 
-  public sendRegistrationMail({ id, email }: { id: string, email: string }): Promise<ISendGridResult> {
+  public sendRegistrationMail({ id, email }: { id: string; email: string }): Promise<ISendGridResult> {
     this.logger.info('Sending Registration Mail');
 
     const token = this.jwtService.generateToken({ id }, '2 hours');
@@ -55,7 +51,7 @@ export class EmailService {
     });
   }
 
-  public sendMoveMail({ gameNumber, email }: { gameNumber: number, email: string }): Promise<ISendGridResult> {
+  public sendMoveMail({ gameNumber, email }: { gameNumber: number; email: string }): Promise<ISendGridResult> {
     this.logger.info('Sending Move Mail');
 
     const link = `${ConfigService.get().CLIENT_URL}/game/${gameNumber}`;
@@ -71,7 +67,7 @@ export class EmailService {
     });
   }
 
-  public sendInviteMail({ gameNumber, email }: { gameNumber: number, email: string }): Promise<ISendGridResult> {
+  public sendInviteMail({ gameNumber, email }: { gameNumber: number; email: string }): Promise<ISendGridResult> {
     this.logger.info('Sending Invite Mail');
 
     const link = `${ConfigService.get().CLIENT_URL}`;
@@ -86,5 +82,4 @@ export class EmailService {
       html: pug.renderFile(templatePath, { link, additionalText: '' }),
     });
   }
-
 }
