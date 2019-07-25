@@ -16,7 +16,7 @@
   "homepage": "https://github.com/zinovik/z-games-api#readme",
   "author": "Max Zinovik <zinovik@gmail.com>",
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts*\" \"test*/**/*.ts*\"",
     "start": "ts-node -r tsconfig-paths/register src/main.ts",
     "start:dev": "nodemon",
@@ -70,7 +70,7 @@
     "cors": "^2.8.5",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.24.0",
-    "mongodb-memory-server": "^5.1.8",
+    "mongodb-memory-server": "^5.1.9",
     "mongoose": "^5.6.6",
     "mongoose-unique-validator": "^2.0.3",
     "multer-storage-cloudinary": "^2.2.1",
@@ -100,7 +100,6 @@
     "prettier": "^1.18.2",
     "supertest": "^4.0.2",
     "ts-jest": "^24.0.2",
-    "tsconfig-paths": "^3.8.0",
     "tslint": "^5.18.0",
     "tslint-config-prettier": "^1.18.0"
   },
