@@ -232,7 +232,7 @@ Thank you, [Richard Caseres](https://github.com/richardbmx), for the amazing Log
 5. sendgrid.com
 6. developers.google.com
 7. firebase.google.com
-8. travis-ci.com
+8. travis-ci.org
 9. hub.docker.com
 
 # Scheme
