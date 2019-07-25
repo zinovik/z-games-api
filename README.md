@@ -2,30 +2,34 @@
 
 ![img](./logo.png)
 
-# What #
+# What
 
 Z-Games is a tiny board games portal.
 
 The project consists of two main parts and several games modules:
+
 1. [Back-end](https://github.com/zinovik/z-games-api)
 2. [Front-end](https://github.com/zinovik/z-games)
+
 - [Game template](https://github.com/zinovik/z-games-base-game)
-- [No, Thanks game](https://github.com/zinovik/z-games-no-thanks) [[wiki](https://en.wikipedia.org/wiki/No_Thanks!_(game))]
+- [No, Thanks game](https://github.com/zinovik/z-games-no-thanks) [[wiki](<https://en.wikipedia.org/wiki/No_Thanks!_(game)>)]
 - [Perudo game](https://github.com/zinovik/z-games-perudo) [[wiki](https://en.wikipedia.org/wiki/Dudo)]
 - [Lost cities game](https://github.com/zinovik/z-games-lost-cities) [[wiki](https://en.wikipedia.org/wiki/Lost_Cities)]
 - [6 nimmt! game](https://github.com/zinovik/z-games-six-nimmt) [[wiki](https://en.wikipedia.org/wiki/6_Nimmt!)]
 
-# Where #
+# Where
 
 There are two environments where you can check current versions:
+
 1. Development (dev branch) (https://z-games-dev.netlify.com)
 2. Production (master branch) (https://z-games.club)
 
-# How #
+# How
 
 Also, you can run a development environment on your local machine.
 
 Please, select the option that suits you best:
+
 1. Run the whole project with [docker and docker-compose](https://docker.com) (the easiest way).
 2. Run only back-end part with databases with [docker and docker-compose](https://docker.com).
 3. Run only databases with [docker and docker-compose](https://docker.com).
@@ -35,13 +39,9 @@ Please, select the option that suits you best:
 
 NB: If you want to use [docker (and docker-compose)](https://docker.com) please install it, else install [node.js with npm](https://nodejs.org).
 
-
-
 Let's start!
 
-
-
-## 1. Run the whole project with docker and docker-compose (the easiest way) ##
+## 1. Run the whole project with docker and docker-compose (the easiest way)
 
 1.1. Clone repositories:
 
@@ -63,9 +63,7 @@ That's it!
 Check front-end here: [http://localhost:3000](http://localhost:3000)!
 Check back-end here: [http://localhost:4000](http://localhost:4000)!
 
-
-
-## 2. Run only back-end part with databases with docker and docker-compose ##
+## 2. Run only back-end part with databases with docker and docker-compose
 
 2.1. Clone repository:
 
@@ -85,9 +83,7 @@ docker-compose up
 That's it!
 Check back-end here: [http://localhost:4000](http://localhost:4000)!
 
-
-
-## 3. Run only databases with docker and docker-compose ##
+## 3. Run only databases with docker and docker-compose
 
 3.1. Clone repository:
 
@@ -113,9 +109,7 @@ docker-compose up
 
 That's it!
 
-
-
-## 4. Run only back-end part with docker ##
+## 4. Run only back-end part with docker
 
 4.1. Clone repository:
 
@@ -136,9 +130,7 @@ docker run z-games-api
 That's it!
 Check front-end here: [http://localhost:3000](http://localhost:3000)!
 
-
-
-## 5. Run only front-end part with docker ##
+## 5. Run only front-end part with docker
 
 5.1. Clone repository:
 
@@ -159,9 +151,7 @@ docker run z-games
 That's it!
 Check front-end here: [http://localhost:3000](http://localhost:3000)!
 
-
-
-## 6. Working without docker ##
+## 6. Working without docker
 
 6.1. Clone repositories you want to run:
 
@@ -206,25 +196,24 @@ or/and
 cd z-games
 npm run start:dev
 ```
+
 That's it!
 Check front-end here: [http://localhost:3000](http://localhost:3000)!
 Check back-end here: [http://localhost:4000](http://localhost:4000)!
 
-
-
 P.S. If you want to change the separate game - clone it's repository! You can work with it using [npm link](https://docs.npmjs.com/cli/link.html) command.
 
-# Contributing #
+# Contributing
 
 Please contribute using [Github Flow](https://guides.github.com/introduction/flow). Create a branch, add commits, and [open a pull request](https://github.com/zinovik/z-games-api/compare).
 
-# Help #
+# Help
 
-If you want to help check current [issues](https://github.com/zinovik/z-games-api/issues) (you can use [ZenHub](https://zenhub.com)) or create the new one! Also, you can write any comment.
+If you want to help check current issues on [project board](https://github.com/users/zinovik/projects/1) or create the new one in any project repository! Also, you can write any comment.
 
 Thank you, [Richard Caseres](https://github.com/richardbmx), for the amazing Logo!
 
-# Technologies #
+# Technologies
 
 1. Typescript
 2. NodeJS
@@ -232,8 +221,9 @@ Thank you, [Richard Caseres](https://github.com/richardbmx), for the amazing Log
 4. NestJS
 5. React
 6. Redux
+7. Docker
 
-# Services #
+# Services
 
 1. namecheap.com
 2. heroku.com
@@ -242,8 +232,10 @@ Thank you, [Richard Caseres](https://github.com/richardbmx), for the amazing Log
 5. sendgrid.com
 6. developers.google.com
 7. firebase.google.com
+8. travis-ci.com
+9. hub.docker.com
 
-# Scheme #
+# Scheme
 
 ```bash
               USER
@@ -277,13 +269,13 @@ Thank you, [Richard Caseres](https://github.com/richardbmx), for the amazing Log
                                     GAMES
 ```
 
-# Database objects #
+# Database objects
 
 1. Game
 2. User
 3. Log
 4. Invite
 
-# License #
+# License
 
 [Apache License 2.0](/LICENSE)
