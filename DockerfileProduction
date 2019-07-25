@@ -18,5 +18,4 @@ COPY tsconfig.build.json ./
 COPY tsconfig.json ./
 COPY tslint.json ./
 
-# Build and run the app
-CMD npm run start:dev
+CMD npm run start:prod
