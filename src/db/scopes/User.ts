@@ -15,6 +15,7 @@ export const USER_FIELDS = [
   'user.username',
   'user.password',
   'user.avatar',
+  'user.notificationsToken',
   'user.email',
   'user.firstName',
   'user.lastName',
@@ -47,7 +48,7 @@ export const USER_JOIN_INVITES_INVITEE: [string, string] = ['user.invitesInvitee
 export const ALL_USER_FIELDS_MONGO = 'id username avatar createdAt previousVisitAt gamesPlayed gamesWon';
 
 export const USER_FIELDS_MONGO =
-  'id username password avatar email firstName lastName createdAt previousVisitAt' +
+  'id username password avatar notificationsToken email firstName lastName createdAt previousVisitAt' +
   ' updatedAt isConfirmed gamesPlayed gamesWon invitesInviter invitesInvitee';
 
 const USER_POPULATE_GAMES = 'id name number';

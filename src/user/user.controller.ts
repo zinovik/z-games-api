@@ -151,18 +151,19 @@ export class UserController {
   @UseGuards(JwtGuard)
   async update(@Req()
   {
-    body: { username },
+    body: { username, notificationsToken },
     user,
-  }: Request & { body: { username: string }; user: IUser | User }): Promise<void> {
-    this.userService.update({ userId: user.id, username });
+  }: Request & { body: { username?: string; notificationsToken?: string }; user: IUser | User }): Promise<void> {
+    this.userService.update({ userId: user.id, username, notificationsToken });
   }
 
   @Post('avatar')
-  // @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard)
   @UseInterceptors(FileUploadInterceptor)
-  async updateAvatar(@UploadedFile() file: any, @Req() req: Request): Promise<string> {
-    // const user = await this.userService.updateAvatar(req.user.email, file && file.secure_url);
-    return file && file.secure_url;
+  async updateAvatar(@UploadedFile() file: any, @Req() { user: { id } }: Request & { user: IUser | User }): Promise<{ avatar: string }> {
+    const avatar = file && file.secure_url;
+    await this.userService.update({ userId: id, avatar });
+    return { avatar };
   }
 
   @Get('authorize/google')
