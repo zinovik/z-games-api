@@ -51,6 +51,9 @@ export class User extends DefaultNamingStrategy {
   @Column({ nullable: true })
   public avatar: string;
 
+  @Column({ name: 'notifications_token', nullable: true })
+  public notificationsToken: string;
+
   @ManyToOne(type => Game, game => game.playersOnline)
   @JoinColumn({ name: 'opened_game' })
   public openedGame: Game;
