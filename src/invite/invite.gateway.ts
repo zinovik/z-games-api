@@ -6,6 +6,7 @@ import { InviteService } from './invite.service';
 import { SocketService } from '../services/socket.service';
 import { UserService } from '../user/user.service';
 import { EmailService } from '../services/email.service';
+import { NotificationService } from '../services/notification.service';
 import { JwtGuard } from '../guards/jwt.guard';
 import { User, Invite } from '../db/entities';
 import { IInvite } from '../db/interfaces';
@@ -20,6 +21,7 @@ export class InviteGateway {
     private readonly socketService: SocketService,
     private readonly userService: UserService,
     private readonly emailService: EmailService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   @UseGuards(JwtGuard)
@@ -66,7 +68,16 @@ export class InviteGateway {
         data: invite,
       });
     } else {
-      const { email } = await this.userService.findOneById(userId);
+      const { email, notificationsToken } = await this.userService.findOneById(userId);
+
+      if (notificationsToken) {
+        await this.notificationService.sendInviteNotification({
+          gameNumber: invite.game.number,
+          notificationsToken,
+        });
+        return;
+      }
+
       await this.emailService.sendInviteMail({
         gameNumber: invite.game.number,
         email,

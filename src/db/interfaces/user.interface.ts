@@ -12,6 +12,7 @@ export interface IUser extends Document {
   isConfirmed: boolean;
   provider: string;
   avatar: string;
+  notificationsToken: string;
   openedGame: IGame;
   currentGames: IGame[];
   openedGameWatcher: IGame;
