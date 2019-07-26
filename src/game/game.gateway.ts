@@ -12,6 +12,7 @@ import { JwtGuard } from '../guards/jwt.guard';
 import { JwtService } from '../services/jwt.service';
 import { SocketService } from '../services/socket.service';
 import { EmailService } from '../services/email.service';
+import { NotificationService } from '../services/notification.service';
 import { Game, User, Invite } from '../db/entities';
 import { IFilterSettings } from './IFilterSettings.interface';
 import { IGame, IUser, IInvite } from '../db/interfaces';
@@ -32,6 +33,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly jwtService: JwtService,
     private readonly socketService: SocketService,
     private readonly emailService: EmailService,
+    private readonly notificationService: NotificationService,
     private readonly moduleRef: ModuleRef,
   ) {
     this.logService = this.moduleRef.get(LogService, { strict: false });
@@ -619,8 +621,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             return;
           }
 
-          const { email } = await this.userService.findOneById(nextPlayerId);
-          await this.emailService.sendMoveMail({ gameNumber, email });
+          const { email, notificationsToken } = await this.userService.findOneById(nextPlayerId);
+
+          if (notificationsToken) {
+            await this.notificationService.sendMoveNotification({
+              gameNumber,
+              notificationsToken,
+            });
+            return;
+          } else {
+            await this.emailService.sendMoveMail({ gameNumber, email });
+          }
         });
       } else {
         const logFinish = await this.logService.create({

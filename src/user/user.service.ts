@@ -236,11 +236,29 @@ export class UserService {
     }
   }
 
-  public async update({ userId, username }: { userId: string; username?: string }): Promise<void> {
+  public async update({
+    userId,
+    username,
+    notificationsToken,
+    avatar,
+  }: {
+    userId: string;
+    username?: string;
+    notificationsToken?: string;
+    avatar?: string;
+  }): Promise<void> {
     const updateFields = {} as IUser;
 
     if (username) {
       updateFields.username = username;
+    }
+
+    if (notificationsToken) {
+      updateFields.notificationsToken = notificationsToken;
+    }
+
+    if (avatar) {
+      updateFields.avatar = avatar;
     }
 
     if (IS_MONGO_USED) {
