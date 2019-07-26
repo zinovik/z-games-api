@@ -20,6 +20,7 @@ export const userSchema = new Schema(
     isConfirmed: Boolean,
     provider: String,
     avatar: String,
+    notificationsToken: String,
     previousVisitAt: Date,
     openedGame: { type: Schema.Types.ObjectId, ref: 'Game' },
     currentGames: [{ type: Schema.Types.ObjectId, ref: 'Game' }],
