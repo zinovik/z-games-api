@@ -4,11 +4,12 @@ import { UserService } from '../user/user.service';
 import { LoggerService } from '../logger/logger.service';
 
 describe('JwtGuard', () => {
-  /* tslint:disable */
+  // tslint:disable-next-line:prefer-const
   let jwtService: JwtService;
+  // tslint:disable-next-line:prefer-const
   let userService: UserService;
+  // tslint:disable-next-line:prefer-const
   let loggerService: LoggerService;
-  /* tslint:enable */
 
   it('should be defined', () => {
     expect(new JwtGuard(jwtService, userService, loggerService)).toBeDefined();
