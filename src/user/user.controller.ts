@@ -71,9 +71,11 @@ export class UserController {
       throw new CreatingUserException('All fields are are required!');
     }
 
-    const usernameRegexp = /[0-9a-zA-Z]{3,30}/;
-    const passwordRegexp = /[0-9a-zA-Z]{6,30}/;
-    const emailRegexp = /^([a-zA-Z0-9_\-.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/;
+    const usernameRegexp = new RegExp('[0-9a-zA-Z]{3,30}');
+    const passwordRegexp = new RegExp('[0-9a-zA-Z]{6,30}');
+    const emailRegexp = new RegExp(
+      '^([a-zA-Z0-9_\\-.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)$',
+    );
 
     const isUsernameOk = usernameRegexp.test(username);
     const isPasswordOk = passwordRegexp.test(password);
