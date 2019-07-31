@@ -1,13 +1,12 @@
 import * as uuid from 'uuid';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ExecutionContext, CallHandler } from '@nestjs/common';
-// import * as cloudinary from 'cloudinary';
-// import * as cloudinaryStorage from 'multer-storage-cloudinary';
 
-/* tslint:disable */
+// tslint:disable-next-line:no-var-requires
 const cloudinary = require('cloudinary');
+
+// tslint:disable-next-line:no-var-requires
 const multerCloudinaryStorage = require('multer-storage-cloudinary');
-/* tslint:enable */
 
 import { InvalidFileException } from '../exceptions';
 
