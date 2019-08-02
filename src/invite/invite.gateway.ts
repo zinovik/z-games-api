@@ -71,11 +71,14 @@ export class InviteGateway {
       const { email, notificationsToken } = await this.userService.findOneById(userId);
 
       if (notificationsToken) {
-        await this.notificationService.sendInviteNotification({
+        const sendNotificationResult = await this.notificationService.sendInviteNotification({
           gameNumber: invite.game.number,
           notificationsToken,
         });
-        return;
+
+        if (sendNotificationResult.success) {
+          return;
+        }
       }
 
       await this.emailService.sendInviteMail({
