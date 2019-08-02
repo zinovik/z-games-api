@@ -471,7 +471,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           data: invite,
         });
       } else {
-        const { email } = await this.userService.findOneById(player.id);
+        const { email, notificationsToken } = await this.userService.findOneById(player.id);
+
+        if (notificationsToken) {
+          const sendNotificationResult = await this.notificationService.sendInviteNotification({
+            gameNumber: invite.game.number,
+            notificationsToken,
+          });
+
+          if (sendNotificationResult.success) {
+            return;
+          }
+        }
+
         await this.emailService.sendInviteMail({
           gameNumber: invite.game.number,
           email,
@@ -624,11 +636,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           const { email, notificationsToken } = await this.userService.findOneById(nextPlayerId);
 
           if (notificationsToken) {
-            await this.notificationService.sendMoveNotification({
+            const sendNotificationResult = await this.notificationService.sendMoveNotification({
               gameNumber,
               notificationsToken,
             });
-            return;
+
+            if (!sendNotificationResult.success) {
+              await this.emailService.sendMoveMail({ gameNumber, email });
+            }
           } else {
             await this.emailService.sendMoveMail({ gameNumber, email });
           }
