@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Req, Res, Param, UseInterceptors, UploadedFile, Request, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Req, Res, Param, UseInterceptors, UploadedFile, HttpCode } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
 
