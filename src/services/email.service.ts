@@ -46,7 +46,7 @@ export class EmailService {
       text: '',
       from: '"Z-Games" <zinovik@gmail.com>',
       to: email,
-      subject: 'Confirm your email in z-games',
+      subject: 'Confirm your email in Z-Games',
       html: pug.renderFile(templatePath, { link, additionalText: '' }),
     });
   }
@@ -79,6 +79,23 @@ export class EmailService {
       from: '"Z-Games" <zinovik@gmail.com>',
       to: email,
       subject: `You was invite to the game number ${gameNumber}`,
+      html: pug.renderFile(templatePath, { link, additionalText: '' }),
+    });
+  }
+
+  public sendResetPasswordMail({ id, email }: { id: string; email: string }): Promise<ISendGridResult> {
+    this.logger.info('Sending Forgot Password Mail');
+
+    const token = this.jwtService.generateToken({ id }, '2 hours');
+    const link = `${ConfigService.get().CLIENT_URL}/reset/${token}`;
+
+    const templatePath = __dirname + '/email-templates/forgot-password.pug';
+
+    return this.server.sendMail({
+      text: '',
+      from: '"Z-Games" <zinovik@gmail.com>',
+      to: email,
+      subject: 'Reset your password in Z-Games',
       html: pug.renderFile(templatePath, { link, additionalText: '' }),
     });
   }
