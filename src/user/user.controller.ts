@@ -148,6 +148,63 @@ export class UserController {
     return { token };
   }
 
+  @Post('forgot-password')
+  async forgotPassword(@Req() { body: { username } }: Request & { body: { username: string } }): Promise<{ result: string; message?: string }> {
+    let user: User | IUser;
+
+    try {
+      user = await this.userService.findOneByUsername(username);
+    } catch (error) {
+      throw new CreatingUserException(error.message);
+    }
+
+    if (!user) {
+      return { result: 'error', message: "User isn't found" };
+    }
+
+    try {
+      await this.emailService.sendResetPasswordMail({
+        id: user.id,
+        email: user.email,
+      });
+    } catch (error) {
+      throw new CreatingUserException('Error sending email, please contact administration to support');
+    }
+
+    return { result: 'success' };
+  }
+
+  @Post('set-password')
+  async setPassword(@Req() { body: { token: setPasswordToken, password } }: Request & { body: { token: string; password: string } }): Promise<any> {
+    const passwordRegexp = new RegExp('[0-9a-zA-Z]{6,30}');
+
+    const isPasswordOk = passwordRegexp.test(password);
+
+    if (!isPasswordOk) {
+      throw new CreatingUserException('Too week password!');
+    }
+
+    const userId = this.jwtService.getUserIdByToken(setPasswordToken);
+
+    const user = await this.userService.findOneById(userId);
+
+    if (!user) {
+      throw new ActivationUserException('Invalid link!');
+    }
+
+    await this.userModel.findOneAndUpdate(
+      { _id: user.id },
+      {
+        password,
+        isConfirmed: true,
+      },
+    );
+
+    const token = this.jwtService.generateToken({ id: user.id }, '7 days');
+
+    return { token };
+  }
+
   @Post('update')
   @HttpCode(200)
   @UseGuards(JwtGuard)
