@@ -36,10 +36,7 @@ export class InviteGateway {
       userId: string;
     },
   ): Promise<void> {
-    if (
-      (!client.user.currentGames || !client.user.currentGames.some(game => game.id === gameId)) &&
-      (!client.user.openedGameWatcher || client.user.openedGameWatcher.id !== gameId)
-    ) {
+    if (!client.user.currentGames || !client.user.currentGames.some(game => game.id === gameId)) {
       return this.socketService.sendError({
         client,
         message: "You can't invite a user if you are not this game player",

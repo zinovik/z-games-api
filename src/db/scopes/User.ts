@@ -25,19 +25,11 @@ export const USER_FIELDS = [
   'user.isConfirmed',
   'user.gamesPlayed',
   'user.gamesWon',
-  'openedGame.number',
-  'openedGame.id',
   'currentGames.number',
   'currentGames.id',
-  'openedGameWatcher.number',
-  'openedGameWatcher.id',
 ];
 
-export const USER_JOIN_OPENED_GAME: [string, string] = ['user.openedGame', 'openedGame'];
-
 export const USER_JOIN_CURRENT_GAMES: [string, string] = ['user.currentGames', 'currentGames'];
-
-export const USER_JOIN_CURRENT_WATCH: [string, string] = ['user.openedGameWatcher', 'openedGameWatcher'];
 
 export const USER_JOIN_INVITES_INVITER: [string, string] = ['user.invitesInviter', 'invitesInviter'];
 
@@ -53,11 +45,7 @@ export const USER_FIELDS_MONGO =
 
 const USER_POPULATE_GAMES = 'id name number';
 
-export const USER_POPULATE_OPENED_GAME: [string, string] = ['openedGame', USER_POPULATE_GAMES];
-
 export const USER_POPULATE_CURRENT_GAMES: [string, string] = ['currentGames', USER_POPULATE_GAMES];
-
-export const USER_POPULATE_CURRENT_WATCH: [string, string] = ['openedGameWatcher', USER_POPULATE_GAMES];
 
 export const USER_POPULATE_INVITES_INVITER: [string, string] = ['invitesInviter', 'id game isClosed isAccepted isDeclined createdAt'];
 

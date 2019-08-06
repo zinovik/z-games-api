@@ -24,7 +24,6 @@ import {
   OPEN_GAME_FIELDS,
   ALL_GAMES_JOIN_PLAYERS,
   ALL_GAMES_JOIN_NEXT_PLAYERS,
-  OPEN_GAME_JOIN_WATCHERS,
   OPEN_GAME_JOIN_PLAYERS_ONLINE,
   OPEN_GAME_JOIN_LOGS,
   OPEN_GAME_JOIN_LOGS_USERNAMES,
@@ -35,7 +34,6 @@ import {
   ALL_GAMES_POPULATE_PLAYERS,
   ALL_GAMES_POPULATE_NEXT_PLAYERS,
   OPEN_GAME_FIELDS_MONGO,
-  OPEN_GAME_POPULATE_WATCHERS,
   OPEN_GAME_POPULATE_PLAYERS_ONLINE,
   OPEN_GAME_POPULATE_NEXT_PLAYERS,
   OPEN_GAME_POPULATE_LOGS,
@@ -67,7 +65,6 @@ export class GameService {
         .populate(...ALL_GAMES_POPULATE_CREATED_BY)
         .populate(...ALL_GAMES_POPULATE_PLAYERS)
         .populate(...ALL_GAMES_POPULATE_NEXT_PLAYERS)
-        .populate(...OPEN_GAME_POPULATE_WATCHERS)
         .populate(...OPEN_GAME_POPULATE_PLAYERS_ONLINE)
         .populate(...OPEN_GAME_POPULATE_NEXT_PLAYERS)
         .populate({
@@ -88,7 +85,6 @@ export class GameService {
       .select(OPEN_GAME_FIELDS)
       .leftJoin(...ALL_GAMES_JOIN_PLAYERS)
       .leftJoin(...ALL_GAMES_JOIN_NEXT_PLAYERS)
-      .leftJoin(...OPEN_GAME_JOIN_WATCHERS)
       .leftJoin(...OPEN_GAME_JOIN_PLAYERS_ONLINE)
       .leftJoin(...OPEN_GAME_JOIN_LOGS)
       .leftJoin(...OPEN_GAME_JOIN_LOGS_USERNAMES)
@@ -204,10 +200,6 @@ export class GameService {
 
     const game = await this.findOneById(gameId);
 
-    if (user.openedGame || user.openedGameWatcher) {
-      throw new JoiningGameException(`You are already have other game opened. Try to refresh the page`);
-    }
-
     if (!game) {
       throw new JoiningGameException(`There is no game number ${game.number}. Try to refresh the page`);
     }
@@ -226,10 +218,6 @@ export class GameService {
 
     if (game.players.some((player: User | IUser) => player.id === user.id)) {
       throw new JoiningGameException("Can't join game twice. Try to refresh the page");
-    }
-
-    if (game.playersOnline.some((playerOnline: User | IUser) => playerOnline.id === user.id)) {
-      throw new JoiningGameException("Can't join opened game");
     }
 
     const gameData = GamesServices[game.name].addPlayer({
@@ -257,7 +245,6 @@ export class GameService {
     newUser.username = user.username;
 
     game.players.push(newUser as User & IUser);
-    game.playersOnline.push(newUser as User & IUser);
 
     game.gameData = gameData;
 
@@ -269,21 +256,12 @@ export class GameService {
 
     const game = await this.findOneById(gameId);
 
-    if (user.openedGame || user.openedGameWatcher) {
-      const openedGameNumber = (user.openedGame && user.openedGame.number) || (user.openedGameWatcher && user.openedGameWatcher.number);
-      throw new OpeningGameException(`You are already in game number ${openedGameNumber}. Try to refresh the page`);
-    }
-
     if (!game) {
       throw new OpeningGameException(`There is no game ${gameId}`);
     }
 
     if (!game.players.some((player: User | IUser) => player.id === user.id)) {
       throw new OpeningGameException("Can't open game without joining");
-    }
-
-    if (game.playersOnline.some((playerOnline: User | IUser) => playerOnline.id === user.id)) {
-      throw new OpeningGameException("Can't open game twice. Try to refresh the page");
     }
 
     if (IS_MONGO_USED) {
@@ -303,8 +281,6 @@ export class GameService {
 
     newUser.id = user.id;
     newUser.username = user.username;
-
-    game.playersOnline.push(newUser as User & IUser);
 
     await this.connection.getRepository(Game).save(game);
   }
@@ -326,29 +302,9 @@ export class GameService {
       throw new WatchingGameException("Can't watch joining game. Try to refresh the page");
     }
 
-    if (game.watchersOnline.some((watcher: User | IUser) => watcher.id === user.id)) {
-      throw new WatchingGameException("Can't watch game twice. Try to refresh the page");
-    }
-
     if (IS_MONGO_USED) {
-      await this.gameModel.findOneAndUpdate(
-        { _id: game.id },
-        {
-          $push: {
-            watchersOnline: user.id,
-          },
-        },
-      );
-
       return JSON.parse(JSON.stringify(await this.findOneById(gameId)));
     }
-
-    const newUser = new User();
-
-    newUser.id = user.id;
-    newUser.username = user.username;
-
-    game.watchersOnline.push(newUser as User & IUser);
 
     return await this.connection.getRepository(Game).save(game);
   }
@@ -391,7 +347,6 @@ export class GameService {
     }
 
     game.players = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
-    game.playersOnline = (game.players as Array<User | IUser>).filter((player: User | IUser) => player.id !== user.id) as User[] | IUser[];
 
     game.gameData = gameData;
 
@@ -408,10 +363,9 @@ export class GameService {
     }
 
     const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
-    const isUserInWatchers = game.watchersOnline.some((player: User | IUser) => player.id === user.id);
 
-    if (!isUserInPlayers && !isUserInWatchers) {
-      throw new ClosingGameException("Can't close game without joining or watching");
+    if (!isUserInPlayers) {
+      throw new ClosingGameException("Can't close game without joining");
     }
 
     if (IS_MONGO_USED) {
@@ -419,21 +373,12 @@ export class GameService {
         { _id: game.id },
         {
           $pull: {
-            watchersOnline: user.id,
             playersOnline: user.id,
           },
         },
       );
 
       return;
-    }
-
-    if (isUserInWatchers) {
-      game.watchersOnline = (game.watchersOnline as Array<User | IUser>).filter(watcher => watcher.id !== user.id) as User[] | IUser[];
-    }
-
-    if (isUserInPlayers) {
-      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
     }
 
     await this.connection.getRepository(Game).save(game);
@@ -462,8 +407,6 @@ export class GameService {
     newUser.id = user.id;
     newUser.username = user.username;
 
-    game.playersOnline.push(newUser as User & IUser);
-
     await this.connection.getRepository(Game).save(game);
   }
 
@@ -472,29 +415,17 @@ export class GameService {
 
     const game = await this.findOneById(gameId);
 
-    const isUserInPlayers = game.players.some((player: User | IUser) => player.id === user.id);
-    const isUserInWatchers = game.watchersOnline.some((player: User | IUser) => player.id === user.id);
-
     if (IS_MONGO_USED) {
       await this.gameModel.findOneAndUpdate(
         { _id: game.id },
         {
           $pull: {
-            watchersOnline: user.id,
             playersOnline: user.id,
           },
         },
       );
 
       return;
-    }
-
-    if (isUserInWatchers) {
-      game.watchersOnline = (game.watchersOnline as Array<User | IUser>).filter(watcher => watcher.id !== user.id) as User[] | IUser[];
-    }
-
-    if (isUserInPlayers) {
-      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
     }
 
     await this.connection.getRepository(Game).save(game);
@@ -521,7 +452,6 @@ export class GameService {
         {
           isRemoved: true,
           playersOnline: [],
-          watchersOnline: [],
         },
       );
 
@@ -529,10 +459,6 @@ export class GameService {
     }
 
     // TODO: SQL Remove Game
-
-    if (isUserInPlayers) {
-      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== userId) as User[] | IUser[];
-    }
   }
 
   public async updateOption({ gameId, name, value }: { gameId: string; name: string; value: string }): Promise<void> {
