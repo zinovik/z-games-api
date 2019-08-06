@@ -493,42 +493,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @UseGuards(JwtGuard)
-  @SubscribeMessage('toggle-ready')
-  public async toggleReady(client: Socket & { user: User }): Promise<void> {
-    if (!client.user.openedGame) {
-      this.socketService.sendError({
-        client,
-        message: "You don't have opened game to toggle ready status",
-      });
-      return;
-    }
-
-    const gameId = client.user.openedGame.id;
-
-    try {
-      await this.gameService.toggleReady({
-        user: client.user,
-        gameId,
-      });
-
-      const { id: logId } = await this.logService.create({
-        type: 'ready',
-        user: client.user,
-        gameId,
-      });
-
-      await this.gameService.addLog({ gameId, logId });
-      await this.userService.addLog({ userId: client.user.id, logId });
-    } catch ({ response: { message } }) {
-      return this.socketService.sendError({ client, message });
-    }
-
-    const game = JSON.parse(JSON.stringify(await this.gameService.findOneById(gameId)));
-
-    this.socketService.sendGameToGameUsers({ server: this.server, game });
-  }
-
-  @UseGuards(JwtGuard)
   @SubscribeMessage('update-option')
   public async updateOption(
     client: Socket & { user: User },

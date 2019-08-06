@@ -49,11 +49,11 @@
     "@types/cors": "^2.8.5",
     "@types/dotenv": "^6.1.1",
     "@types/express": "^4.17.0",
-    "@types/jest": "^24.0.16",
+    "@types/jest": "^24.0.17",
     "@types/jsonwebtoken": "^8.3.2",
-    "@types/mongoose": "^5.5.11",
+    "@types/mongoose": "^5.5.12",
     "@types/mongoose-unique-validator": "^1.0.2",
-    "@types/node": "^12.6.8",
+    "@types/node": "^12.6.9",
     "@types/nodemailer": "^6.2.1",
     "@types/passport-google-oauth": "^1.0.41",
     "@types/passport-jwt": "^3.0.1",
@@ -70,8 +70,8 @@
     "cors": "^2.8.5",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.24.0",
-    "mongodb-memory-server": "^5.1.9",
-    "mongoose": "^5.6.7",
+    "mongodb-memory-server": "^5.1.10",
+    "mongoose": "^5.6.8",
     "mongoose-unique-validator": "^2.0.3",
     "multer-storage-cloudinary": "^2.2.1",
     "nodemailer": "^6.3.0",
@@ -88,13 +88,14 @@
     "tsconfig-paths": "^3.8.0",
     "typeorm": "^0.2.18",
     "typescript": "^3.5.3",
-    "z-games-base-game": "^0.0.21",
-    "z-games-lost-cities": "^0.0.19",
-    "z-games-no-thanks": "^0.0.17",
-    "z-games-perudo": "^0.0.17",
-    "z-games-six-nimmt": "^0.0.23"
+    "z-games-base-game": "^0.0.22",
+    "z-games-lost-cities": "^0.0.20",
+    "z-games-no-thanks": "^0.0.18",
+    "z-games-perudo": "^0.0.18",
+    "z-games-six-nimmt": "^0.0.24"
   },
   "devDependencies": {
+    "husky": "^3.0.2",
     "jest": "^24.8.0",
     "nodemon": "^1.19.1",
     "prettier": "^1.18.2",
@@ -116,5 +117,10 @@
     },
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run format && npm run lint && npm run test && npm run build"
+    }
   }
 }
