@@ -535,27 +535,6 @@ export class GameService {
     }
   }
 
-  public async toggleReady({ user, gameId }: { user: User; gameId: string }): Promise<void> {
-    this.logger.info(`Toggle ready game ${gameId}`);
-
-    const game = await this.findOneById(gameId);
-
-    const gameData = GamesServices[game.name].toggleReady({
-      gameData: game.gameData,
-      userId: user.id,
-    });
-
-    if (IS_MONGO_USED) {
-      await this.gameModel.findOneAndUpdate({ _id: game.id }, { gameData });
-
-      return;
-    }
-
-    game.gameData = gameData;
-
-    await this.connection.getRepository(Game).save(game);
-  }
-
   public async updateOption({ gameId, name, value }: { gameId: string; name: string; value: string }): Promise<void> {
     this.logger.info(`Update option game ${gameId}`);
 
@@ -589,10 +568,6 @@ export class GameService {
 
     if (game.players.length > game.playersMax) {
       throw new StartingGameException('Too many players. Try to refresh the page');
-    }
-
-    if (!GamesServices[game.name].checkReady(game.gameData)) {
-      throw new StartingGameException('Not all players are ready. Try to refresh the page');
     }
 
     if (game.state !== GAME_NOT_STARTED) {
