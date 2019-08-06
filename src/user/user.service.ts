@@ -9,17 +9,13 @@ import { User } from '../db/entities';
 import { IUser } from '../db/interfaces';
 import {
   USER_FIELDS,
-  USER_JOIN_OPENED_GAME,
   USER_JOIN_CURRENT_GAMES,
-  USER_JOIN_CURRENT_WATCH,
   ALL_USER_FIELDS,
   ALL_USER_FIELDS_MONGO,
   USER_JOIN_INVITES_INVITER,
   USER_JOIN_INVITES_INVITEE,
   USER_FIELDS_MONGO,
-  USER_POPULATE_OPENED_GAME,
   USER_POPULATE_CURRENT_GAMES,
-  USER_POPULATE_CURRENT_WATCH,
   USER_POPULATE_INVITES_INVITER,
   USER_POPULATE_INVITES_INVITEE,
   USER_POPULATE_INVITES_GAME,
@@ -74,9 +70,7 @@ export class UserService {
       .getRepository(User)
       .createQueryBuilder('user')
       .select(USER_FIELDS)
-      .leftJoin(...USER_JOIN_OPENED_GAME)
       .leftJoin(...USER_JOIN_CURRENT_GAMES)
-      .leftJoin(...USER_JOIN_CURRENT_WATCH)
       .leftJoin(...USER_JOIN_INVITES_INVITER)
       .leftJoin(...USER_JOIN_INVITES_INVITEE)
       .where({ email })
@@ -94,9 +88,7 @@ export class UserService {
       .getRepository(User)
       .createQueryBuilder('user')
       .select(USER_FIELDS)
-      .leftJoin(...USER_JOIN_OPENED_GAME)
       .leftJoin(...USER_JOIN_CURRENT_GAMES)
-      .leftJoin(...USER_JOIN_CURRENT_WATCH)
       .leftJoin(...USER_JOIN_INVITES_INVITER)
       .leftJoin(...USER_JOIN_INVITES_INVITEE)
       .where({ id: userId })
@@ -114,9 +106,7 @@ export class UserService {
       .getRepository(User)
       .createQueryBuilder('user')
       .select(USER_FIELDS)
-      .leftJoin(...USER_JOIN_OPENED_GAME)
       .leftJoin(...USER_JOIN_CURRENT_GAMES)
-      .leftJoin(...USER_JOIN_CURRENT_WATCH)
       .leftJoin(...USER_JOIN_INVITES_INVITER)
       .leftJoin(...USER_JOIN_INVITES_INVITEE)
       .where({ username })
@@ -132,9 +122,7 @@ export class UserService {
       //   .exec();
       return this.userModel
         .find({ username: new RegExp(`.*${username}.*`, 'i') }, USER_FIELDS_MONGO)
-        .populate(...USER_POPULATE_OPENED_GAME)
         .populate(...USER_POPULATE_CURRENT_GAMES)
-        .populate(...USER_POPULATE_CURRENT_WATCH)
         .populate({
           path: USER_POPULATE_INVITES_INVITER[0],
           select: USER_POPULATE_INVITES_INVITER[1],
@@ -173,9 +161,7 @@ export class UserService {
       .getRepository(User)
       .createQueryBuilder('user')
       .select(USER_FIELDS)
-      .leftJoin(...USER_JOIN_OPENED_GAME)
       .leftJoin(...USER_JOIN_CURRENT_GAMES)
-      .leftJoin(...USER_JOIN_CURRENT_WATCH)
       .leftJoin(...USER_JOIN_INVITES_INVITER)
       .leftJoin(...USER_JOIN_INVITES_INVITEE)
       .where({ username: Like(`%${username}%`) })
@@ -274,34 +260,11 @@ export class UserService {
     // TODO: SQL update
   }
 
-  public async updateOpenGame({ usersIds, gameId }: { usersIds: string[]; gameId: string | null }): Promise<void> {
-    if (IS_MONGO_USED) {
-      await this.userModel.updateMany(
-        { _id: { $in: usersIds } },
-        {
-          openedGame: gameId,
-        },
-      );
-    }
-  }
-
-  public async updateOpenGameWatcher({ usersIds, gameId }: { usersIds: string[]; gameId: string | null }): Promise<void> {
-    if (IS_MONGO_USED) {
-      await this.userModel.findOneAndUpdate(
-        { _id: { $in: usersIds } },
-        {
-          openedGameWatcher: gameId,
-        },
-      );
-    }
-  }
-
   public async updateOpenAndAddCurrentGame({ userId, gameId }: { userId: string; gameId: string }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.userModel.findOneAndUpdate(
         { _id: userId },
         {
-          openedGame: gameId,
           $push: {
             currentGames: gameId,
           },
@@ -315,7 +278,6 @@ export class UserService {
       await this.userModel.findOneAndUpdate(
         { _id: userId },
         {
-          openedGame: null,
           $pull: {
             currentGames: gameId,
           },
@@ -404,9 +366,7 @@ export class UserService {
 
   private populateQuery(query: DocumentQuery<IUser, IUser, {}>): DocumentQuery<IUser, IUser, {}> {
     return query
-      .populate(...USER_POPULATE_OPENED_GAME)
       .populate(...USER_POPULATE_CURRENT_GAMES)
-      .populate(...USER_POPULATE_CURRENT_WATCH)
       .populate({
         path: USER_POPULATE_INVITES_INVITER[0],
         select: USER_POPULATE_INVITES_INVITER[1],

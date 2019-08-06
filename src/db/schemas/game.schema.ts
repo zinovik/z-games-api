@@ -21,7 +21,6 @@ export const gameSchema = new Schema(
     privatePassword: String,
     playersOnline: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     players: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    watchersOnline: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     nextPlayers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     logs: [{ type: Schema.Types.ObjectId, ref: 'Log' }],
     invites: [{ type: Schema.Types.ObjectId, ref: 'Invite' }],
