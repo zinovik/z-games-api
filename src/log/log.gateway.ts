@@ -30,10 +30,7 @@ export class LogGateway {
   @UseGuards(JwtGuard)
   @SubscribeMessage('message')
   public async message(client: Socket & { user: User }, { gameId, message }: { gameId: string; message: string }): Promise<void> {
-    if (
-      (!client.user.currentGames || !client.user.currentGames.some(game => game.id === gameId)) &&
-      (!client.user.openedGameWatcher || client.user.openedGameWatcher.id !== gameId)
-    ) {
+    if (!client.user.currentGames || !client.user.currentGames.some(game => game.id === gameId)) {
       this.socketService.sendError({
         client,
         message: "You can't send a message if you are not this game player",

@@ -58,36 +58,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    if (!user.openedGame) {
-      return;
-    }
-
-    client.join(user.openedGame.id);
-
     if (this.disconnectTimers[user.id]) {
       clearTimeout(this.disconnectTimers[user.id]);
       delete this.disconnectTimers[user.id];
       return;
     }
-
-    await this.gameService.connectGame({ user, gameId: user.openedGame.id });
-
-    const { id: logId } = await this.logService.create({
-      type: 'connect',
-      user,
-      gameId: user.openedGame.id,
-    });
-
-    await this.gameService.addLog({ gameId: user.openedGame.id, logId });
-    await this.userService.addLog({ userId: user.id, logId });
-
-    const game = JSON.parse(JSON.stringify(await this.gameService.findOneById(user.openedGame.id)));
-
-    this.socketService.sendGameToGameUsers({ server: this.server, game });
-    this.socketService.updateGame({
-      server: this.server,
-      game: { id: game.id, players: game.players } as Game | IGame,
-    });
   }
 
   async handleDisconnect(client: Socket) {
@@ -101,35 +76,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    if (!user.openedGame) {
-      return;
-    }
-
     this.disconnectTimers[user.id] = setTimeout(async () => {
-      await this.gameService.disconnectGame({
-        user,
-        gameId: user.openedGame.id,
-      });
-
-      const { id: logId } = await this.logService.create({
-        type: 'disconnect',
-        user,
-        gameId: user.openedGame.id,
-      });
-
-      await this.gameService.addLog({ gameId: user.openedGame.id, logId });
-      await this.userService.addLog({ userId: user.id, logId });
-
-      client.leave(user.openedGame.id);
-
-      const game = JSON.parse(JSON.stringify(await this.gameService.findOneById(user.openedGame.id)));
-
-      this.socketService.sendGameToGameUsers({ server: this.server, game });
-      this.socketService.updateGame({
-        server: this.server,
-        game: { id: game.id, players: game.players } as Game | IGame,
-      });
-
       delete this.disconnectTimers[user.id];
     }, 4000);
   }
@@ -139,34 +86,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return {
       event: 'all-games',
       data: await this.gameService.getAllGames(filterSettings),
-    };
-  }
-
-  @UseGuards(JwtGuard)
-  @SubscribeMessage('get-opened-game')
-  public async getOpenedGame(client: Socket & { user: User }): Promise<WsResponse<Game | IGame>> {
-    if (!client.user) {
-      return;
-    }
-
-    if (!client.user.openedGame && !client.user.openedGameWatcher) {
-      return {
-        event: 'update-opened-game',
-        data: null,
-      };
-    }
-
-    const gameId = client.user.openedGame ? client.user.openedGame.id : client.user.openedGameWatcher.id;
-    const game = JSON.parse(JSON.stringify(await this.gameService.findOneById(gameId)));
-
-    client.join(game.id);
-
-    return {
-      event: 'update-opened-game',
-      data: this.socketService.parseGameForUser({
-        game,
-        userId: client.user.id,
-      }),
     };
   }
 
@@ -256,11 +175,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       await this.gameService.openGame({ user: client.user, gameId });
 
-      await this.userService.updateOpenGame({
-        usersIds: [client.user.id],
-        gameId,
-      });
-
       const { id: logId } = await this.logService.create({
         type: 'open',
         user: client.user,
@@ -291,11 +205,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       await this.gameService.watchGame({
         user: client.user,
-        gameId,
-      });
-
-      await this.userService.updateOpenGameWatcher({
-        usersIds: [client.user.id],
         gameId,
       });
 
@@ -360,30 +269,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @UseGuards(JwtGuard)
   @SubscribeMessage('close-game')
-  public async closeGame(client: Socket & { user: User }): Promise<WsResponse<Game>> {
-    if (!client.user.openedGame && !client.user.openedGameWatcher) {
-      this.socketService.sendError({
-        client,
-        message: "You don't have opened game to close. Try to refresh the page",
-      });
-      return;
-    }
-
-    const gameId = (client.user.openedGame && client.user.openedGame.id) || (client.user.openedGameWatcher && client.user.openedGameWatcher.id);
-
+  public async closeGame(client: Socket & { user: User }, gameId: string): Promise<WsResponse<Game>> {
     try {
       await this.gameService.closeGame({
         user: client.user,
         gameId,
-      });
-
-      await this.userService.updateOpenGame({
-        usersIds: [client.user.id],
-        gameId: null,
-      });
-      await this.userService.updateOpenGameWatcher({
-        usersIds: [client.user.id],
-        gameId: null,
       });
 
       const { id: logId } = await this.logService.create({
@@ -415,18 +305,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const game = await this.gameService.findOneById(gameId);
 
       const playersIds: string[] = (game.players as IUser[]).map(player => player.id);
-      const watchersIds: string[] = (game.watchersOnline as IUser[]).map(watcher => watcher.id);
 
       await this.gameService.removeGame({ userId: client.user.id, gameId });
       await this.inviteService.closeInvites({ gameId });
-      await this.userService.updateOpenGame({
-        usersIds: playersIds,
-        gameId: null,
-      });
-      await this.userService.updateOpenGameWatcher({
-        usersIds: watchersIds,
-        gameId: null,
-      });
     } catch ({ response: { message } }) {
       this.socketService.sendError({ client, message });
       return;
@@ -442,7 +323,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   public async repeatGame(client: Socket & { user: User }, gameId: string): Promise<void> {
     const { name, players, isPrivate } = await this.gameService.findOneById(gameId);
 
-    await this.closeGame(client);
+    await this.closeGame(client, gameId);
     const newGameId = await this.newGame(client, { name, isPrivate });
 
     players.forEach(async (player: User | IUser) => {
@@ -661,10 +542,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
     } catch ({ response: { message } }) {
       return this.socketService.sendError({ client, message });
-    }
-
-    if (client.user.openedGame || client.user.openedGameWatcher) {
-      await this.closeGame(client);
     }
 
     await this.joinGame(client, invite.game.id, { isJoinByInvite: true });
