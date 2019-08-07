@@ -63,9 +63,15 @@ export class Game extends DefaultNamingStrategy {
   @Column({ name: 'private_password', nullable: true })
   public privatePassword: string;
 
+  @OneToMany(type => User, user => user.openedGame)
+  public playersOnline: User[];
+
   @ManyToMany(type => User, user => user.currentGames)
   @JoinTable({ name: 'user_current_game_to_game_players' })
   public players: User[];
+
+  @OneToMany(type => User, user => user.openedGameWatcher)
+  public watchersOnline: User[];
 
   @ManyToMany(type => User, user => user.currentMoves)
   @JoinTable({ name: 'user_current_move_to_game_next_players' })

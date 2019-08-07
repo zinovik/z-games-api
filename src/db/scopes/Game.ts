@@ -33,6 +33,10 @@ export const OPEN_GAME_FIELDS = [
   'players.avatar',
   'players.gamesPlayed',
   'players.gamesWon',
+  'watchersOnline.username',
+  'watchersOnline.id',
+  'playersOnline.username',
+  'playersOnline.id',
   'logs.type',
   'logs.text',
   'logs.createdAt',
@@ -40,11 +44,15 @@ export const OPEN_GAME_FIELDS = [
   'createdBy.username',
 ];
 
+export const OPEN_GAME_JOIN_WATCHERS: [string, string] = ['game.watchersOnline', 'watchersOnline'];
+
+export const OPEN_GAME_JOIN_PLAYERS_ONLINE: [string, string] = ['game.playersOnline', 'playersOnline'];
+
 export const OPEN_GAME_JOIN_LOGS: [string, string] = ['game.logs', 'logs'];
 
 export const OPEN_GAME_JOIN_LOGS_USERNAMES: [string, string] = ['logs.createdBy', 'createdBy'];
 
-export const FIELDS_TO_REMOVE_IN_ALL_GAMES = ['gameData', 'nextPlayers', 'logs'];
+export const FIELDS_TO_REMOVE_IN_ALL_GAMES = ['gameData', 'watchersOnline', 'playersOnline', 'nextPlayers', 'logs'];
 
 export const LOGS_FIELD_ORDER_BY = 'logs.createdAt';
 
@@ -65,6 +73,10 @@ export const ALL_GAMES_POPULATE_NEXT_PLAYERS: [string, string] = [
 ];
 
 export const OPEN_GAME_FIELDS_MONGO = `${ALL_GAMES_FIELDS_MONGO} id gameData`;
+
+export const OPEN_GAME_POPULATE_WATCHERS: [string, string] = ['watchersOnline', GAME_POPULATE_USERS];
+
+export const OPEN_GAME_POPULATE_PLAYERS_ONLINE: [string, string] = ['playersOnline', GAME_POPULATE_USERS];
 
 export const OPEN_GAME_POPULATE_NEXT_PLAYERS: [string, string] = ['nextPlayers', GAME_POPULATE_USERS];
 

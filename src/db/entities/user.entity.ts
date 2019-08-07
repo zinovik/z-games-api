@@ -54,11 +54,19 @@ export class User extends DefaultNamingStrategy {
   @Column({ name: 'notifications_token', nullable: true })
   public notificationsToken: string;
 
+  @ManyToOne(type => Game, game => game.playersOnline)
+  @JoinColumn({ name: 'opened_game' })
+  public openedGame: Game;
+
   @ManyToMany(type => Game, game => game.players)
   public currentGames: Game[];
 
   @ManyToMany(type => User, user => user.friends)
   public friends: User[];
+
+  @ManyToOne(type => Game, game => game.watchersOnline)
+  @JoinColumn({ name: 'opened_game_watcher' })
+  public openedGameWatcher: Game;
 
   @ManyToMany(type => Game, game => game.nextPlayers)
   public currentMoves: Game[];
