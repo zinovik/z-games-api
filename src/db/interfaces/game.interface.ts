@@ -13,10 +13,10 @@ export interface IGame extends Document {
   isPrivate: boolean;
   isMoveTimeout: boolean;
   isRemoved: boolean;
-  privatePassword: string;
   playersOnline: IUser[];
   players: IUser[];
   watchersOnline: IUser[];
+  anonymousWatchersOnline: string;
   nextPlayers: IUser[];
   logs: ILog[];
   invites: IInvite[];

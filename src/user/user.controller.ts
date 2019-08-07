@@ -22,7 +22,7 @@ import { ConfigService } from '../config/config.service';
 import { CreatingUserException, ActivationUserException } from '../exceptions';
 import { User } from '../db/entities';
 import { IUser } from '../db/interfaces';
-import { FileUploadInterceptor } from '../interceptors/file-interceptor';
+import { FileUploadInterceptor } from '../interceptors/file-upload.interceptor';
 import { IGoogleProfile } from './google-profile.interface';
 import { EmailService } from '../services/email.service';
 
