@@ -4,7 +4,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '../services/jwt.service';
 import { UserService } from '../user/user.service';
 import { LoggerService } from '../logger/logger.service';
-import { User } from '../db/entities/user.entity';
 
 @Injectable()
 export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
@@ -16,7 +15,8 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const client = context.switchToWs().getClient();
 
-    const tokenHttp = request.headers && request.headers.authorization && request.headers.authorization.split('Bearer ')[1];
+    const tokenHttp =
+      request.headers && request.headers.authorization && request.headers.authorization.split('Bearer ')[1];
     const tokenWebSocket = client.handshake && client.handshake.query.token;
 
     const token = tokenHttp || tokenWebSocket;

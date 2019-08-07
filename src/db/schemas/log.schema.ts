@@ -11,7 +11,7 @@ export const logSchema = new Schema(
     type: { type: String, required: true },
     text: String,
     game: { type: Schema.Types.ObjectId, ref: 'Game', required: true },
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   {
     toJSON: { transform },

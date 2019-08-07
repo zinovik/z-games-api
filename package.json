@@ -23,7 +23,7 @@
     "start:debug": "nodemon --config nodemon-debug.json",
     "prestart:prod": "rimraf dist && npm run build",
     "start:prod": "node dist/main.js",
-    "lint": "tslint -p tsconfig.json -c tslint.json",
+    "lint": "tslint --fix -p tsconfig.json -c tslint.json",
     "test": "jest --detectOpenHandles --forceExit",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -32,7 +32,7 @@
   },
   "engines": {
     "node": ">=12.7",
-    "npm": ">=6.9"
+    "npm": ">=6.10"
   },
   "dependencies": {
     "@nestjs/common": "^6.5.3",
@@ -53,7 +53,7 @@
     "@types/jsonwebtoken": "^8.3.2",
     "@types/mongoose": "^5.5.12",
     "@types/mongoose-unique-validator": "^1.0.2",
-    "@types/node": "^12.6.9",
+    "@types/node": "^12.7.0",
     "@types/nodemailer": "^6.2.1",
     "@types/passport-google-oauth": "^1.0.41",
     "@types/passport-jwt": "^3.0.1",
@@ -88,11 +88,11 @@
     "tsconfig-paths": "^3.8.0",
     "typeorm": "^0.2.18",
     "typescript": "^3.5.3",
-    "z-games-base-game": "^0.0.22",
-    "z-games-lost-cities": "^0.0.20",
-    "z-games-no-thanks": "^0.0.18",
-    "z-games-perudo": "^0.0.18",
-    "z-games-six-nimmt": "^0.0.24"
+    "z-games-base-game": "^0.0.23",
+    "z-games-lost-cities": "^0.0.21",
+    "z-games-no-thanks": "^0.0.19",
+    "z-games-perudo": "^0.0.19",
+    "z-games-six-nimmt": "^0.0.25"
   },
   "devDependencies": {
     "husky": "^3.0.2",

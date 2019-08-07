@@ -24,7 +24,6 @@ import {
   OPEN_GAME_FIELDS,
   ALL_GAMES_JOIN_PLAYERS,
   ALL_GAMES_JOIN_NEXT_PLAYERS,
-  OPEN_GAME_JOIN_PLAYERS_ONLINE,
   OPEN_GAME_JOIN_LOGS,
   OPEN_GAME_JOIN_LOGS_USERNAMES,
   LOGS_FIELD_ORDER_BY,
@@ -34,7 +33,6 @@ import {
   ALL_GAMES_POPULATE_PLAYERS,
   ALL_GAMES_POPULATE_NEXT_PLAYERS,
   OPEN_GAME_FIELDS_MONGO,
-  OPEN_GAME_POPULATE_PLAYERS_ONLINE,
   OPEN_GAME_POPULATE_NEXT_PLAYERS,
   OPEN_GAME_POPULATE_LOGS,
   OPEN_GAME_POPULATE_LOGS_USERNAMES,
@@ -65,7 +63,6 @@ export class GameService {
         .populate(...ALL_GAMES_POPULATE_CREATED_BY)
         .populate(...ALL_GAMES_POPULATE_PLAYERS)
         .populate(...ALL_GAMES_POPULATE_NEXT_PLAYERS)
-        .populate(...OPEN_GAME_POPULATE_PLAYERS_ONLINE)
         .populate(...OPEN_GAME_POPULATE_NEXT_PLAYERS)
         .populate({
           path: OPEN_GAME_POPULATE_LOGS[0],
@@ -85,7 +82,6 @@ export class GameService {
       .select(OPEN_GAME_FIELDS)
       .leftJoin(...ALL_GAMES_JOIN_PLAYERS)
       .leftJoin(...ALL_GAMES_JOIN_NEXT_PLAYERS)
-      .leftJoin(...OPEN_GAME_JOIN_PLAYERS_ONLINE)
       .leftJoin(...OPEN_GAME_JOIN_LOGS)
       .leftJoin(...OPEN_GAME_JOIN_LOGS_USERNAMES)
       .where({ id })
@@ -93,12 +89,62 @@ export class GameService {
       .getOne();
   }
 
-  public async getAllGames(filterSettings: IFilterSettings = {} as IFilterSettings, isRemoved?: boolean, userId?: string): Promise<Game[]> {
+  public async findOneByNumber(gameNumber: string): Promise<Game | IGame> {
+    this.logger.info(`Find one game number ${gameNumber}`);
+
+    if (IS_MONGO_USED) {
+      return this.gameModel
+        .findOne({ number: gameNumber }, OPEN_GAME_FIELDS_MONGO)
+        .populate(...ALL_GAMES_POPULATE_CREATED_BY)
+        .populate(...ALL_GAMES_POPULATE_PLAYERS)
+        .populate(...ALL_GAMES_POPULATE_NEXT_PLAYERS)
+        .populate(...OPEN_GAME_POPULATE_NEXT_PLAYERS)
+        .populate({
+          path: OPEN_GAME_POPULATE_LOGS[0],
+          select: OPEN_GAME_POPULATE_LOGS[1],
+          populate: {
+            path: OPEN_GAME_POPULATE_LOGS_USERNAMES[0],
+            select: OPEN_GAME_POPULATE_LOGS_USERNAMES[1],
+          },
+          options: { sort: { [LOGS_FIELD_ORDER_BY_MONGO]: -1 } },
+        })
+        .exec();
+    }
+
+    return this.connection
+      .getRepository(Game)
+      .createQueryBuilder('game')
+      .select(OPEN_GAME_FIELDS)
+      .leftJoin(...ALL_GAMES_JOIN_PLAYERS)
+      .leftJoin(...ALL_GAMES_JOIN_NEXT_PLAYERS)
+      .leftJoin(...OPEN_GAME_JOIN_LOGS)
+      .leftJoin(...OPEN_GAME_JOIN_LOGS_USERNAMES)
+      .where({ number: gameNumber })
+      .orderBy({ [LOGS_FIELD_ORDER_BY]: 'DESC' })
+      .getOne();
+  }
+
+  public async getAllGames(
+    filterSettings: IFilterSettings = {} as IFilterSettings,
+    isRemoved?: boolean,
+    userId?: string,
+  ): Promise<Game[]> {
     this.logger.info('Get all games');
 
     const isEmptyFilter = !filterSettings || !Object.keys(filterSettings).length;
 
-    const { isNotStarted, isStarted, isFinished, isWithMe, isWithoutMe, isMyMove, isNotMyMove, isGames, limit, offset } = filterSettings;
+    const {
+      isNotStarted,
+      isStarted,
+      isFinished,
+      isWithMe,
+      isWithoutMe,
+      isMyMove,
+      isNotMyMove,
+      isGames,
+      limit,
+      offset,
+    } = filterSettings;
 
     const stateFilter: number[] = [];
 
@@ -155,7 +201,15 @@ export class GameService {
       .getMany();
   }
 
-  public async newGame({ name, isPrivate, userId }: { name: string; isPrivate: boolean; userId: string }): Promise<Game> {
+  public async newGame({
+    name,
+    isPrivate,
+    userId,
+  }: {
+    name: string;
+    isPrivate: boolean;
+    userId: string;
+  }): Promise<Game> {
     this.logger.info(`New ${name} game`);
 
     const { playersMax, playersMin, gameData } = GamesServices[name].getNewGame();
@@ -232,7 +286,6 @@ export class GameService {
           gameData,
           $push: {
             players: user.id,
-            playersOnline: user.id,
           },
         },
       );
@@ -265,15 +318,6 @@ export class GameService {
     }
 
     if (IS_MONGO_USED) {
-      await this.gameModel.findOneAndUpdate(
-        { _id: game.id },
-        {
-          $push: {
-            playersOnline: user.id,
-          },
-        },
-      );
-
       return;
     }
 
@@ -338,7 +382,6 @@ export class GameService {
           gameData,
           $pull: {
             players: user.id,
-            playersOnline: user.id,
           },
         },
       );
@@ -451,7 +494,6 @@ export class GameService {
         { _id: gameId },
         {
           isRemoved: true,
-          playersOnline: [],
         },
       );
 

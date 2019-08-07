@@ -117,7 +117,9 @@ export class UserService {
     this.logger.info(`Find users by username: ${username}`);
 
     if (IS_MONGO_USED) {
-      // return this.populateQuery(this.userModel.find({ username: new RegExp(`.*${username}.*`, 'i') }, USER_FIELDS_MONGO))
+      // return this.populateQuery(
+      //   this.userModel.find({ username: new RegExp(`.*${username}.*`, 'i') }, USER_FIELDS_MONGO),
+      // )
       //   .limit(5)
       //   .exec();
       return this.userModel
