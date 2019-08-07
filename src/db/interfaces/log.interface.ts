@@ -7,7 +7,7 @@ export interface ILog extends Document {
   type: string;
   text: string;
   game: IGame;
-  createdBy: IUser;
+  createdBy?: IUser;
   createdAt: Date;
   updatedAt: Date;
 }
