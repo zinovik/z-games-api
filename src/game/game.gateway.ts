@@ -1,6 +1,13 @@
 import { UseGuards } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { SubscribeMessage, WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect, WsResponse } from '@nestjs/websockets';
+import {
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  WsResponse,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GAME_FINISHED } from 'z-games-base-game';
 
@@ -172,7 +179,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @UseGuards(JwtGuard)
   @SubscribeMessage('new-game')
-  public async newGame(client: Socket & { user: User }, { name, isPrivate }: { name: string; isPrivate: boolean }): Promise<string> {
+  public async newGame(
+    client: Socket & { user: User },
+    { name, isPrivate }: { name: string; isPrivate: boolean },
+  ): Promise<string> {
     let gameId = '';
 
     try {
@@ -369,7 +379,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const gameId = (client.user.openedGame && client.user.openedGame.id) || (client.user.openedGameWatcher && client.user.openedGameWatcher.id);
+    const gameId =
+      (client.user.openedGame && client.user.openedGame.id) ||
+      (client.user.openedGameWatcher && client.user.openedGameWatcher.id);
 
     try {
       await this.gameService.closeGame({
@@ -558,7 +570,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @UseGuards(JwtGuard)
   @SubscribeMessage('make-move')
-  public async move(client: Socket & { user: User }, { gameId, move }: { gameId: string; move: string }): Promise<void> {
+  public async move(
+    client: Socket & { user: User },
+    { gameId, move }: { gameId: string; move: string },
+  ): Promise<void> {
     if (!client.user.currentGames || !client.user.currentGames.some(currentGame => currentGame.id === gameId)) {
       return this.socketService.sendError({
         client,

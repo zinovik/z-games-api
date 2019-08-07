@@ -1,4 +1,15 @@
-import { Controller, Get, Post, UseGuards, Req, Res, Param, UseInterceptors, UploadedFile, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  Req,
+  Res,
+  Param,
+  UseInterceptors,
+  UploadedFile,
+  HttpCode,
+} from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection as ConnectionMongo } from 'mongoose';
 
@@ -149,7 +160,10 @@ export class UserController {
   }
 
   @Post('forgot-password')
-  async forgotPassword(@Req() { body: { username } }: Request & { body: { username: string } }): Promise<{ result: string; message?: string }> {
+  async forgotPassword(@Req() { body: { username } }: Request & { body: { username: string } }): Promise<{
+    result: string;
+    message?: string;
+  }> {
     let user: User | IUser;
 
     try {
@@ -175,7 +189,10 @@ export class UserController {
   }
 
   @Post('set-password')
-  async setPassword(@Req() { body: { token: setPasswordToken, password } }: Request & { body: { token: string; password: string } }): Promise<any> {
+  async setPassword(@Req()
+  {
+    body: { token: setPasswordToken, password },
+  }: Request & { body: { token: string; password: string } }): Promise<any> {
     const passwordRegexp = new RegExp('[0-9a-zA-Z]{6,30}');
 
     const isPasswordOk = passwordRegexp.test(password);
@@ -219,7 +236,10 @@ export class UserController {
   @Post('avatar')
   @UseGuards(JwtGuard)
   @UseInterceptors(FileUploadInterceptor)
-  async updateAvatar(@UploadedFile() file: any, @Req() { user: { id } }: Request & { user: IUser | User }): Promise<{ avatar: string }> {
+  async updateAvatar(
+    @UploadedFile() file: any,
+    @Req() { user: { id } }: Request & { user: IUser | User },
+  ): Promise<{ avatar: string }> {
     const avatar = file && file.secure_url;
     await this.userService.update({ userId: id, avatar });
     return { avatar };
@@ -233,7 +253,10 @@ export class UserController {
 
   @Get('authorize/google/callback')
   @UseGuards(GoogleGuard)
-  async googleAuthCallback(@Req() req: { user: IGoogleProfile }, @Res() res: Response & { redirect: (url: string) => void }) {
+  async googleAuthCallback(
+    @Req() req: { user: IGoogleProfile },
+    @Res() res: Response & { redirect: (url: string) => void },
+  ) {
     const user = await this.userService.findOneByEmail(req.user.emails[0].value);
 
     let id: string;

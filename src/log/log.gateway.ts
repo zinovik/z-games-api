@@ -29,7 +29,10 @@ export class LogGateway {
 
   @UseGuards(JwtGuard)
   @SubscribeMessage('message')
-  public async message(client: Socket & { user: User }, { gameId, message }: { gameId: string; message: string }): Promise<void> {
+  public async message(
+    client: Socket & { user: User },
+    { gameId, message }: { gameId: string; message: string },
+  ): Promise<void> {
     if (
       (!client.user.currentGames || !client.user.currentGames.some(game => game.id === gameId)) &&
       (!client.user.openedGameWatcher || client.user.openedGameWatcher.id !== gameId)

@@ -16,7 +16,8 @@ export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const client = context.switchToWs().getClient();
 
-    const tokenHttp = request.headers && request.headers.authorization && request.headers.authorization.split('Bearer ')[1];
+    const tokenHttp =
+      request.headers && request.headers.authorization && request.headers.authorization.split('Bearer ')[1];
     const tokenWebSocket = client.handshake && client.handshake.query.token;
 
     const token = tokenHttp || tokenWebSocket;

@@ -285,7 +285,13 @@ export class UserService {
     }
   }
 
-  public async updateOpenGameWatcher({ usersIds, gameId }: { usersIds: string[]; gameId: string | null }): Promise<void> {
+  public async updateOpenGameWatcher({
+    usersIds,
+    gameId,
+  }: {
+    usersIds: string[];
+    gameId: string | null;
+  }): Promise<void> {
     if (IS_MONGO_USED) {
       await this.userModel.findOneAndUpdate(
         { _id: { $in: usersIds } },

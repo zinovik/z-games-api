@@ -30,7 +30,17 @@ export class SocketService {
     });
   }
 
-  public emitByUserId({ server, userId, event, data }: { server: Server; userId: string; event: string; data: any }): void {
+  public emitByUserId({
+    server,
+    userId,
+    event,
+    data,
+  }: {
+    server: Server;
+    userId: string;
+    event: string;
+    data: any;
+  }): void {
     const sockets = server.sockets.connected;
 
     const socketId = Object.keys(sockets).find(currentSocketId => {
