@@ -19,7 +19,6 @@ export const gameSchema = new Schema(
     isMoveTimeout: { type: Boolean },
     isRemoved: { type: Boolean },
     privatePassword: String,
-    playersOnline: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     players: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     nextPlayers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     logs: [{ type: Schema.Types.ObjectId, ref: 'Log' }],

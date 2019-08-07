@@ -1,6 +1,15 @@
 import * as uuid from 'uuid';
 import { IsNotEmpty } from 'class-validator';
-import { BeforeInsert, Column, CreateDateColumn, DefaultNamingStrategy, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import {
+  BeforeInsert,
+  Column,
+  CreateDateColumn,
+  DefaultNamingStrategy,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryColumn,
+} from 'typeorm';
 
 import { User, Game } from '../../db/entities';
 
@@ -20,7 +29,6 @@ export class Log extends DefaultNamingStrategy {
   @Column({ name: 'game_id' })
   public gameId: string;
 
-  @IsNotEmpty()
   @Column({ name: 'user_id' })
   public userId: string;
 
@@ -33,7 +41,6 @@ export class Log extends DefaultNamingStrategy {
   @JoinColumn({ name: 'game_id' })
   public game: Game;
 
-  @IsNotEmpty()
   @ManyToOne(type => User, user => user.createdLogs)
   @JoinColumn({ name: 'user_id' })
   public createdBy: User;

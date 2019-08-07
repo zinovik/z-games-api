@@ -33,8 +33,6 @@ export const OPEN_GAME_FIELDS = [
   'players.avatar',
   'players.gamesPlayed',
   'players.gamesWon',
-  'playersOnline.username',
-  'playersOnline.id',
   'logs.type',
   'logs.text',
   'logs.createdAt',
@@ -42,19 +40,18 @@ export const OPEN_GAME_FIELDS = [
   'createdBy.username',
 ];
 
-export const OPEN_GAME_JOIN_PLAYERS_ONLINE: [string, string] = ['game.playersOnline', 'playersOnline'];
-
 export const OPEN_GAME_JOIN_LOGS: [string, string] = ['game.logs', 'logs'];
 
 export const OPEN_GAME_JOIN_LOGS_USERNAMES: [string, string] = ['logs.createdBy', 'createdBy'];
 
-export const FIELDS_TO_REMOVE_IN_ALL_GAMES = ['gameData', 'playersOnline', 'nextPlayers', 'logs'];
+export const FIELDS_TO_REMOVE_IN_ALL_GAMES = ['gameData', 'nextPlayers', 'logs'];
 
 export const LOGS_FIELD_ORDER_BY = 'logs.createdAt';
 
 // MongoDB
 
-export const ALL_GAMES_FIELDS_MONGO = 'number name state playersMax playersMin isPrivate isMoveTimeout createdAt updatedAt createdBy previousMoveAt';
+export const ALL_GAMES_FIELDS_MONGO =
+  'number name state playersMax playersMin isPrivate isMoveTimeout createdAt updatedAt createdBy previousMoveAt';
 
 const GAME_POPULATE_USERS = 'id username';
 
@@ -62,11 +59,12 @@ export const ALL_GAMES_POPULATE_CREATED_BY: [string, string] = ['createdBy', GAM
 
 export const ALL_GAMES_POPULATE_PLAYERS: [string, string] = ['players', 'username avatar gamesPlayed gamesWon'];
 
-export const ALL_GAMES_POPULATE_NEXT_PLAYERS: [string, string] = ['nextPlayers', 'username avatar gamesPlayed gamesWon'];
+export const ALL_GAMES_POPULATE_NEXT_PLAYERS: [string, string] = [
+  'nextPlayers',
+  'username avatar gamesPlayed gamesWon',
+];
 
 export const OPEN_GAME_FIELDS_MONGO = `${ALL_GAMES_FIELDS_MONGO} id gameData`;
-
-export const OPEN_GAME_POPULATE_PLAYERS_ONLINE: [string, string] = ['playersOnline', GAME_POPULATE_USERS];
 
 export const OPEN_GAME_POPULATE_NEXT_PLAYERS: [string, string] = ['nextPlayers', GAME_POPULATE_USERS];
 
