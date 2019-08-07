@@ -60,9 +60,6 @@ export class Game extends DefaultNamingStrategy {
   @Column({ name: 'is_removed' })
   public isRemoved: boolean;
 
-  @Column({ name: 'private_password', nullable: true })
-  public privatePassword: string;
-
   @OneToMany(type => User, user => user.openedGame)
   public playersOnline: User[];
 
@@ -72,6 +69,9 @@ export class Game extends DefaultNamingStrategy {
 
   @OneToMany(type => User, user => user.openedGameWatcher)
   public watchersOnline: User[];
+
+  @Column({ name: 'private_password', nullable: true })
+  public anonymousWatchersOnline: string;
 
   @ManyToMany(type => User, user => user.currentMoves)
   @JoinTable({ name: 'user_current_move_to_game_next_players' })
