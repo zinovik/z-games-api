@@ -97,12 +97,27 @@ export class GameService {
       .getOne();
   }
 
-  public async getAllGames(filterSettings: IFilterSettings = {} as IFilterSettings, isRemoved?: boolean, userId?: string): Promise<Game[]> {
+  public async getAllGames(
+    filterSettings: IFilterSettings = {} as IFilterSettings,
+    isRemoved?: boolean,
+    userId?: string,
+  ): Promise<Game[]> {
     this.logger.info('Get all games');
 
     const isEmptyFilter = !filterSettings || !Object.keys(filterSettings).length;
 
-    const { isNotStarted, isStarted, isFinished, isWithMe, isWithoutMe, isMyMove, isNotMyMove, isGames, limit, offset } = filterSettings;
+    const {
+      isNotStarted,
+      isStarted,
+      isFinished,
+      isWithMe,
+      isWithoutMe,
+      isMyMove,
+      isNotMyMove,
+      isGames,
+      limit,
+      offset,
+    } = filterSettings;
 
     const stateFilter: number[] = [];
 
@@ -159,7 +174,15 @@ export class GameService {
       .getMany();
   }
 
-  public async newGame({ name, isPrivate, userId }: { name: string; isPrivate: boolean; userId: string }): Promise<Game> {
+  public async newGame({
+    name,
+    isPrivate,
+    userId,
+  }: {
+    name: string;
+    isPrivate: boolean;
+    userId: string;
+  }): Promise<Game> {
     this.logger.info(`New ${name} game`);
 
     const { playersMax, playersMin, gameData } = GamesServices[name].getNewGame();
@@ -270,7 +293,8 @@ export class GameService {
     const game = await this.findOneById(gameId);
 
     if (user.openedGame || user.openedGameWatcher) {
-      const openedGameNumber = (user.openedGame && user.openedGame.number) || (user.openedGameWatcher && user.openedGameWatcher.number);
+      const openedGameNumber =
+        (user.openedGame && user.openedGame.number) || (user.openedGameWatcher && user.openedGameWatcher.number);
       throw new OpeningGameException(`You are already in game number ${openedGameNumber}. Try to refresh the page`);
     }
 
@@ -391,7 +415,9 @@ export class GameService {
     }
 
     game.players = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
-    game.playersOnline = (game.players as Array<User | IUser>).filter((player: User | IUser) => player.id !== user.id) as User[] | IUser[];
+    game.playersOnline = (game.players as Array<User | IUser>).filter(
+      (player: User | IUser) => player.id !== user.id,
+    ) as User[] | IUser[];
 
     game.gameData = gameData;
 
@@ -429,11 +455,15 @@ export class GameService {
     }
 
     if (isUserInWatchers) {
-      game.watchersOnline = (game.watchersOnline as Array<User | IUser>).filter(watcher => watcher.id !== user.id) as User[] | IUser[];
+      game.watchersOnline = (game.watchersOnline as Array<User | IUser>).filter(watcher => watcher.id !== user.id) as
+        | User[]
+        | IUser[];
     }
 
     if (isUserInPlayers) {
-      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
+      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as
+        | User[]
+        | IUser[];
     }
 
     await this.connection.getRepository(Game).save(game);
@@ -490,11 +520,15 @@ export class GameService {
     }
 
     if (isUserInWatchers) {
-      game.watchersOnline = (game.watchersOnline as Array<User | IUser>).filter(watcher => watcher.id !== user.id) as User[] | IUser[];
+      game.watchersOnline = (game.watchersOnline as Array<User | IUser>).filter(watcher => watcher.id !== user.id) as
+        | User[]
+        | IUser[];
     }
 
     if (isUserInPlayers) {
-      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as User[] | IUser[];
+      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== user.id) as
+        | User[]
+        | IUser[];
     }
 
     await this.connection.getRepository(Game).save(game);
@@ -531,7 +565,9 @@ export class GameService {
     // TODO: SQL Remove Game
 
     if (isUserInPlayers) {
-      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== userId) as User[] | IUser[];
+      game.playersOnline = (game.players as Array<User | IUser>).filter(player => player.id !== userId) as
+        | User[]
+        | IUser[];
     }
   }
 

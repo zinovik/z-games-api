@@ -7,7 +7,12 @@ import { User, Invite } from '../db/entities';
 import { IUser, IInvite, IGame } from '../db/interfaces';
 import { LoggerService } from '../logger/logger.service';
 import { ConfigService } from '../config/config.service';
-import { INVITE_FIELDS_MONGO, INVITE_POPULATE_GAME, INVITE_POPULATE_INVITEE, INVITE_POPULATE_CREATED_BY } from '../db/scopes';
+import {
+  INVITE_FIELDS_MONGO,
+  INVITE_POPULATE_GAME,
+  INVITE_POPULATE_INVITEE,
+  INVITE_POPULATE_CREATED_BY,
+} from '../db/scopes';
 
 const IS_MONGO_USED = ConfigService.get().IS_MONGO_USED === 'true';
 
@@ -42,7 +47,15 @@ export class InviteService {
     // TODO: SQL Find One Invite
   }
 
-  public async create({ gameId, createdBy, invitee }: { gameId: string; createdBy: string; invitee: string }): Promise<Invite> {
+  public async create({
+    gameId,
+    createdBy,
+    invitee,
+  }: {
+    gameId: string;
+    createdBy: string;
+    invitee: string;
+  }): Promise<Invite> {
     this.logger.info(`Create an invite by ${createdBy}`);
 
     if (IS_MONGO_USED) {
@@ -98,7 +111,15 @@ export class InviteService {
     return await this.connection.getRepository(Invite).save(invite);
   }
 
-  public async closeInvite({ inviteId, isAccepted, isDeclined }: { inviteId: string; isAccepted?: boolean; isDeclined?: boolean }): Promise<Invite> {
+  public async closeInvite({
+    inviteId,
+    isAccepted,
+    isDeclined,
+  }: {
+    inviteId: string;
+    isAccepted?: boolean;
+    isDeclined?: boolean;
+  }): Promise<Invite> {
     await this.inviteModel.findOneAndUpdate(
       { _id: inviteId },
       {
