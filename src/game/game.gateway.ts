@@ -46,6 +46,24 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logService = this.moduleRef.get(LogService, { strict: false });
   }
 
+  private async getClientUser(client: Socket): Promise<User | IUser | null> {
+    const token = client.handshake.query.token;
+
+    if (token) {
+      return null;
+    }
+
+    const userId = this.jwtService.getUserIdByToken(token);
+
+    if (userId) {
+      return null;
+    }
+
+    const user = await this.userService.findOneById(userId);
+
+    return user;
+  }
+
   async handleConnection(client: Socket) {
     const token = client.handshake.query.token;
 
