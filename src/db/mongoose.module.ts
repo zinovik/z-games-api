@@ -15,11 +15,14 @@ const mongod = new MongoMemoryServer();
   imports: [
     ConfigModule,
     (async () =>
-      MongooseModule.forRoot(IS_USE_REAL_MONGODB ? ConfigService.get().MONGODB_URI : await mongod.getConnectionString(), {
-        useCreateIndex: true,
-        useNewUrlParser: true,
-        useFindAndModify: false,
-      }))(),
+      MongooseModule.forRoot(
+        IS_USE_REAL_MONGODB ? ConfigService.get().MONGODB_URI : await mongod.getConnectionString(),
+        {
+          useCreateIndex: true,
+          useNewUrlParser: true,
+          useFindAndModify: false,
+        },
+      ))(),
     MongooseModule.forFeature(
       [
         { name: 'User', schema: userSchema },

@@ -12,6 +12,18 @@ import { FIELDS_TO_REMOVE_IN_ALL_GAMES } from '../db/scopes/Game';
 export class SocketService {
   constructor(private logger: LoggerService) {}
 
+  public openGame({ client, gameNumber }: { client: Socket; gameNumber: string }): void {
+    client.join(gameNumber);
+  }
+
+  public getOpenedGameNumber(client: Socket): string | undefined {
+    return client.rooms[0];
+  }
+
+  public closeGame({ client, gameNumber }: { client: Socket; gameNumber: string }): void {
+    client.leave(gameNumber);
+  }
+
   public sendError({ client, message }: { client: Socket; message: string }): void {
     this.logger.error(message, '');
     client.emit('error-message', { message });
@@ -30,7 +42,17 @@ export class SocketService {
     });
   }
 
-  public emitByUserId({ server, userId, event, data }: { server: Server; userId: string; event: string; data: any }): void {
+  public emitByUserId({
+    server,
+    userId,
+    event,
+    data,
+  }: {
+    server: Server;
+    userId: string;
+    event: string;
+    data: any;
+  }): void {
     const sockets = server.sockets.connected;
 
     const socketId = Object.keys(sockets).find(currentSocketId => {
@@ -46,11 +68,11 @@ export class SocketService {
   }
 
   public sendGameToGameUsers({ server, game }: { server: Server; game: Game | IGame }): void {
-    if (!server.sockets.adapter.rooms[game.id]) {
+    if (!server.sockets.adapter.rooms[game.number]) {
       return;
     }
 
-    Object.keys(server.sockets.adapter.rooms[game.id].sockets).forEach(socketId => {
+    Object.keys(server.sockets.adapter.rooms[game.number].sockets).forEach(socketId => {
       const socketInGame = server.sockets.connected[socketId] as Socket & {
         user: User;
       };
