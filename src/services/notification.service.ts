@@ -22,7 +22,15 @@ export interface IFirebaseResult {
 export class NotificationService {
   constructor(private logger: LoggerService) {}
 
-  public async sendNotification({ title, message, userToken }: { title: string; message: string; userToken: string }): Promise<IFirebaseResult> {
+  public async sendNotification({
+    title,
+    message,
+    userToken,
+  }: {
+    title: string;
+    message: string;
+    userToken: string;
+  }): Promise<IFirebaseResult> {
     this.logger.info('Sending Notification');
 
     const data = {

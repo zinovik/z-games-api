@@ -59,9 +59,15 @@ export const USER_POPULATE_CURRENT_GAMES: [string, string] = ['currentGames', US
 
 export const USER_POPULATE_CURRENT_WATCH: [string, string] = ['openedGameWatcher', USER_POPULATE_GAMES];
 
-export const USER_POPULATE_INVITES_INVITER: [string, string] = ['invitesInviter', 'id game isClosed isAccepted isDeclined createdAt'];
+export const USER_POPULATE_INVITES_INVITER: [string, string] = [
+  'invitesInviter',
+  'id game isClosed isAccepted isDeclined createdAt',
+];
 
-export const USER_POPULATE_INVITES_INVITEE: [string, string] = ['invitesInvitee', 'id game isClosed isAccepted isDeclined createdAt'];
+export const USER_POPULATE_INVITES_INVITEE: [string, string] = [
+  'invitesInvitee',
+  'id game isClosed isAccepted isDeclined createdAt',
+];
 
 export const USER_POPULATE_INVITES_GAME: [string, string] = ['game', USER_POPULATE_GAMES];
 
