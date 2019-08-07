@@ -12,6 +12,18 @@ import { FIELDS_TO_REMOVE_IN_ALL_GAMES } from '../db/scopes/Game';
 export class SocketService {
   constructor(private logger: LoggerService) {}
 
+  public openGame({ client, gameNumber }: { client: Socket; gameNumber: string }): void {
+    client.join(gameNumber);
+  }
+
+  public getOpenedGameNumber(client: Socket): string | undefined {
+    return client.rooms[0];
+  }
+
+  public closeGame({ client, gameNumber }: { client: Socket; gameNumber: string }): void {
+    client.leave(gameNumber);
+  }
+
   public sendError({ client, message }: { client: Socket; message: string }): void {
     this.logger.error(message, '');
     client.emit('error-message', { message });
