@@ -14,7 +14,9 @@ export interface IGame extends Document {
   isMoveTimeout: boolean;
   isRemoved: boolean;
   privatePassword: string;
+  playersOnline: IUser[];
   players: IUser[];
+  watchersOnline: IUser[];
   nextPlayers: IUser[];
   logs: ILog[];
   invites: IInvite[];
