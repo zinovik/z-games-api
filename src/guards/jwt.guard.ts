@@ -4,6 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '../services/jwt.service';
 import { UserService } from '../user/user.service';
 import { LoggerService } from '../logger/logger.service';
+import { User } from '../db/entities/user.entity';
 
 @Injectable()
 export class JwtGuard extends AuthGuard('jwt') implements CanActivate {
