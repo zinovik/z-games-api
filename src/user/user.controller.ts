@@ -80,7 +80,7 @@ export class UserController {
     ...request
   }: Request & {
     body: { username: string; password: string; email: string };
-  } & { connection: { remoteAddress: string } }): Promise<User | IUser> {
+  }): Promise<User | IUser> {
     if (!password || !email || !username) {
       throw new CreatingUserException('All fields are are required!');
     }
@@ -105,7 +105,7 @@ export class UserController {
     let country = '';
 
     try {
-      const ip = request.connection.remoteAddress;
+      const ip = request.headers.get('x-forwarded-for');
       country = await this.ipGeolocationService.getFlag({ ip });
     } catch (error) {
       console.log('Error getting users country flag', error.message);
@@ -169,13 +169,13 @@ export class UserController {
   {
     user,
     ...request
-  }: Request & { user: User | IUser } & { connection: { remoteAddress: string } }): Promise<{
+  }: Request & { user: User | IUser }): Promise<{
     token: string;
   }> {
     const token = this.jwtService.generateToken({ id: user.id }, '7 days');
 
     try {
-      const ip = request.connection.remoteAddress;
+      const ip = request.headers.get('x-forwarded-for');
       const country = await this.ipGeolocationService.getFlag({ ip });
 
       await this.userService.update({ userId: user.id, country });
@@ -281,7 +281,7 @@ export class UserController {
   @Get('authorize/google/callback')
   @UseGuards(GoogleGuard)
   async googleAuthCallback(
-    @Req() req: { user: IGoogleProfile } & { connection: { remoteAddress: string } },
+    @Req() req: Request & { user: IGoogleProfile },
     @Res() res: Response & { redirect: (url: string) => void },
   ) {
     const user = await this.userService.findOneByEmail(req.user.emails[0].value);
@@ -291,7 +291,7 @@ export class UserController {
     let country = '';
 
     try {
-      const ip = req.connection.remoteAddress;
+      const ip = req.headers.get('x-forwarded-for');
       country = await this.ipGeolocationService.getFlag({ ip });
     } catch (error) {
       console.log('Error getting users country flag', error.message);
