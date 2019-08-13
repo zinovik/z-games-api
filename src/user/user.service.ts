@@ -192,6 +192,7 @@ export class UserService {
     firstName,
     lastName,
     avatar,
+    country,
   }: {
     username: string;
     email: string;
@@ -200,6 +201,7 @@ export class UserService {
     firstName?: string;
     lastName?: string;
     avatar?: string;
+    country?: string;
   }): Promise<User | IUser> {
     this.logger.info(`Create a user: ${username}`);
 
@@ -215,6 +217,8 @@ export class UserService {
     } else {
       user.password = password;
     }
+
+    user.country = country;
 
     if (IS_MONGO_USED) {
       const userMongo = new this.userModel(user);
@@ -243,11 +247,13 @@ export class UserService {
     username,
     notificationsToken,
     avatar,
+    country,
   }: {
     userId: string;
     username?: string;
     notificationsToken?: string;
     avatar?: string;
+    country?: string;
   }): Promise<void> {
     const updateFields = {} as IUser;
 
@@ -261,6 +267,10 @@ export class UserService {
 
     if (avatar) {
       updateFields.avatar = avatar;
+    }
+
+    if (country) {
+      updateFields.country = country;
     }
 
     if (IS_MONGO_USED) {
