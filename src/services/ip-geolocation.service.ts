@@ -15,7 +15,7 @@ export class IpGeolocationService {
   constructor(private logger: LoggerService) {}
 
   public async getFlag({ ip }: { ip: string }): Promise<string | undefined> {
-    this.logger.info('Get country flag');
+    this.logger.info(`Get country flag for ip: ${ip}`);
 
     const { data: response }: { data: IIpGeolocationResult } = await axios.get(
       `${URL}?apiKey${ConfigService.get().IP_GEOLOCATION_API_KEY}=&ip=${ip}`,
