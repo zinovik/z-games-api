@@ -31,6 +31,7 @@ export const OPEN_GAME_FIELDS = [
   'players.username',
   'players.id',
   'players.avatar',
+  'players.country',
   'players.gamesPlayed',
   'players.gamesWon',
   'watchersOnline.username',
@@ -65,11 +66,11 @@ const GAME_POPULATE_USERS = 'id username';
 
 export const ALL_GAMES_POPULATE_CREATED_BY: [string, string] = ['createdBy', GAME_POPULATE_USERS];
 
-export const ALL_GAMES_POPULATE_PLAYERS: [string, string] = ['players', 'username avatar gamesPlayed gamesWon'];
+export const ALL_GAMES_POPULATE_PLAYERS: [string, string] = ['players', 'username avatar country gamesPlayed gamesWon'];
 
 export const ALL_GAMES_POPULATE_NEXT_PLAYERS: [string, string] = [
   'nextPlayers',
-  'username avatar gamesPlayed gamesWon',
+  'username avatar country gamesPlayed gamesWon',
 ];
 
 export const OPEN_GAME_FIELDS_MONGO = `${ALL_GAMES_FIELDS_MONGO} id gameData`;
