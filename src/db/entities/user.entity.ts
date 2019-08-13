@@ -51,6 +51,9 @@ export class User extends DefaultNamingStrategy {
   @Column({ nullable: true })
   public avatar: string;
 
+  @Column({ nullable: true })
+  public country: string;
+
   @Column({ name: 'notifications_token', nullable: true })
   public notificationsToken: string;
 

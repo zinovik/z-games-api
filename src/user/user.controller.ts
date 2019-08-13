@@ -25,6 +25,7 @@ import { IUser } from '../db/interfaces';
 import { FileUploadInterceptor } from '../interceptors/file-upload.interceptor';
 import { IGoogleProfile } from './google-profile.interface';
 import { EmailService } from '../services/email.service';
+import { IpGeolocationService } from '../services/ip-geolocation.service';
 
 @Controller('users')
 export class UserController {
@@ -35,6 +36,7 @@ export class UserController {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
+    private readonly ipGeolocationService: IpGeolocationService,
     @InjectConnection() private readonly connectionMongo: ConnectionMongo,
   ) {
     this.userModel = this.connectionMongo.model('User');
@@ -75,9 +77,10 @@ export class UserController {
   async register(@Req()
   {
     body: { username, password, email },
+    ...request
   }: Request & {
     body: { username: string; password: string; email: string };
-  }): Promise<User | IUser> {
+  } & { connection: { remoteAddress: string } }): Promise<User | IUser> {
     if (!password || !email || !username) {
       throw new CreatingUserException('All fields are are required!');
     }
@@ -99,11 +102,21 @@ export class UserController {
 
     let user: User | IUser;
 
+    let country = '';
+
+    try {
+      const ip = request.connection.remoteAddress;
+      country = await this.ipGeolocationService.getFlag({ ip });
+    } catch (error) {
+      console.log('Error getting users country flag', error.message);
+    }
+
     try {
       user = await this.userService.create({
         username: username || email,
         password,
         email,
+        country,
       });
     } catch (error) {
       throw new CreatingUserException(error.message);
@@ -152,10 +165,23 @@ export class UserController {
 
   @Post('authorize')
   @UseGuards(LocalGuard)
-  async authorize(@Req() { user }: { user: User | IUser }): Promise<{
+  async authorize(@Req()
+  {
+    user,
+    ...request
+  }: Request & { user: User | IUser } & { connection: { remoteAddress: string } }): Promise<{
     token: string;
   }> {
     const token = this.jwtService.generateToken({ id: user.id }, '7 days');
+
+    try {
+      const ip = request.connection.remoteAddress;
+      const country = await this.ipGeolocationService.getFlag({ ip });
+
+      await this.userService.update({ userId: user.id, country });
+    } catch (error) {
+      console.log('Error getting users country flag', error.message);
+    }
 
     return { token };
   }
@@ -231,7 +257,7 @@ export class UserController {
     body: { username, notificationsToken },
     user,
   }: Request & { body: { username?: string; notificationsToken?: string }; user: IUser | User }): Promise<void> {
-    this.userService.update({ userId: user.id, username, notificationsToken });
+    await this.userService.update({ userId: user.id, username, notificationsToken });
   }
 
   @Post('avatar')
@@ -255,18 +281,32 @@ export class UserController {
   @Get('authorize/google/callback')
   @UseGuards(GoogleGuard)
   async googleAuthCallback(
-    @Req() req: { user: IGoogleProfile },
+    @Req() req: { user: IGoogleProfile } & { connection: { remoteAddress: string } },
     @Res() res: Response & { redirect: (url: string) => void },
   ) {
     const user = await this.userService.findOneByEmail(req.user.emails[0].value);
 
     let id: string;
 
+    let country = '';
+
+    try {
+      const ip = req.connection.remoteAddress;
+      country = await this.ipGeolocationService.getFlag({ ip });
+    } catch (error) {
+      console.log('Error getting users country flag', error.message);
+    }
+
     if (user) {
       id = user.id;
+
+      if (country) {
+        await this.userService.update({ userId: user.id, country });
+      }
     } else {
       try {
         const newUser = await this.userService.create({
+          country,
           username: req.user.displayName || req.user.emails[0].value,
           email: req.user.emails[0].value,
           provider: 'google',
