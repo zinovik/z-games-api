@@ -17,9 +17,13 @@ export class IpGeolocationService {
   public async getFlag({ ip }: { ip: string }): Promise<string | undefined> {
     this.logger.info(`Get country flag for ip: ${ip}`);
 
+    const IP_GEOLOCATION_API_KEY = ConfigService.get().IP_GEOLOCATION_API_KEY;
+
     const { data: response }: { data: IIpGeolocationResult } = await axios.get(
-      `${URL}?apiKey${ConfigService.get().IP_GEOLOCATION_API_KEY}=&ip=${ip}`,
+      `${URL}?apiKey${IP_GEOLOCATION_API_KEY}=&ip=${ip}`,
     );
+
+    console.log(response);
 
     return response.country_flag;
   }
