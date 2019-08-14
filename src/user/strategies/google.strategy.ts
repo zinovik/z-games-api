@@ -12,8 +12,8 @@ export class GoogleStrategy extends PassportStrategy(OAuth2Strategy) {
     const BASE_URL = ConfigService.get().BASE_URL;
 
     super({
-      clientID: GOOGLE_CONSUMER_KEY || 'GOOGLE_CONSUMER_KEY',
-      clientSecret: GOOGLE_CONSUMER_SECRET || 'GOOGLE_CONSUMER_SECRET',
+      clientID: GOOGLE_CONSUMER_KEY as string,
+      clientSecret: GOOGLE_CONSUMER_SECRET as string,
       callbackURL: `${BASE_URL}/api/users/authorize/google/callback`,
       scope: ['profile', 'email'],
       session: false,
