@@ -248,12 +248,14 @@ export class UserService {
     notificationsToken,
     avatar,
     country,
+    password,
   }: {
     userId: string;
     username?: string;
     notificationsToken?: string;
     avatar?: string;
     country?: string;
+    password?: string;
   }): Promise<void> {
     const updateFields = {} as IUser;
 
@@ -271,6 +273,10 @@ export class UserService {
 
     if (country) {
       updateFields.country = country;
+    }
+
+    if (password) {
+      updateFields.country = password;
     }
 
     if (IS_MONGO_USED) {
