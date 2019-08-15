@@ -37,7 +37,7 @@ export class EmailService {
   public sendRegistrationMail({ id, email }: { id: string; email: string }): Promise<ISendGridResult> {
     this.logger.info('Sending Registration Mail');
 
-    const token = this.jwtService.generateToken({ id }, '2 hours');
+    const token = this.jwtService.generateToken({ id, type: 'activate' }, '2 hours');
     const link = `${ConfigService.get().CLIENT_URL}/activate/${token}`;
 
     const templatePath = __dirname + '/email-templates/registration.pug';
@@ -86,7 +86,7 @@ export class EmailService {
   public sendResetPasswordMail({ id, email }: { id: string; email: string }): Promise<ISendGridResult> {
     this.logger.info('Sending Forgot Password Mail');
 
-    const token = this.jwtService.generateToken({ id }, '2 hours');
+    const token = this.jwtService.generateToken({ id, type: 'reset' }, '2 hours');
     const link = `${ConfigService.get().CLIENT_URL}/reset/${token}`;
 
     const templatePath = __dirname + '/email-templates/forgot-password.pug';

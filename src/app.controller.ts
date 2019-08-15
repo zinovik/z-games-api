@@ -17,8 +17,6 @@ export class AppController {
       method: request.method,
       headers: request.headers,
       body: request.body,
-      remoteAddress: (request as any).connection.remoteAddress,
-      ip: (request as any).ip,
     });
   }
 }

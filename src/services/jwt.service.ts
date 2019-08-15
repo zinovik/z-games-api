@@ -18,13 +18,18 @@ export class JwtService {
     });
   };
 
-  public getUserIdByToken = (token: string): string => {
+  public getUserIdByToken = (token: string, type?: string): string => {
     let jwtDecoded: IJwtToken;
 
     try {
       jwtDecoded = jwt.verify(token, this.JWT_SECRET) as IJwtToken;
     } catch (err) {
       this.logger.warn(`Error verifying token: ${err.name}`);
+      return null;
+    }
+
+    if (type && jwtDecoded.type !== type) {
+      this.logger.warn(`Error verifying token type: ${type}`);
       return null;
     }
 
