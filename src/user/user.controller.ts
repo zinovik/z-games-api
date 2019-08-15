@@ -139,7 +139,7 @@ export class UserController {
   {
     body: { token: activationToken },
   }: Request & { body: { token: string } }): Promise<{ token: string }> {
-    const userId = this.jwtService.getUserIdByToken(activationToken);
+    const userId = this.jwtService.getUserIdByToken(activationToken, 'activate');
 
     const user = await this.userService.findOneById(userId);
 
@@ -228,7 +228,7 @@ export class UserController {
       throw new CreatingUserException('Too week password!');
     }
 
-    const userId = this.jwtService.getUserIdByToken(setPasswordToken);
+    const userId = this.jwtService.getUserIdByToken(setPasswordToken, 'reset');
 
     const user = await this.userService.findOneById(userId);
 
@@ -236,13 +236,7 @@ export class UserController {
       throw new ActivationUserException('Invalid link!');
     }
 
-    await this.userModel.findOneAndUpdate(
-      { _id: user.id },
-      {
-        password,
-        isConfirmed: true,
-      },
-    );
+    await this.userService.update({ userId: user.id, password });
 
     const token = this.jwtService.generateToken({ id: user.id }, '7 days');
 
