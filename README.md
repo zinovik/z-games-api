@@ -21,8 +21,8 @@ The project consists of two main parts and several games modules:
 
 There are two environments where you can check current versions:
 
-1. Development (dev branch) (https://z-games-dev.netlify.com)
-2. Production (master branch) (https://z-games.netlify.com)
+1. Development (dev branch) (https://z-games-dev.netlify.app)
+2. Production (master branch) (https://z-games.netlify.app)
 
 # How
 
