@@ -228,7 +228,7 @@ export class GameService {
     const game = await this.findOneById(gameId);
 
     if (user.openedGame || user.openedGameWatcher) {
-      throw new JoiningGameException(`You are already have other game opened. Try to refresh the page`);
+      throw new JoiningGameException('You are already have other game opened. Try to refresh the page');
     }
 
     if (!game) {
