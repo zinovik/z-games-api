@@ -16,7 +16,7 @@ COPY nodemon-debug.json *.env ./
 COPY nodemon.json ./
 COPY tsconfig.build.json ./
 COPY tsconfig.json ./
-COPY tslint.json ./
+COPY .eslintrc.js ./
 
 # Build and run the app
 CMD npm run start:dev
